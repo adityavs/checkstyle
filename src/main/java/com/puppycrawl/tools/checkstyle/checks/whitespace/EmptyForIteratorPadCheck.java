@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,8 +21,7 @@ package com.puppycrawl.tools.checkstyle.checks.whitespace;
 
 import java.util.Locale;
 
-import org.apache.commons.beanutils.ConversionException;
-
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -50,6 +49,7 @@ for (Iterator foo = very.long.line.iterator();
  *
  * @author Rick Giles
  */
+@StatelessCheck
 public class EmptyForIteratorPadCheck
     extends AbstractCheck {
 
@@ -74,30 +74,30 @@ public class EmptyForIteratorPadCheck
     /**
      * Set the option to enforce.
      * @param optionStr string to decode option from
-     * @throws ConversionException if unable to decode
+     * @throws IllegalArgumentException if unable to decode
      */
     public void setOption(String optionStr) {
         try {
             option = PadOption.valueOf(optionStr.trim().toUpperCase(Locale.ENGLISH));
         }
         catch (IllegalArgumentException iae) {
-            throw new ConversionException("unable to parse " + optionStr, iae);
+            throw new IllegalArgumentException("unable to parse " + optionStr, iae);
         }
     }
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.FOR_ITERATOR};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.FOR_ITERATOR};
     }
 
     @Override
@@ -120,4 +120,5 @@ public class EmptyForIteratorPadCheck
             }
         }
     }
+
 }

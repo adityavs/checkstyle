@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,8 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.regexp;
 
-import java.util.Arrays;
-
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
@@ -30,6 +29,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * Supports ignoring comments for matches.
  * @author Oliver Burn
  */
+@StatelessCheck
 public class RegexpSinglelineJavaCheck extends AbstractCheck {
 
     /** The format of the regular expression to match. */
@@ -47,30 +47,30 @@ public class RegexpSinglelineJavaCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return CommonUtils.EMPTY_INT_ARRAY;
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
     public void beginTree(DetailAST rootAST) {
-        MatchSuppressor supressor = null;
+        MatchSuppressor suppressor = null;
         if (ignoreComments) {
-            supressor = new CommentSuppressor(getFileContents());
+            suppressor = new CommentSuppressor(getFileContents());
         }
 
         final DetectorOptions options = DetectorOptions.newBuilder()
             .reporter(this)
             .compileFlags(0)
-            .suppressor(supressor)
+            .suppressor(suppressor)
             .format(format)
             .message(message)
             .minimum(minimum)
@@ -78,7 +78,7 @@ public class RegexpSinglelineJavaCheck extends AbstractCheck {
             .ignoreCase(ignoreCase)
             .build();
         final SinglelineDetector detector = new SinglelineDetector(options);
-        detector.processLines(Arrays.asList(getLines()));
+        detector.processLines(getFileContents().getText());
     }
 
     /**
@@ -128,4 +128,5 @@ public class RegexpSinglelineJavaCheck extends AbstractCheck {
     public void setIgnoreComments(boolean ignore) {
         ignoreComments = ignore;
     }
+
 }

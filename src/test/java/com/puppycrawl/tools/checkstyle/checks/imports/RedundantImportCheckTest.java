@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,26 +25,23 @@ import static com.puppycrawl.tools.checkstyle.checks.imports.RedundantImportChec
 import static org.junit.Assert.assertArrayEquals;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.google.common.collect.ImmutableMap;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class RedundantImportCheckTest
-    extends BaseCheckTestSupport {
-    @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "imports" + File.separator + filename);
-    }
+    extends AbstractModuleTestSupport {
 
     @Override
-    protected String getNonCompilablePath(String filename) throws IOException {
-        return super.getNonCompilablePath("checks" + File.separator
-                + "imports" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/imports/redundantimport";
     }
 
     @Test
@@ -55,31 +52,52 @@ public class RedundantImportCheckTest
             TokenTypes.STATIC_IMPORT,
             TokenTypes.PACKAGE_DEF,
         };
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, checkObj.getRequiredTokens());
+    }
+
+    @Test
+    public void testStateIsClearedOnBeginTree1()
+            throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(RedundantImportCheck.class);
+        final String inputWithWarnings = getPath("InputRedundantImportCheckClearState.java");
+        final String inputWithoutWarnings = getPath("InputRedundantImportWithoutWarnings.java");
+        final List<String> expectedFirstInput = Arrays.asList(
+            "4:1: " + getCheckMessage(MSG_DUPLICATE, 3, "java.util.Arrays.asList"),
+            "7:1: " + getCheckMessage(MSG_DUPLICATE, 6, "java.util.List")
+        );
+        final List<String> expectedSecondInput = Arrays.asList(CommonUtils.EMPTY_STRING_ARRAY);
+        final File[] inputs = {new File(inputWithWarnings), new File(inputWithoutWarnings)};
+
+        verify(createChecker(checkConfig), inputs, ImmutableMap.of(
+            inputWithWarnings, expectedFirstInput,
+            inputWithoutWarnings, expectedSecondInput));
     }
 
     @Test
     public void testWithChecker()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(RedundantImportCheck.class);
+            createModuleConfig(RedundantImportCheck.class);
         final String[] expected = {
-            "7:1: " + getCheckMessage(MSG_SAME, "com.puppycrawl.tools.checkstyle.checks.imports.*"),
+            "7:1: " + getCheckMessage(MSG_SAME,
+                "com.puppycrawl.tools.checkstyle.checks.imports.redundantimport.*"),
             "8:1: " + getCheckMessage(MSG_SAME,
-                "com.puppycrawl.tools.checkstyle.checks.imports.InputImportBug"),
+                "com.puppycrawl.tools.checkstyle.checks.imports.redundantimport."
+                        + "InputRedundantImportBug"),
             "10:1: " + getCheckMessage(MSG_LANG, "java.lang.*"),
             "11:1: " + getCheckMessage(MSG_LANG, "java.lang.String"),
             "14:1: " + getCheckMessage(MSG_DUPLICATE, 13, "java.util.List"),
             "26:1: " + getCheckMessage(MSG_DUPLICATE, 25, "javax.swing.WindowConstants.*"),
         };
-        verify(checkConfig, getPath("InputRedundantImport.java"), expected);
+        verify(checkConfig, getPath("InputRedundantImportWithChecker.java"), expected);
     }
 
     @Test
     public void testUnnamedPackage()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(RedundantImportCheck.class);
+            createModuleConfig(RedundantImportCheck.class);
         final String[] expected = {
             "4:1: " + getCheckMessage(MSG_DUPLICATE, 3, "java.util.List"),
             "6:1: " + getCheckMessage(MSG_LANG, "java.lang.String"),
@@ -99,6 +117,7 @@ public class RedundantImportCheckTest
             TokenTypes.PACKAGE_DEF,
         };
 
-        assertArrayEquals(expected, actual);
+        assertArrayEquals("Default acceptable tokens are invalid", expected, actual);
     }
+
 }

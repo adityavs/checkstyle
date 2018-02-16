@@ -29,7 +29,7 @@
         any coding standard. An example configuration files are supplied
         supporting the <a href="http://www.oracle.com/technetwork/java/javase/documentation/codeconvtoc-136057.html">
         Sun Code Conventions</a>,
-        <a href="http://checkstyle.sourceforge.net/reports/google-java-style.html">Google Java Style</a>.
+        <a href="http://checkstyle.sourceforge.net/reports/google-java-style-20170228.html">Google Java Style</a>.
       </p>
 
       <p>
@@ -38,37 +38,6 @@
         href="http://maven.apache.org/plugins/maven-checkstyle-plugin/checkstyle.html">seen here</a>.
       </p>
     </section>
-
-    <section name="Important Development Changes">
-      <p>
-        As of September 2013, the Checkstyle project is using GitHub for
-        hosting the following:
-      </p>
-      <ul>
-        <li>
-          <a href="https://github.com/checkstyle/checkstyle">GitHub Source
-          code repository</a> - replacing the Mercurial repository on
-          SourceForge.
-        </li>
-        <li>
-          <a
-          href="https://github.com/checkstyle/checkstyle/issues">GitHub Issue
-          management</a> - replacing the Bugs/Feature/Patches on
-          SourceForge. All new issues should be raised at GitHub, and
-          pull requests are now the preferred way to submit patches.
-        </li>
-      </ul>
-
-      <p>
-        SourceForge will still be used for website hosting and binary
-        hosting for downloads.
-      </p>
-
-      <p>
-        <b>Releases will happen at the end of each month</b> if functional changes exists in <a href="https://github.com/checkstyle/checkstyle/commits/master">master branch of our repo</a>.
-      </p>
-
-      </section>
 
     <section name="Features">
       <p>
@@ -116,6 +85,17 @@
       </p>
     </section>
 
+    <section name="Development Circle">
+      <p>
+        <b>Releases will happen at the end of each month</b>
+        if functional changes exists in <a href="https://github.com/checkstyle/checkstyle/commits/master">master branch of our repo</a>.
+        For exact day pelase follow our <a href="https://github.com/checkstyle/checkstyle/milestones">milestones</a>.
+      </p>
+      <p>
+        Explanation why we do not follow Semantic Versioning is in <a href="https://github.com/checkstyle/checkstyle/issues/3709">issue #3709</a>
+      </p>
+    </section>
+
     <section name="Related Tools">
       <p>
         Checkstyle is most useful if you integrate it in your build process or
@@ -143,12 +123,12 @@
               </tr>
               <tr>
                   <td>
-                      <a href="https://bitbucket.org/product/server">Bitbucket Server</a>
+                      <a href="https://www.atlassian.com/software/bitbucket/server">Bitbucket Server</a>
                   </td>
                   <td>Stephan Bechter</td>
                   <td>
                       <a href="https://marketplace.atlassian.com/plugins/at.apogeum.bitbucket.checkstyle/server/overview">
-                          Checkstyles for Bitbucket Server
+                          Checkstyle for Bitbucket Server
                       </a>
                   </td>
                   <td/>
@@ -168,14 +148,14 @@
                   </td>
               </tr>
               <tr>
-                  <td><a href="http://www.eclipse.org">Eclipse/RAD/RDz</a></td>
+                  <td><a href="https://eclipse.org">Eclipse/RAD/RDz</a></td>
                   <td>David Schneider</td>
                   <td>
-                      <a href="http://eclipse-cs.sourceforge.net/">Eclipse-CS Home Page</a>
+                      <a href="https://checkstyle.github.io/eclipse-cs/">Eclipse-CS Home Page</a>
                   </td>
                   <td>
                       In 2007 was awarded
-                      <a href="http://www.eclipse.org/org/press-release/20070306eclipsecommunityawards.php">
+                      <a href="https://eclipse.org/org/press-release/20070306eclipsecommunityawards.php">
                           Best Open Source Eclipse-based Developer tool
                       </a>.
                   </td>
@@ -201,7 +181,7 @@
                   <td/>
               </tr>
               <tr>
-                  <td><a href="http://www.eclipse.org">Eclipse/RAD/RDz</a></td>
+                  <td><a href="https://eclipse.org">Eclipse/RAD/RDz</a></td>
                   <td>Roman Ivanov</td>
                   <td>
                       <a href="https://github.com/sevntu-checkstyle">Project Page</a>
@@ -217,10 +197,24 @@
                   </td>
               </tr>
               <tr>
-                  <td><a href="https://bitbucket.org/atlassian/bamboo-checkstyle-plugin">Bamboo Checkstyle plug-in</a></td>
+                  <td><a href="https://eclipse.org">Eclipse/RAD/RDz</a></td>
+                  <td>Jan Burkhardt</td>
+                  <td>
+                      <a href="https://github.com/bjrke/JSR305CheckstylePlugin">Project Page</a>
+                  </td>
+                  <td>
+                      Extension for Eclipse-CS plugin which ensures nullness annotations on methods
+                      and constructors (JSR305).
+                  </td>
+              </tr>
+              <tr>
+                  <td><a href="https://bitbucket.org/atlassian/bamboo-checkstyle-plugin">
+                      Bamboo Checkstyle plug-in</a></td>
                   <td>Atlassian (formerly by Ross Rowe and Stephan Paulicke)</td>
-                  <td><a href="https://bitbucket.org/atlassian/bamboo-checkstyle-plugin">Bamboo Checkstyle plug-in Home Page</a></td>
-                  <td>An add-on that will parse and record CheckStyle reports and report your style violations over time.</td>
+                  <td><a href="https://bitbucket.org/atlassian/bamboo-checkstyle-plugin">
+                      Bamboo Checkstyle plug-in Home Page</a></td>
+                  <td>An add-on that will parse and record CheckStyle reports and report your style
+                      violations over time.</td>
               </tr>
               <tr>
                   <td>
@@ -235,10 +229,14 @@
                   <td/>
               </tr>
               <tr>
-                  <td><a href="https://wiki.jenkins-ci.org/display/JENKINS/Checkstyle+Plugin">Jenkins Checkstyle plug-in</a></td>
+                  <td><a href="https://wiki.jenkins.io/display/JENKINS/Checkstyle+Plugin">Jenkins
+                  Checkstyle plug-in</a></td>
                   <td/>
-                  <td><a href="https://wiki.jenkins-ci.org/display/JENKINS/Checkstyle+Plugin">Jenkins Checkstyle plug-in Home Page</a></td>
-                  <td>This plug-in is supported by the Static Analysis Collector plug-in that collects different analysis results and shows the results in aggregated trend graphs.</td>
+                  <td><a href="https://wiki.jenkins.io/display/JENKINS/Checkstyle+Plugin">Jenkins
+                  Checkstyle plug-in Home Page</a></td>
+                  <td>This plug-in is supported by the Static Analysis Collector plug-in that
+                  collects different analysis results and shows the results in aggregated trend
+                  graphs.</td>
               </tr>
               <tr>
                   <td><a href="http://maven.apache.org/">Maven</a></td>
@@ -256,7 +254,7 @@
                   <td><a href="https://netbeans.org/">NetBeans</a></td>
                   <td>Petr Hejl</td>
                   <td>
-                      <a href="http://www.sickboy.cz/checkstyle/">Checkstyle Beans</a>
+                      <a href="https://www.sickboy.cz/checkstyle/">Checkstyle Beans</a>
                   </td>
                   <td>
                       Problems with source code are displayed as annotations of
@@ -267,15 +265,15 @@
                   <td><a href="https://netbeans.org/">NetBeans</a></td>
                   <td/>
                   <td>
-                      <a href="https://java.net/projects/sqe/">Software Quality Environment (SQE)</a>
+                      <a href="http://sqe-team.github.io">Software Quality Environment (SQE)</a>
                   </td>
                   <td/>
               </tr>
               <tr>
-                  <td><a href="https://sonarqube.com/about">SonarQube</a></td>
+                  <td><a href="https://www.sonarqube.org/">SonarQube</a></td>
                   <td>Freddy Mallet (initial author)</td>
-                  <td><a href="https://sonarqube.com/about">SonarQube Home Page</a></td>
-                  <td><a href="https://sonarqube.com/projects">Demo site</a></td>
+                  <td><a href="https://github.com/checkstyle/sonar-checkstyle">Checkstyle SonarQube repository</a></td>
+                  <td><a href="https://sonarcloud.io/projects">Demo site of SonarQube</a></td>
               </tr>
               <tr>
                   <td><a href="http://www.jedit.org/">jEdit</a></td>
@@ -294,21 +292,40 @@
                   <td><a href="http://www.jetbrains.com/idea/">IntelliJ IDEA</a></td>
                   <td>Jakub Slawinski</td>
                   <td>
-                      <a href="http://qaplug.com/">QAPlug</a>
+                      <a href="https://plugins.jetbrains.com/plugin/4594-qaplug">QAPlug</a>
                   </td>
                   <td>Provides quality assurance features.</td>
               </tr>
               <tr>
-                  <td><a href="http://www.jarchitect.com/">JArchitect</a></td>
+                  <td><a href="https://www.jarchitect.com">JArchitect</a></td>
                   <td/>
-                  <td><a href="http://www.jarchitect.com/">JArchitect Home Page</a></td>
+                  <td><a href="https://www.jarchitect.com">JArchitect Home Page</a></td>
                   <td>Imports XML result files from CheckStyle.</td>
               </tr>
               <tr>
-                  <td><a href="http://www.scala-sbt.org/">SBT</a></td>
+                  <td><a href="https://www.scala-sbt.org/">SBT</a></td>
                   <td>Andrew Johnson</td>
                   <td><a href="https://github.com/etsy/sbt-checkstyle-plugin">sbt-checkstyle-plugin Project Page</a></td>
                   <td>SBT plugin for running Checkstyle on Java source files in an SBT project</td>
+              </tr>
+              <tr>
+                  <td><a href="https://github.com/nidi3/code-assert">code-assert</a></td>
+                  <td>Stefan Niederhauser</td>
+                  <td><a href="https://github.com/nidi3/code-assert#checkstyle-checks">code-assert</a></td>
+                  <td>Assert that the java code of a project satisfies certain checks. Launch
+                      checkstyle validation from UTs</td>
+              </tr>
+              <tr>
+                  <td><a href="http://jdee.sourceforge.net/">Emacs JDE</a></td>
+                  <td>Markus Mohnen</td>
+                  <td>Part of the standard JDEE distribution - <a href="https://github.com/jdee-emacs/jdee"/></td>
+                  <td><a href="https://github.com/jdee-emacs/jdee/blob/master/jdee-checkstyle.el">configuration could be seen at jdee-checkstyle.el</a></td>
+              </tr>
+              <tr>
+                  <td><a href="https://code.visualstudio.com/">Visual Studio Code</a></td>
+                  <td>Sheng Chen</td>
+                  <td><a href="https://marketplace.visualstudio.com/items?itemName=shengchen.vscode-checkstyle">vscode-checkstyle</a></td>
+                  <td>Checkstyle for Microsoft Visual Studio Code</td>
               </tr>
           </table>
       </subsection>
@@ -338,13 +355,13 @@
                   <td>Combines multiple tools (CheckStyle, findbugs, PMD, Cobertura, etc.)</td>
               </tr>
               <tr>
-                  <td><a href="http://www.bluej.org">BlueJ</a></td>
+                  <td><a href="https://www.bluej.org/">BlueJ</a></td>
                   <td>Rick Giles</td>
                   <td><a href="http://bluejcheckstyle.sourceforge.net/">bluejcheckstyle home page</a></td>
                   <td/>
               </tr>
               <tr>
-                  <td><a href="http://www.eclipse.org">Eclipse/RAD/RDz</a></td>
+                  <td><a href="https://eclipse.org">Eclipse/RAD/RDz</a></td>
                   <td>Marco van Meegen</td>
                   <td>
                       <a href="http://www.mvmsoft.de/content/plugins/checkclipse/checkclipse.htm">Checklipse Home Page</a>
@@ -364,15 +381,9 @@
                   <td/>
               </tr>
               <tr>
-                  <td><a href="http://jdee.sourceforge.net/">Emacs JDE</a></td>
-                  <td>Markus Mohnen</td>
-                  <td>Part of the standard JDEE distribution</td>
-                  <td/>
-              </tr>
-              <tr>
-                  <td><a href="http://www.vim.org">Vim editor</a></td>
+                  <td><a href="https://vim.sourceforge.io/">Vim editor</a></td>
                   <td>Xandy Johnson</td>
-                  <td><a href="http://vim.sourceforge.net/scripts/script.php?script_id=448">Plugin Homepage</a></td>
+                  <td><a href="https://vim.sourceforge.io/scripts/script.php?script_id=448">Plugin Homepage</a></td>
                   <td>Vim file-type plug-in</td>
               </tr>
           </table>

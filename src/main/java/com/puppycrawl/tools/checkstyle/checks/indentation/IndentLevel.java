@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,6 +28,7 @@ import java.util.BitSet;
  * @author o_sukhodolsky
  */
 public class IndentLevel {
+
     /** Set of acceptable indentation levels. */
     private final BitSet levels = new BitSet();
 
@@ -72,6 +73,8 @@ public class IndentLevel {
     }
 
     /**
+     * Returns true if indent less then minimal of
+     * acceptable indentation levels, false otherwise.
      * @param indent indentation to check.
      * @return true if {@code indent} less then minimal of
      *         acceptable indentation levels, false otherwise.
@@ -114,17 +117,22 @@ public class IndentLevel {
 
     @Override
     public String toString() {
+        final String result;
         if (levels.cardinality() == 1) {
-            return String.valueOf(levels.nextSetBit(0));
+            result = String.valueOf(levels.nextSetBit(0));
         }
-        final StringBuilder sb = new StringBuilder();
-        for (int i = levels.nextSetBit(0); i >= 0;
-            i = levels.nextSetBit(i + 1)) {
-            if (sb.length() > 0) {
-                sb.append(", ");
+        else {
+            final StringBuilder sb = new StringBuilder(50);
+            for (int i = levels.nextSetBit(0); i >= 0;
+                 i = levels.nextSetBit(i + 1)) {
+                if (sb.length() > 0) {
+                    sb.append(", ");
+                }
+                sb.append(i);
             }
-            sb.append(i);
+            result = sb.toString();
         }
-        return sb.toString();
+        return result;
     }
+
 }

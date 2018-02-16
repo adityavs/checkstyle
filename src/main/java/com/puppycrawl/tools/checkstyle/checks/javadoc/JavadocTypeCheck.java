@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
@@ -43,6 +44,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author Oliver Burn
  * @author Michael Tamm
  */
+@StatelessCheck
 public class JavadocTypeCheck
     extends AbstractCheck {
 
@@ -223,15 +225,14 @@ public class JavadocTypeCheck
      * @return whether we should check a given node.
      */
     private boolean shouldCheck(final DetailAST ast) {
-        final DetailAST mods = ast.findFirstToken(TokenTypes.MODIFIERS);
-        final Scope declaredScope = ScopeUtils.getScopeFromMods(mods);
         final Scope customScope;
 
         if (ScopeUtils.isInInterfaceOrAnnotationBlock(ast)) {
             customScope = Scope.PUBLIC;
         }
         else {
-            customScope = declaredScope;
+            final DetailAST mods = ast.findFirstToken(TokenTypes.MODIFIERS);
+            customScope = ScopeUtils.getScopeFromMods(mods);
         }
         final Scope surroundingScope = ScopeUtils.getSurroundingScope(ast);
 
@@ -303,6 +304,7 @@ public class JavadocTypeCheck
                 && tag.getFirstArg().indexOf(OPEN_ANGLE_BRACKET
                         + typeParamName + CLOSE_ANGLE_BRACKET) == 0) {
                 found = true;
+                break;
             }
         }
         if (!found) {
@@ -322,7 +324,6 @@ public class JavadocTypeCheck
         for (int i = tags.size() - 1; i >= 0; i--) {
             final JavadocTag tag = tags.get(i);
             if (tag.isParamTag()) {
-
                 final String typeParamName = extractTypeParamNameFromTag(tag);
 
                 if (!typeParamNames.contains(typeParamName)) {
@@ -352,4 +353,5 @@ public class JavadocTypeCheck
         }
         return typeParamName;
     }
+
 }

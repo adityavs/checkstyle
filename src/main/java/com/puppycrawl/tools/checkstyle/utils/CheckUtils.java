@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,12 +20,16 @@
 package com.puppycrawl.tools.checkstyle.utils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
+import antlr.collections.AST;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.checks.naming.AccessModifier;
 
 /**
  * Contains utility methods for the checks.
@@ -35,6 +39,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author o_sukhodolsky
  */
 public final class CheckUtils {
+
     // constants for parseDouble()
     /** Octal radix. */
     private static final int BASE_8 = 8;
@@ -72,18 +77,15 @@ public final class CheckUtils {
      * @param typeAST a type node.
      * @return {@code FullIdent} for given type.
      */
-    public static FullIdent createFullType(DetailAST typeAST) {
-        final DetailAST arrayDeclaratorAST =
-            typeAST.findFirstToken(TokenTypes.ARRAY_DECLARATOR);
-        final FullIdent fullType;
+    public static FullIdent createFullType(final DetailAST typeAST) {
+        DetailAST ast = typeAST;
 
-        if (arrayDeclaratorAST == null) {
-            fullType = createFullTypeNoArrays(typeAST);
+        // ignore array part of type
+        while (ast.findFirstToken(TokenTypes.ARRAY_DECLARATOR) != null) {
+            ast = ast.findFirstToken(TokenTypes.ARRAY_DECLARATOR);
         }
-        else {
-            fullType = createFullTypeNoArrays(arrayDeclaratorAST);
-        }
-        return fullType;
+
+        return FullIdent.createFullIdent(ast.getFirstChild());
     }
 
     /**
@@ -97,8 +99,9 @@ public final class CheckUtils {
 
         if (ast.getType() == TokenTypes.METHOD_DEF) {
             final DetailAST modifiers = ast.findFirstToken(TokenTypes.MODIFIERS);
-            final boolean staticOrAbstract = modifiers.branchContains(TokenTypes.LITERAL_STATIC)
-                    || modifiers.branchContains(TokenTypes.ABSTRACT);
+            final boolean staticOrAbstract =
+                    modifiers.findFirstToken(TokenTypes.LITERAL_STATIC) != null
+                    || modifiers.findFirstToken(TokenTypes.ABSTRACT) != null;
 
             if (!staticOrAbstract) {
                 final DetailAST nameNode = ast.findFirstToken(TokenTypes.IDENT);
@@ -145,14 +148,6 @@ public final class CheckUtils {
         return ast.getType() == TokenTypes.SLIST
             && ast.getChildCount() == 2
             && isElse(ast.getParent());
-    }
-
-    /**
-     * @param typeAST a type node (no array)
-     * @return {@code FullIdent} for given type.
-     */
-    private static FullIdent createFullTypeNoArrays(DetailAST typeAST) {
-        return FullIdent.createFullIdent(typeAST.getFirstChild());
     }
 
     /**
@@ -332,11 +327,10 @@ public final class CheckUtils {
         // exceptions.
         if (ast.getType() == TokenTypes.METHOD_DEF
                 && ast.getChildCount() == SETTER_GETTER_MAX_CHILDREN) {
-
             final DetailAST type = ast.findFirstToken(TokenTypes.TYPE);
             final String name = type.getNextSibling().getText();
             final boolean matchesSetterFormat = SETTER_PATTERN.matcher(name).matches();
-            final boolean voidReturnType = type.getChildCount(TokenTypes.LITERAL_VOID) > 0;
+            final boolean voidReturnType = type.findFirstToken(TokenTypes.LITERAL_VOID) != null;
 
             final DetailAST params = ast.findFirstToken(TokenTypes.PARAMETERS);
             final boolean singleParam = params.getChildCount(TokenTypes.PARAMETER_DEF) == 1;
@@ -370,11 +364,10 @@ public final class CheckUtils {
         // exceptions.
         if (ast.getType() == TokenTypes.METHOD_DEF
                 && ast.getChildCount() == SETTER_GETTER_MAX_CHILDREN) {
-
             final DetailAST type = ast.findFirstToken(TokenTypes.TYPE);
             final String name = type.getNextSibling().getText();
             final boolean matchesGetterFormat = GETTER_PATTERN.matcher(name).matches();
-            final boolean noVoidReturnType = type.getChildCount(TokenTypes.LITERAL_VOID) == 0;
+            final boolean noVoidReturnType = type.findFirstToken(TokenTypes.LITERAL_VOID) == null;
 
             final DetailAST params = ast.findFirstToken(TokenTypes.PARAMETERS);
             final boolean noParams = params.getChildCount(TokenTypes.PARAMETER_DEF) == 0;
@@ -418,11 +411,57 @@ public final class CheckUtils {
      * @return true if the parameter is a receiver.
      */
     public static boolean isReceiverParameter(DetailAST parameterDefAst) {
-        boolean returnValue = false;
-        if (parameterDefAst.getType() == TokenTypes.PARAMETER_DEF
-                && parameterDefAst.findFirstToken(TokenTypes.IDENT) == null) {
-            returnValue = parameterDefAst.branchContains(TokenTypes.LITERAL_THIS);
-        }
-        return returnValue;
+        return parameterDefAst.getType() == TokenTypes.PARAMETER_DEF
+                && parameterDefAst.findFirstToken(TokenTypes.IDENT) == null;
     }
+
+    /**
+     * Returns {@link AccessModifier} based on the information about access modifier
+     * taken from the given token of type {@link TokenTypes#MODIFIERS}.
+     * @param modifiersToken token of type {@link TokenTypes#MODIFIERS}.
+     * @return {@link AccessModifier}.
+     */
+    public static AccessModifier getAccessModifierFromModifiersToken(DetailAST modifiersToken) {
+        if (modifiersToken == null || modifiersToken.getType() != TokenTypes.MODIFIERS) {
+            throw new IllegalArgumentException("expected non-null AST-token with type 'MODIFIERS'");
+        }
+
+        // default access modifier
+        AccessModifier accessModifier = AccessModifier.PACKAGE;
+        for (AST token = modifiersToken.getFirstChild(); token != null;
+             token = token.getNextSibling()) {
+            final int tokenType = token.getType();
+            if (tokenType == TokenTypes.LITERAL_PUBLIC) {
+                accessModifier = AccessModifier.PUBLIC;
+            }
+            else if (tokenType == TokenTypes.LITERAL_PROTECTED) {
+                accessModifier = AccessModifier.PROTECTED;
+            }
+            else if (tokenType == TokenTypes.LITERAL_PRIVATE) {
+                accessModifier = AccessModifier.PRIVATE;
+            }
+        }
+        return accessModifier;
+    }
+
+    /**
+     * Create set of class names and short class names.
+     *
+     * @param classNames array of class names.
+     * @return set of class names and short class names.
+     */
+    public static Set<String> parseClassNames(String... classNames) {
+        final Set<String> illegalClassNames = new HashSet<>();
+        for (final String name : classNames) {
+            illegalClassNames.add(name);
+            final int lastDot = name.lastIndexOf('.');
+            if (lastDot != -1 && lastDot < name.length() - 1) {
+                final String shortName = name
+                        .substring(name.lastIndexOf('.') + 1);
+                illegalClassNames.add(shortName);
+            }
+        }
+        return illegalClassNames;
+    }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -33,7 +34,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * <p>
  * Checks that class which has only private ctors
  * is declared as final. Doesn't check for classes nested in interfaces
- * or annotations, as they are always <code>final</code> there.
+ * or annotations, as they are always {@code final} there.
  * </p>
  * <p>
  * An example of how to configure the check is:
@@ -43,6 +44,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * </pre>
  * @author o_sukhodolsky
  */
+@FileStatefulCheck
 public class FinalClassCheck
     extends AbstractCheck {
 
@@ -55,7 +57,7 @@ public class FinalClassCheck
     /**
      * Character separate package names in qualified name of java class.
      */
-    public static final String PACKAGE_SEPARATOR = ".";
+    private static final String PACKAGE_SEPARATOR = ".";
 
     /** Keeps ClassDesc objects for stack of declared classes. */
     private Deque<ClassDesc> classes;
@@ -65,17 +67,17 @@ public class FinalClassCheck
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.CLASS_DEF, TokenTypes.CTOR_DEF, TokenTypes.PACKAGE_DEF};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.CLASS_DEF, TokenTypes.CTOR_DEF, TokenTypes.PACKAGE_DEF};
     }
 
     @Override
@@ -89,7 +91,6 @@ public class FinalClassCheck
         final DetailAST modifiers = ast.findFirstToken(TokenTypes.MODIFIERS);
 
         switch (ast.getType()) {
-
             case TokenTypes.PACKAGE_DEF:
                 packageName = extractQualifiedName(ast);
                 break;
@@ -97,8 +98,8 @@ public class FinalClassCheck
             case TokenTypes.CLASS_DEF:
                 registerNestedSubclassToOuterSuperClasses(ast);
 
-                final boolean isFinal = modifiers.branchContains(TokenTypes.FINAL);
-                final boolean isAbstract = modifiers.branchContains(TokenTypes.ABSTRACT);
+                final boolean isFinal = modifiers.findFirstToken(TokenTypes.FINAL) != null;
+                final boolean isAbstract = modifiers.findFirstToken(TokenTypes.ABSTRACT) != null;
 
                 final String qualifiedClassName = getQualifiedClassName(ast);
                 classes.push(new ClassDesc(qualifiedClassName, isFinal, isAbstract));
@@ -107,11 +108,11 @@ public class FinalClassCheck
             case TokenTypes.CTOR_DEF:
                 if (!ScopeUtils.isInEnumBlock(ast)) {
                     final ClassDesc desc = classes.peek();
-                    if (modifiers.branchContains(TokenTypes.LITERAL_PRIVATE)) {
-                        desc.registerPrivateCtor();
+                    if (modifiers.findFirstToken(TokenTypes.LITERAL_PRIVATE) == null) {
+                        desc.registerNonPrivateCtor();
                     }
                     else {
-                        desc.registerNonPrivateCtor();
+                        desc.registerPrivateCtor();
                     }
                 }
                 break;
@@ -204,7 +205,7 @@ public class FinalClassCheck
      * outer class.
      * @param packageName package name, empty string on default package
      * @param outerClassQualifiedName qualified name(package + class) of outer class,
-     *                           null if doesnt exist
+     *                           null if doesn't exist
      * @param className class name
      * @return qualified class name(package + class name)
      */
@@ -242,7 +243,7 @@ public class FinalClassCheck
 
     /**
      * Checks if given super class name in extend clause match super class qualified name.
-     * @param superClassQualifiedName super class quaflieid name(with package)
+     * @param superClassQualifiedName super class qualified name (with package)
      * @param superClassInExtendClause name in extend clause
      * @return true if given super class name in extend clause match super class qualified name,
      *         false otherwise
@@ -267,6 +268,7 @@ public class FinalClassCheck
 
     /** Maintains information about class' ctors. */
     private static final class ClassDesc {
+
         /** Qualified class name(with package). */
         private final String qualifiedName;
 
@@ -361,5 +363,7 @@ public class FinalClassCheck
         private boolean isDeclaredAsAbstract() {
             return declaredAsAbstract;
         }
+
     }
+
 }

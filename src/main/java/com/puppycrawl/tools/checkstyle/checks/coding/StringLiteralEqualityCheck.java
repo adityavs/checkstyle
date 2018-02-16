@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,22 +20,25 @@
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import antlr.collections.AST;
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
 /**
  * <p>Checks that string literals are not used with
- * {@code ==} or {@code &#33;=}.
+ * {@code ==} or <code>&#33;=</code>.
  * </p>
  * <p>
  * Rationale: Novice Java programmers often use code like
- * {@code if (x == &quot;something&quot;)} when they mean
- * {@code if (&quot;something&quot;.equals(x))}.
+ * {@code if (x == "something")} when they mean
+ * {@code if ("something".equals(x))}.
  * </p>
  *
  * @author Lars K&uuml;hne
+ * @noinspection HtmlTagCanBeJavadocTag
  */
+@StatelessCheck
 public class StringLiteralEqualityCheck extends AbstractCheck {
 
     /**
@@ -46,17 +49,17 @@ public class StringLiteralEqualityCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.EQUAL, TokenTypes.NOT_EQUAL};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.EQUAL, TokenTypes.NOT_EQUAL};
     }
 
     @Override
@@ -71,4 +74,5 @@ public class StringLiteralEqualityCheck extends AbstractCheck {
                     MSG_KEY, ast.getText());
         }
     }
+
 }

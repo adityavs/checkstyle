@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,31 +21,27 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import static com.puppycrawl.tools.checkstyle.checks.coding.ArrayTrailingCommaCheck.MSG_KEY;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 
 public class ArrayTrailingCommaCheckTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "coding" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/coding/arraytrailingcomma";
     }
 
     @Test
     public void testDefault()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ArrayTrailingCommaCheck.class);
+            createModuleConfig(ArrayTrailingCommaCheck.class);
         final String[] expected = {
             "17: " + getCheckMessage(MSG_KEY),
-            "34: " + getCheckMessage(MSG_KEY),
             "37: " + getCheckMessage(MSG_KEY),
         };
         verify(checkConfig, getPath("InputArrayTrailingComma.java"), expected);
@@ -54,8 +50,9 @@ public class ArrayTrailingCommaCheckTest
     @Test
     public void testTokensNotNull() {
         final ArrayTrailingCommaCheck check = new ArrayTrailingCommaCheck();
-        Assert.assertNotNull(check.getAcceptableTokens());
-        Assert.assertNotNull(check.getDefaultTokens());
-        Assert.assertNotNull(check.getRequiredTokens());
+        Assert.assertNotNull("Invalid acceptable tokens", check.getAcceptableTokens());
+        Assert.assertNotNull("Invalid default tokens", check.getDefaultTokens());
+        Assert.assertNotNull("Invalid required tokens", check.getRequiredTokens());
     }
+
 }

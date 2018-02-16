@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,23 +19,47 @@
 
 package com.puppycrawl.tools.checkstyle.api;
 
-import static com.puppycrawl.tools.checkstyle.internal.TestUtils.assertUtilsClassHasPrivateConstructor;
+import static com.puppycrawl.tools.checkstyle.internal.utils.TestUtil.isUtilsClassHasPrivateConstructor;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
 
 public class TokenTypesTest {
+
     @Test
     public void testGetShortDescription() {
         assertEquals("short description for EQUAL",
-                "The <code>==</code> (equal) operator.", TokenUtils
-                        .getShortDescription("EQUAL"));
+                "The <code>==</code> (equal) operator.",
+                TokenUtils.getShortDescription("EQUAL"));
+
+        assertEquals("short description for LAND",
+                "The <code>&&</code> (conditional AND) operator.",
+                TokenUtils.getShortDescription("LAND"));
+
+        assertEquals("short description for LCURLY",
+                "A left curly brace (<code>{</code>).",
+                TokenUtils.getShortDescription("LCURLY"));
+
+        assertEquals("short description for SR_ASSIGN",
+                "The <code>>>=</code> (signed right shift assignment)",
+                TokenUtils.getShortDescription("SR_ASSIGN"));
+
+        assertEquals("short description for SL",
+                "The <code><<</code> (shift left) operator.",
+                TokenUtils.getShortDescription("SL"));
+
+        assertEquals("short description for BSR",
+                "The <code>>>></code> (unsigned shift right) operator.",
+                TokenUtils.getShortDescription("BSR"));
     }
 
     @Test
     public void testIsProperUtilsClass() throws ReflectiveOperationException {
-        assertUtilsClassHasPrivateConstructor(TokenTypes.class);
+        assertTrue("Constructor is not private",
+                isUtilsClassHasPrivateConstructor(TokenTypes.class, true));
     }
+
 }

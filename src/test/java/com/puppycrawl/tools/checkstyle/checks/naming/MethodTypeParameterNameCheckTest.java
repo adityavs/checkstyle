@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,36 +22,44 @@ package com.puppycrawl.tools.checkstyle.checks.naming;
 import static com.puppycrawl.tools.checkstyle.checks.naming.AbstractNameCheck.MSG_INVALID_PATTERN;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
 public class MethodTypeParameterNameCheckTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "naming" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/naming/methodtypeparametername";
     }
 
     @Test
-    public void testGetMethodRequiredTokens() {
+    public void testGetAcceptableTokens() {
+        final MethodTypeParameterNameCheck methodTypeParameterNameCheck =
+            new MethodTypeParameterNameCheck();
+        final int[] expected = {TokenTypes.TYPE_PARAMETER};
+
+        assertArrayEquals("Default acceptable tokens are invalid",
+                expected, methodTypeParameterNameCheck.getAcceptableTokens());
+    }
+
+    @Test
+    public void testGetRequiredTokens() {
         final MethodTypeParameterNameCheck checkObj =
             new MethodTypeParameterNameCheck();
         final int[] expected = {TokenTypes.TYPE_PARAMETER};
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testMethodDefault()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MethodTypeParameterNameCheck.class);
+            createModuleConfig(MethodTypeParameterNameCheck.class);
 
         final String pattern = "^[A-Z]$";
 
@@ -62,14 +70,14 @@ public class MethodTypeParameterNameCheckTest
             "23:6: " + getCheckMessage(MSG_INVALID_PATTERN, "foo", pattern),
             "28:10: " + getCheckMessage(MSG_INVALID_PATTERN, "_fo", pattern),
         };
-        verify(checkConfig, getPath("InputTypeParameterName.java"), expected);
+        verify(checkConfig, getPath("InputMethodTypeParameterName.java"), expected);
     }
 
     @Test
     public void testMethodFooName()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MethodTypeParameterNameCheck.class);
+            createModuleConfig(MethodTypeParameterNameCheck.class);
         checkConfig.addAttribute("format", "^foo$");
 
         final String pattern = "^foo$";
@@ -83,6 +91,7 @@ public class MethodTypeParameterNameCheckTest
             "37:14: " + getCheckMessage(MSG_INVALID_PATTERN, "T", pattern),
             //"40:14: Name 'EE' must match pattern '^foo$'.",
         };
-        verify(checkConfig, getPath("InputTypeParameterName.java"), expected);
+        verify(checkConfig, getPath("InputMethodTypeParameterName.java"), expected);
     }
+
 }

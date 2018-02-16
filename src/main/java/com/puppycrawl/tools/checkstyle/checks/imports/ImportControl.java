@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
  * @author Oliver Burn
  */
 class ImportControl {
+
     /** The package separator: "." */
     private static final String DOT = ".";
     /** A pattern matching the package separator: "." */
@@ -56,15 +57,20 @@ class ImportControl {
     private final Pattern patternForExactMatch;
     /** If this package represents a regular expression. */
     private final boolean regex;
+    /** Strategy in a case if matching allow/disallow rule was not found. */
+    private final MismatchStrategy strategyOnMismatch;
 
     /**
      * Construct a root node.
      * @param pkgName the name of the package.
      * @param regex flags interpretation of pkgName as regex pattern.
+     * @param strategyOnMismatch strategy in a case if matching allow/disallow rule was not found.
      */
-    ImportControl(final String pkgName, final boolean regex) {
+    ImportControl(String pkgName, boolean regex,
+                  MismatchStrategy strategyOnMismatch) {
         parent = null;
         this.regex = regex;
+        this.strategyOnMismatch = strategyOnMismatch;
         if (regex) {
             // ensure that fullPackage is a self-contained regular expression
             fullPackage = encloseInGroup(pkgName);
@@ -79,14 +85,26 @@ class ImportControl {
     }
 
     /**
+     * Construct a root node.
+     * @param pkgName the name of the package.
+     * @param regex flags interpretation of pkgName as regex pattern.
+     */
+    ImportControl(String pkgName, boolean regex) {
+        this(pkgName, regex, MismatchStrategy.DISALLOWED);
+    }
+
+    /**
      * Construct a child node. The concatenation of regular expressions needs special care:
      * see {@link #ensureSelfContainedRegex(String, boolean)} for more details.
      * @param parent the parent node.
      * @param subPkg the sub package name.
      * @param regex flags interpretation of subPkg as regex pattern.
+     * @param strategyOnMismatch strategy in a case if matching allow/disallow rule was not found.
      */
-    ImportControl(final ImportControl parent, final String subPkg, final boolean regex) {
+    ImportControl(ImportControl parent, String subPkg, boolean regex,
+                  MismatchStrategy strategyOnMismatch) {
         this.parent = parent;
+        this.strategyOnMismatch = strategyOnMismatch;
         if (regex || parent.regex) {
             // regex gets inherited
             final String parentRegex = ensureSelfContainedRegex(parent.fullPackage, parent.regex);
@@ -102,7 +120,17 @@ class ImportControl {
             patternForExactMatch = null;
             this.regex = false;
         }
-        parent.children.add(this);
+    }
+
+    /**
+     * Construct a child node. The concatenation of regular expressions needs special care:
+     * see {@link #ensureSelfContainedRegex(String, boolean)} for more details.
+     * @param parent the parent node.
+     * @param subPkg the sub package name.
+     * @param regex flags interpretation of subPkg as regex pattern.
+     */
+    ImportControl(ImportControl parent, String subPkg, boolean regex) {
+        this(parent, subPkg, regex, MismatchStrategy.DELEGATE_TO_PARENT);
     }
 
     /**
@@ -129,7 +157,7 @@ class ImportControl {
      * @param alreadyRegex signals if input already is a regular expression.
      * @return a regex string.
      */
-    private static String ensureSelfContainedRegex(final String input, final boolean alreadyRegex) {
+    private static String ensureSelfContainedRegex(String input, boolean alreadyRegex) {
         final String result;
         if (alreadyRegex) {
             result = encloseInGroup(input);
@@ -183,8 +211,16 @@ class ImportControl {
      * Adds an {@link AbstractImportRule} to the node.
      * @param rule the rule to be added.
      */
-    protected void addImportRule(final AbstractImportRule rule) {
+    protected void addImportRule(AbstractImportRule rule) {
         rules.addFirst(rule);
+    }
+
+    /**
+     * Adds new child import control.
+     * @param importControl child import control
+     */
+    public void addChild(ImportControl importControl) {
+        children.add(importControl);
     }
 
     /**
@@ -192,7 +228,7 @@ class ImportControl {
      * @param forPkg the package to search for.
      * @return the finest match, or null if no match at all.
      */
-    public ImportControl locateFinest(final String forPkg) {
+    public ImportControl locateFinest(String forPkg) {
         ImportControl finestMatch = null;
         // Check if we are a match.
         if (matchesAtFront(forPkg)) {
@@ -215,7 +251,7 @@ class ImportControl {
      * @param pkg the package to compare with.
      * @return if it matches.
      */
-    private boolean matchesAtFront(final String pkg) {
+    private boolean matchesAtFront(String pkg) {
         final boolean result;
         if (regex) {
             result = patternForPartialMatch.matcher(pkg).matches();
@@ -232,7 +268,7 @@ class ImportControl {
      * @param pkg the package to compare with.
      * @return if it matches.
      */
-    private boolean matchesAtFrontNoRegex(final String pkg) {
+    private boolean matchesAtFrontNoRegex(String pkg) {
         return pkg.startsWith(fullPackage)
                 && (pkg.length() == fullPackage.length()
                     || pkg.charAt(fullPackage.length()) == '.');
@@ -248,18 +284,30 @@ class ImportControl {
      * @param inPkg the package doing the import.
      * @return an {@link AccessResult}.
      */
-    public AccessResult checkAccess(final String inPkg, final String forImport) {
+    public AccessResult checkAccess(String inPkg, String forImport) {
         final AccessResult result;
         final AccessResult returnValue = localCheckAccess(inPkg, forImport);
         if (returnValue != AccessResult.UNKNOWN) {
             result = returnValue;
         }
         else if (parent == null) {
-            // we are the top, so default to not allowed.
-            result = AccessResult.DISALLOWED;
+            if (strategyOnMismatch == MismatchStrategy.ALLOWED) {
+                result = AccessResult.ALLOWED;
+            }
+            else {
+                result = AccessResult.DISALLOWED;
+            }
         }
         else {
-            result = parent.checkAccess(inPkg, forImport);
+            if (strategyOnMismatch == MismatchStrategy.ALLOWED) {
+                result = AccessResult.ALLOWED;
+            }
+            else if (strategyOnMismatch == MismatchStrategy.DISALLOWED) {
+                result = AccessResult.DISALLOWED;
+            }
+            else {
+                result = parent.checkAccess(inPkg, forImport);
+            }
         }
         return result;
     }
@@ -271,27 +319,27 @@ class ImportControl {
      * @param inPkg the package doing the import.
      * @return an {@link AccessResult}.
      */
-    private AccessResult localCheckAccess(final String inPkg,
-        final String forImport) {
-        for (AbstractImportRule r : rules) {
+    private AccessResult localCheckAccess(String inPkg, String forImport) {
+        AccessResult localCheckAccessResult = AccessResult.UNKNOWN;
+        for (AbstractImportRule importRule : rules) {
             // Check if an import rule is only meant to be applied locally.
-            if (r.isLocalOnly() && !matchesExactly(inPkg)) {
-                continue;
-            }
-            final AccessResult result = r.verifyImport(forImport);
-            if (result != AccessResult.UNKNOWN) {
-                return result;
+            if (!importRule.isLocalOnly() || matchesExactly(inPkg)) {
+                final AccessResult result = importRule.verifyImport(forImport);
+                if (result != AccessResult.UNKNOWN) {
+                    localCheckAccessResult = result;
+                    break;
+                }
             }
         }
-        return AccessResult.UNKNOWN;
+        return localCheckAccessResult;
     }
 
     /**
-     * Check for equality of this with pkg
+     * Check for equality of this with pkg.
      * @param pkg the package to compare with.
      * @return if it matches.
      */
-    private boolean matchesExactly(final String pkg) {
+    private boolean matchesExactly(String pkg) {
         final boolean result;
         if (regex) {
             result = patternForExactMatch.matcher(pkg).matches();
@@ -301,4 +349,5 @@ class ImportControl {
         }
         return result;
     }
+
 }

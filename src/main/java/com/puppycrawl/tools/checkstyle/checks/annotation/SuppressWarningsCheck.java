@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ package com.puppycrawl.tools.checkstyle.checks.annotation;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -89,7 +90,9 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * </pre>
  * @author Travis Schneeberger
  */
+@StatelessCheck
 public class SuppressWarningsCheck extends AbstractCheck {
+
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -217,15 +220,12 @@ public class SuppressWarningsCheck extends AbstractCheck {
      * @return the {@link SuppressWarnings SuppressWarnings} annotation
      */
     private static DetailAST getSuppressWarnings(DetailAST ast) {
-        final DetailAST annotation = AnnotationUtility.getAnnotation(
-            ast, SUPPRESS_WARNINGS);
+        DetailAST annotation = AnnotationUtility.getAnnotation(ast, SUPPRESS_WARNINGS);
 
         if (annotation == null) {
-            return AnnotationUtility.getAnnotation(ast, FQ_SUPPRESS_WARNINGS);
+            annotation = AnnotationUtility.getAnnotation(ast, FQ_SUPPRESS_WARNINGS);
         }
-        else {
-            return annotation;
-        }
+        return annotation;
     }
 
     /**
@@ -265,11 +265,12 @@ public class SuppressWarningsCheck extends AbstractCheck {
                     annValuePair.findFirstToken(TokenTypes.ANNOTATION_ARRAY_INIT);
         }
 
+        DetailAST warningsHolder = annotation;
         if (annArrayInit != null) {
-            return annArrayInit;
+            warningsHolder = annArrayInit;
         }
 
-        return annotation;
+        return warningsHolder;
     }
 
     /**
@@ -333,4 +334,5 @@ public class SuppressWarningsCheck extends AbstractCheck {
         final DetailAST colon = cond.findFirstToken(TokenTypes.COLON);
         return colon.getNextSibling();
     }
+
 }

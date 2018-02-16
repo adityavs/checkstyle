@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,14 +30,18 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.beanutils.ConversionException;
 
-import com.google.common.base.CharMatcher;
+import antlr.Token;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.puppycrawl.tools.checkstyle.api.DetailAST;
+import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
 /**
  * Contains utility methods.
@@ -62,9 +66,15 @@ public final class CommonUtils {
     /** Prefix for the exception when unable to find resource. */
     private static final String UNABLE_TO_FIND_EXCEPTION_PREFIX = "Unable to find: ";
 
+    /** Symbols with which javadoc starts. */
+    private static final String JAVADOC_START = "/**";
+    /** Symbols with which multiple comment starts. */
+    private static final String BLOCK_MULTIPLE_COMMENT_BEGIN = "/*";
+    /** Symbols with which multiple comment ends. */
+    private static final String BLOCK_MULTIPLE_COMMENT_END = "*/";
+
     /** Stop instances being created. **/
     private CommonUtils() {
-
     }
 
     /**
@@ -88,7 +98,7 @@ public final class CommonUtils {
      * @param flags
      *            the flags to set
      * @return a created regexp object
-     * @throws ConversionException
+     * @throws IllegalArgumentException
      *             if unable to create Pattern object.
      **/
     public static Pattern createPattern(String pattern, int flags) {
@@ -96,9 +106,115 @@ public final class CommonUtils {
             return Pattern.compile(pattern, flags);
         }
         catch (final PatternSyntaxException ex) {
-            throw new ConversionException(
+            throw new IllegalArgumentException(
                 "Failed to initialise regular expression " + pattern, ex);
         }
+    }
+
+    /**
+     * Create block comment from string content.
+     * @param content comment content.
+     * @return DetailAST block comment
+     */
+    public static DetailAST createBlockCommentNode(String content) {
+        final DetailAST blockCommentBegin = new DetailAST();
+        blockCommentBegin.setType(TokenTypes.BLOCK_COMMENT_BEGIN);
+        blockCommentBegin.setText(BLOCK_MULTIPLE_COMMENT_BEGIN);
+        blockCommentBegin.setLineNo(0);
+        blockCommentBegin.setColumnNo(-JAVADOC_START.length());
+
+        final DetailAST commentContent = new DetailAST();
+        commentContent.setType(TokenTypes.COMMENT_CONTENT);
+        commentContent.setText("*" + content);
+        commentContent.setLineNo(0);
+        // javadoc should starts at 0 column, so COMMENT_CONTENT node
+        // that contains javadoc identifier has -1 column
+        commentContent.setColumnNo(-1);
+
+        final DetailAST blockCommentEnd = new DetailAST();
+        blockCommentEnd.setType(TokenTypes.BLOCK_COMMENT_END);
+        blockCommentEnd.setText(BLOCK_MULTIPLE_COMMENT_END);
+
+        blockCommentBegin.setFirstChild(commentContent);
+        commentContent.setNextSibling(blockCommentEnd);
+        return blockCommentBegin;
+    }
+
+    /**
+     * Create block comment from token.
+     * @param token
+     *        Token object.
+     * @return DetailAST with BLOCK_COMMENT type.
+     */
+    public static DetailAST createBlockCommentNode(Token token) {
+        final DetailAST blockComment = new DetailAST();
+        blockComment.initialize(TokenTypes.BLOCK_COMMENT_BEGIN, BLOCK_MULTIPLE_COMMENT_BEGIN);
+
+        // column counting begins from 0
+        blockComment.setColumnNo(token.getColumn() - 1);
+        blockComment.setLineNo(token.getLine());
+
+        final DetailAST blockCommentContent = new DetailAST();
+        blockCommentContent.setType(TokenTypes.COMMENT_CONTENT);
+
+        // column counting begins from 0
+        // plus length of '/*'
+        blockCommentContent.setColumnNo(token.getColumn() - 1 + 2);
+        blockCommentContent.setLineNo(token.getLine());
+        blockCommentContent.setText(token.getText());
+
+        final DetailAST blockCommentClose = new DetailAST();
+        blockCommentClose.initialize(TokenTypes.BLOCK_COMMENT_END, BLOCK_MULTIPLE_COMMENT_END);
+
+        final Map.Entry<Integer, Integer> linesColumns = countLinesColumns(
+                token.getText(), token.getLine(), token.getColumn());
+        blockCommentClose.setLineNo(linesColumns.getKey());
+        blockCommentClose.setColumnNo(linesColumns.getValue());
+
+        blockComment.addChild(blockCommentContent);
+        blockComment.addChild(blockCommentClose);
+        return blockComment;
+    }
+
+    /**
+     * Count lines and columns (in last line) in text.
+     * @param text
+     *        String.
+     * @param initialLinesCnt
+     *        initial value of lines counter.
+     * @param initialColumnsCnt
+     *        initial value of columns counter.
+     * @return entry(pair), first element is lines counter, second - columns
+     *         counter.
+     */
+    private static Map.Entry<Integer, Integer> countLinesColumns(
+            String text, int initialLinesCnt, int initialColumnsCnt) {
+        int lines = initialLinesCnt;
+        int columns = initialColumnsCnt;
+        boolean foundCr = false;
+        for (char c : text.toCharArray()) {
+            if (c == '\n') {
+                foundCr = false;
+                lines++;
+                columns = 0;
+            }
+            else {
+                if (foundCr) {
+                    foundCr = false;
+                    lines++;
+                    columns = 0;
+                }
+                if (c == '\r') {
+                    foundCr = true;
+                }
+                columns++;
+            }
+        }
+        if (foundCr) {
+            lines++;
+            columns = 0;
+        }
+        return new AbstractMap.SimpleEntry<>(lines, columns);
     }
 
     /**
@@ -132,6 +248,7 @@ public final class CommonUtils {
             for (final String fileExtension : withDotExtensions) {
                 if (fileName.endsWith(fileExtension)) {
                     result = true;
+                    break;
                 }
             }
         }
@@ -149,12 +266,14 @@ public final class CommonUtils {
      * @return whether there is only whitespace
      */
     public static boolean hasWhitespaceBefore(int index, String line) {
+        boolean result = true;
         for (int i = 0; i < index; i++) {
             if (!Character.isWhitespace(line.charAt(i))) {
-                return false;
+                result = false;
+                break;
             }
         }
-        return true;
+        return result;
     }
 
     /**
@@ -213,29 +332,32 @@ public final class CommonUtils {
      * @return true if the pattern is valid false otherwise
      */
     public static boolean isPatternValid(String pattern) {
+        boolean isValid = true;
         try {
             Pattern.compile(pattern);
         }
         catch (final PatternSyntaxException ignored) {
-            return false;
+            isValid = false;
         }
-        return true;
+        return isValid;
     }
 
     /**
+     * Returns base class name from qualified name.
      * @param type
      *            the fully qualified name. Cannot be null
      * @return the base class name from a fully qualified name
      */
     public static String baseClassName(String type) {
+        final String className;
         final int index = type.lastIndexOf('.');
-
         if (index == -1) {
-            return type;
+            className = type;
         }
         else {
-            return type.substring(index + 1);
+            className = type.substring(index + 1);
         }
+        return className;
     }
 
     /**
@@ -249,12 +371,16 @@ public final class CommonUtils {
      *     path or path if base directory is null.
      */
     public static String relativizeAndNormalizePath(final String baseDirectory, final String path) {
+        final String resultPath;
         if (baseDirectory == null) {
-            return path;
+            resultPath = path;
         }
-        final Path pathAbsolute = Paths.get(path).normalize();
-        final Path pathBase = Paths.get(baseDirectory).normalize();
-        return pathBase.relativize(pathAbsolute).toString();
+        else {
+            final Path pathAbsolute = Paths.get(path).normalize();
+            final Path pathBase = Paths.get(baseDirectory).normalize();
+            resultPath = pathBase.relativize(pathAbsolute).toString();
+        }
+        return resultPath;
     }
 
     /**
@@ -318,6 +444,7 @@ public final class CommonUtils {
     }
 
     /**
+     * Returns new instance of a class.
      * @param constructor
      *            to invoke
      * @param parameters
@@ -416,17 +543,6 @@ public final class CommonUtils {
     }
 
     /**
-     * Check if a string is blank.
-     * A string is considered blank if it is null, empty or contains only  whitespace characters,
-     * as determined by {@link CharMatcher#WHITESPACE}.
-     * @param str the string to check
-     * @return true if str is either null, empty or whitespace-only.
-     */
-    public static boolean isBlank(String str) {
-        return str == null || CharMatcher.WHITESPACE.matchesAllOf(str);
-    }
-
-    /**
      * Returns file name without extension.
      * We do not use the method from Guava library to reduce Checkstyle's dependencies
      * on external libraries.
@@ -467,4 +583,82 @@ public final class CommonUtils {
         }
         return extension;
     }
+
+    /**
+     * Checks whether the given string is a valid identifier.
+     * @param str A string to check.
+     * @return true when the given string contains valid identifier.
+     */
+    public static boolean isIdentifier(String str) {
+        boolean isIdentifier = !str.isEmpty();
+
+        for (int i = 0; isIdentifier && i < str.length(); i++) {
+            if (i == 0) {
+                isIdentifier = Character.isJavaIdentifierStart(str.charAt(0));
+            }
+            else {
+                isIdentifier = Character.isJavaIdentifierPart(str.charAt(i));
+            }
+        }
+
+        return isIdentifier;
+    }
+
+    /**
+     * Checks whether the given string is a valid name.
+     * @param str A string to check.
+     * @return true when the given string contains valid name.
+     */
+    public static boolean isName(String str) {
+        boolean isName = !str.isEmpty();
+
+        final String[] identifiers = str.split("\\.", -1);
+        for (int i = 0; isName && i < identifiers.length; i++) {
+            isName = isIdentifier(identifiers[i]);
+        }
+
+        return isName;
+    }
+
+    /**
+     * Checks if the value arg is blank by either being null,
+     * empty, or contains only whitespace characters.
+     * @param value A string to check.
+     * @return true if the arg is blank.
+     */
+    public static boolean isBlank(String value) {
+        boolean result = true;
+        if (value != null && !value.isEmpty()) {
+            for (int i = 0; i < value.length(); i++) {
+                if (!Character.isWhitespace(value.charAt(i))) {
+                    result = false;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Checks whether the string contains an integer value.
+     * @param str a string to check
+     * @return true if the given string is an integer, false otherwise.
+     */
+    public static boolean isInt(String str) {
+        boolean isInt;
+        if (str == null) {
+            isInt = false;
+        }
+        else {
+            try {
+                Integer.parseInt(str);
+                isInt = true;
+            }
+            catch (NumberFormatException ignored) {
+                isInt = false;
+            }
+        }
+        return isInt;
+    }
+
 }

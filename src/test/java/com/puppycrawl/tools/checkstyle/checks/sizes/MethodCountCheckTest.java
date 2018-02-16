@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,28 +26,26 @@ import static com.puppycrawl.tools.checkstyle.checks.sizes.MethodCountCheck.MSG_
 import static com.puppycrawl.tools.checkstyle.checks.sizes.MethodCountCheck.MSG_PUBLIC_METHODS;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-public class MethodCountCheckTest extends BaseCheckTestSupport {
+public class MethodCountCheckTest extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "sizes" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/sizes/methodcount";
     }
 
     @Test
     public void testGetRequiredTokens() {
         final MethodCountCheck checkObj = new MethodCountCheck();
         final int[] expected = {TokenTypes.METHOD_DEF};
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, checkObj.getRequiredTokens());
     }
 
     @Test
@@ -60,16 +58,17 @@ public class MethodCountCheckTest extends BaseCheckTestSupport {
             TokenTypes.ENUM_CONSTANT_DEF,
             TokenTypes.ENUM_DEF,
             TokenTypes.INTERFACE_DEF,
+            TokenTypes.ANNOTATION_DEF,
             TokenTypes.METHOD_DEF,
         };
 
-        assertArrayEquals(expected, actual);
+        assertArrayEquals("Default acceptable tokens are invalid", expected, actual);
     }
 
     @Test
     public void testDefaults() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MethodCountCheck.class);
+            createModuleConfig(MethodCountCheck.class);
 
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
@@ -79,7 +78,7 @@ public class MethodCountCheckTest extends BaseCheckTestSupport {
     @Test
     public void testThrees() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MethodCountCheck.class);
+            createModuleConfig(MethodCountCheck.class);
         checkConfig.addAttribute("maxPrivate", "3");
         checkConfig.addAttribute("maxPackage", "3");
         checkConfig.addAttribute("maxProtected", "3");
@@ -104,7 +103,7 @@ public class MethodCountCheckTest extends BaseCheckTestSupport {
     @Test
     public void testEnum() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MethodCountCheck.class);
+            createModuleConfig(MethodCountCheck.class);
         checkConfig.addAttribute("maxPrivate", "0");
         checkConfig.addAttribute("maxTotal", "2");
 
@@ -118,7 +117,7 @@ public class MethodCountCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testWithPackageModifier() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(MethodCountCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(MethodCountCheck.class);
         checkConfig.addAttribute("maxPrivate", "0");
         checkConfig.addAttribute("maxTotal", "2");
 
@@ -128,4 +127,51 @@ public class MethodCountCheckTest extends BaseCheckTestSupport {
 
         verify(checkConfig, getPath("InputMethodCount3.java"), expected);
     }
+
+    @Test
+    public void testOnInterfaceDefinitionWithField() throws Exception {
+        final DefaultConfiguration checkConfig =
+                createModuleConfig(MethodCountCheck.class);
+
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+        verify(checkConfig, getPath("InputMethodCount4.java"), expected);
+    }
+
+    @Test
+    public void testWithInterfaceDefinitionInClass() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(MethodCountCheck.class);
+        checkConfig.addAttribute("maxTotal", "1");
+
+        final String[] expected = {
+            "1: " + getCheckMessage(MSG_MANY_METHODS, 2, 1),
+        };
+
+        verify(checkConfig, getPath("InputMethodCount5.java"), expected);
+    }
+
+    @Test
+    public void testPartialTokens() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(MethodCountCheck.class);
+        checkConfig.addAttribute("maxTotal", "1");
+        checkConfig.addAttribute("tokens", "ENUM_DEF");
+
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+        verify(checkConfig, getPath("InputMethodCount6.java"), expected);
+    }
+
+    @Test
+    public void testCountMethodToCorrectDefinition() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(MethodCountCheck.class);
+        checkConfig.addAttribute("maxTotal", "1");
+        checkConfig.addAttribute("tokens", "ENUM_DEF");
+
+        final String[] expected = {
+            "8: " + getCheckMessage(MSG_MANY_METHODS, 2, 1),
+        };
+
+        verify(checkConfig, getPath("InputMethodCount7.java"), expected);
+    }
+
 }

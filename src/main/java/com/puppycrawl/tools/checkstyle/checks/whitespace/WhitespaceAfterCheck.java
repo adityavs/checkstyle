@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.whitespace;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -59,6 +60,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author Oliver Burn
  * @author Rick Giles
  */
+@StatelessCheck
 public class WhitespaceAfterCheck
     extends AbstractCheck {
 
@@ -101,9 +103,9 @@ public class WhitespaceAfterCheck
 
     @Override
     public void visitToken(DetailAST ast) {
-        final String line = getLine(ast.getLineNo() - 1);
         if (ast.getType() == TokenTypes.TYPECAST) {
             final DetailAST targetAST = ast.findFirstToken(TokenTypes.RPAREN);
+            final String line = getLine(targetAST.getLineNo() - 1);
             if (!isFollowedByWhitespace(targetAST, line)) {
                 log(targetAST.getLineNo(),
                     targetAST.getColumnNo() + targetAST.getText().length(),
@@ -111,6 +113,7 @@ public class WhitespaceAfterCheck
             }
         }
         else {
+            final String line = getLine(ast.getLineNo() - 1);
             if (!isFollowedByWhitespace(ast, line)) {
                 final Object[] message = {ast.getText()};
                 log(ast.getLineNo(),
@@ -140,4 +143,5 @@ public class WhitespaceAfterCheck
         }
         return followedByWhitespace;
     }
+
 }

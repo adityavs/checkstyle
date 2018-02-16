@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ package com.puppycrawl.tools.checkstyle.checks.regexp;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
@@ -53,6 +54,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * </pre>
  * @author Stan Quinn
  */
+@FileStatefulCheck
 public class RegexpCheck extends AbstractCheck {
 
     /**
@@ -85,7 +87,7 @@ public class RegexpCheck extends AbstractCheck {
         + "the check is aborting, there may be more unreported errors.";
 
     /** Custom message for report. */
-    private String message = "";
+    private String message;
 
     /** Ignore matches within comments?. **/
     private boolean ignoreComments;
@@ -172,17 +174,17 @@ public class RegexpCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return CommonUtils.EMPTY_INT_ARRAY;
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
@@ -195,7 +197,6 @@ public class RegexpCheck extends AbstractCheck {
 
     /** Recursive method that finds the matches. */
     private void findMatch() {
-
         final boolean foundMatch = matcher.find();
         if (foundMatch) {
             final FileText text = getFileContents().getText();
@@ -219,7 +220,6 @@ public class RegexpCheck extends AbstractCheck {
         else if (!illegalPattern && matchCount == 0) {
             logMessage(0);
         }
-
     }
 
     /**
@@ -228,7 +228,7 @@ public class RegexpCheck extends AbstractCheck {
      * @return true is we can continue
      */
     private boolean canContinueValidation(boolean ignore) {
-        return errorCount < errorLimit
+        return errorCount <= errorLimit - 1
                 && (ignore || illegalPattern || checkForDuplicates);
     }
 
@@ -247,12 +247,12 @@ public class RegexpCheck extends AbstractCheck {
         else {
             end = text.lineColumn(matcher.end() - 1);
         }
-        final int startColumn = start.getColumn();
-        final int endLine = end.getLine();
-        final int endColumn = end.getColumn();
         boolean ignore = false;
         if (ignoreComments) {
             final FileContents theFileContents = getFileContents();
+            final int startColumn = start.getColumn();
+            final int endLine = end.getLine();
+            final int endColumn = end.getColumn();
             ignore = theFileContents.hasIntersectionWithComment(startLine,
                 startColumn, endLine, endColumn);
         }
@@ -266,7 +266,7 @@ public class RegexpCheck extends AbstractCheck {
     private void logMessage(int lineNumber) {
         String msg;
 
-        if (message.isEmpty()) {
+        if (message == null || message.isEmpty()) {
             msg = format.pattern();
         }
         else {
@@ -289,4 +289,5 @@ public class RegexpCheck extends AbstractCheck {
             }
         }
     }
+
 }

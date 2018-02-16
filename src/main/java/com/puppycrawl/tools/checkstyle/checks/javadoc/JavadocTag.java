@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ package com.puppycrawl.tools.checkstyle.checks.javadoc;
  * @author Oliver Burn
  */
 public class JavadocTag {
+
     /** The line number of the tag. **/
     private final int lineNo;
     /** The column number of the tag. **/
@@ -66,6 +67,7 @@ public class JavadocTag {
     }
 
     /**
+     * Returns first argument.
      * @return the first argument. null if not set.
      */
     public String getFirstArg() {
@@ -90,8 +92,10 @@ public class JavadocTag {
 
     @Override
     public String toString() {
-        return "JavadocTag{tag='" + getTagName() + "' lineNo=" + lineNo + ", columnNo=" + columnNo
-                + ", firstArg='" + firstArg + "'}";
+        return "JavadocTag[tag='" + tagInfo.getName()
+                + "' lineNo=" + lineNo
+                + ", columnNo=" + columnNo
+                + ", firstArg='" + firstArg + "']";
     }
 
     /**
@@ -147,4 +151,5 @@ public class JavadocTag {
                 || tagInfo == JavadocTagInfo.THROWS
                 || tagInfo == JavadocTagInfo.EXCEPTION;
     }
+
 }

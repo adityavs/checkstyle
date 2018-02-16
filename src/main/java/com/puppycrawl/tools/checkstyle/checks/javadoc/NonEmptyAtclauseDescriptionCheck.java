@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,6 @@ package com.puppycrawl.tools.checkstyle.checks.javadoc;
 
 import com.puppycrawl.tools.checkstyle.api.DetailNode;
 import com.puppycrawl.tools.checkstyle.api.JavadocTokenTypes;
-import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.JavadocUtils;
 
 /**
@@ -49,18 +48,9 @@ public class NonEmptyAtclauseDescriptionCheck extends AbstractJavadocCheck {
             JavadocTokenTypes.PARAM_LITERAL,
             JavadocTokenTypes.RETURN_LITERAL,
             JavadocTokenTypes.THROWS_LITERAL,
+            JavadocTokenTypes.EXCEPTION_LITERAL,
             JavadocTokenTypes.DEPRECATED_LITERAL,
         };
-    }
-
-    @Override
-    public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.BLOCK_COMMENT_BEGIN };
-    }
-
-    @Override
-    public int[] getRequiredTokens() {
-        return getAcceptableTokens();
     }
 
     @Override
@@ -80,4 +70,5 @@ public class NonEmptyAtclauseDescriptionCheck extends AbstractJavadocCheck {
                 JavadocUtils.findFirstToken(tagNode, JavadocTokenTypes.DESCRIPTION);
         return tagDescription == null;
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -29,27 +29,43 @@ public class LineColumnTest {
 
     @Test
     public void testCompareToBothEqual() {
-        assertEquals(0, new LineColumn(0, 0).compareTo(new LineColumn(0, 0)));
+        assertEquals("Invalid LineColumn comparing result",
+                0, new LineColumn(0, 0).compareTo(new LineColumn(0, 0)));
     }
 
     @Test
     public void testCompareToFirstLarger() {
         final LineColumn lineColumn = new LineColumn(0, 0);
 
-        assertEquals(1, new LineColumn(1, 0).compareTo(lineColumn));
-        assertEquals(1, new LineColumn(0, 1).compareTo(lineColumn));
+        assertEquals("Invalid LineColumn comparison result",
+                1, new LineColumn(1, 0).compareTo(lineColumn));
+        assertEquals("Invalid LineColumn comparison result",
+                1, new LineColumn(0, 1).compareTo(lineColumn));
     }
 
     @Test
     public void testCompareToFirstSmaller() {
         final Comparable<LineColumn> lineColumn = new LineColumn(0, 0);
 
-        assertEquals(-1, lineColumn.compareTo(new LineColumn(1, 0)));
-        assertEquals(-1, lineColumn.compareTo(new LineColumn(0, 1)));
+        assertEquals("Invalid LineColumn comparison result", -1,
+                lineColumn.compareTo(new LineColumn(1, 0)));
+        assertEquals("Invalid LineColumn comparison result", -1,
+                lineColumn.compareTo(new LineColumn(0, 1)));
     }
 
     @Test
     public void testEqualsAndHashCode() {
         EqualsVerifier.forClass(LineColumn.class).usingGetClass().verify();
     }
+
+    @Test
+    public void testGetters() {
+        final LineColumn lineColumn = new LineColumn(2, 3);
+
+        assertEquals("Invalid LineColumn comparison result",
+                2, lineColumn.getLine());
+        assertEquals("Invalid LineColumn comparison result",
+                3, lineColumn.getColumn());
+    }
+
 }

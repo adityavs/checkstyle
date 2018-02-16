@@ -24,12 +24,18 @@
     <section name="Import Checkstyle Project">
       <p>
         If no project is currently open in IntelliJ IDEA, click Import Project on the
-        Welcome screen. Otherwise, select File > Import Project<br/><br/>
+        Welcome screen. Otherwise, select File > New > Project from Existing Sources<br/><br/>
         <img alt="screenshot" src="images/gui_screenshot_importing_idea.png"/>
         <br/><br/>
         <img alt="screenshot" src="images/gui_screenshot_importing_idea1.png"/>
         <br/><br/>
         Then Next > Next > ... Until Finish.
+      </p>
+      <p>
+        Generate sources that a required by checkstyle
+        by right click over pom.xml file and click on menu "Maven / Generate Sources and Update Folders"
+        <img alt="screenshot" src="images/gui_screenshot_idea_generate_sources.png"/>
+        <br/><br/>
       </p>
     </section>
 
@@ -58,7 +64,8 @@
         To change formatter settings please go to File->Settings in menu.<br/>
         Then in the tree go to: Editor->Code Style->Java, open Import tab (follow numbers on a
         picture) and apply settings highlighted:<br/><br/>
-        <img alt="Organize Imports settings in IDEA" src="images/gui_screenshot_organize_imports_idea.jpg"/>
+        <img alt="Organize Imports settings in IDEA"
+          src="images/gui_screenshot_organize_imports_idea.jpg"/>
         <br/>
       </p>
     </section>
@@ -73,8 +80,24 @@
         Not all files in repository should be analyzed. For example test input files contain numerous
         violations on purpose. Our shared inspection scope can be used to exclude such files.<br/>
         To add custom scope copy file <code>config/intellij-idea-inspection-scope.xml</code>
-        to <code>.idea/scopes</code> directory. Now it should be ready to use in inspect code window:<br/><br/>
+        to <code>.idea/scopes</code> directory.
+        Command from root of repo is
+        <code>mkdir -p .idea/scopes; cp config/intellij-idea-inspection-scope.xml
+        .idea/scopes/</code><br/>
+        Now it should be ready to use in inspect code window:<br/><br/>
         <img alt="Scope for inspections" src="images/gui_screenshot_scope_idea.png"/>
+      </p>
+    </section>
+
+    <section name="Disable Auto Indent On Paste">
+      <p>
+        IDEA has it's own rules of indentation when pasting code and it applies these rules to
+        all the lines of the copied code. This may result in wrong formatting of code in many
+        checkstyle files. A simple solution to this problem is by using the key combinations
+        <code>Ctrl + Shift + Alt + V</code> or <code>Edit | Paste Simple</code>. However it is
+        recommended that this settings be changed by default as shown below
+        <img alt="Disable Auto Indent on Paste"
+          src="images/gui_screenshot_disable_indent_paste_idea.png"/>
       </p>
     </section>
 

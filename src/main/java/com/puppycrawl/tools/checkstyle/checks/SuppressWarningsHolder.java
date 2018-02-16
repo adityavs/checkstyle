@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,8 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.apache.commons.beanutils.ConversionException;
-
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.AuditEvent;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
@@ -39,6 +38,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author Trevor Robinson
  * @author St&eacute;phane Galland
  */
+@StatelessCheck
 public class SuppressWarningsHolder
     extends AbstractCheck {
 
@@ -55,7 +55,7 @@ public class SuppressWarningsHolder
      * suppression {@code "checkstyle:fallthrough"} or {@code "checkstyle:FallThrough"}.
      * To suppress the warning in both tools, just use {@code "fallthrough"}.
      */
-    public static final String CHECKSTYLE_PREFIX = "checkstyle:";
+    private static final String CHECKSTYLE_PREFIX = "checkstyle:";
 
     /** Java.lang namespace prefix, which is stripped from SuppressWarnings */
     private static final String JAVA_LANG_PREFIX = "java.lang.";
@@ -73,12 +73,8 @@ public class SuppressWarningsHolder
      * A thread-local holder for the list of suppression entries for the last
      * file parsed.
      */
-    private static final ThreadLocal<List<Entry>> ENTRIES = new ThreadLocal<List<Entry>>() {
-        @Override
-        protected List<Entry> initialValue() {
-            return new LinkedList<>();
-        }
-    };
+    private static final ThreadLocal<List<Entry>> ENTRIES =
+            ThreadLocal.withInitial(LinkedList::new);
 
     /**
      * Returns the default alias for the source name of a check, which is the
@@ -89,11 +85,11 @@ public class SuppressWarningsHolder
      * @return the default alias for the given check
      */
     public static String getDefaultAlias(String sourceName) {
-        final int startIndex = sourceName.lastIndexOf('.') + 1;
         int endIndex = sourceName.length();
         if (sourceName.endsWith(CHECK_SUFFIX)) {
             endIndex -= CHECK_SUFFIX.length();
         }
+        final int startIndex = sourceName.lastIndexOf('.') + 1;
         return sourceName.substring(startIndex, endIndex).toLowerCase(Locale.ENGLISH);
     }
 
@@ -119,7 +115,7 @@ public class SuppressWarningsHolder
      *        name)
      * @param checkAlias the alias used in {@link SuppressWarnings} annotations
      */
-    public static void registerAlias(String sourceName, String checkAlias) {
+    private static void registerAlias(String sourceName, String checkAlias) {
         CHECK_ALIAS_MAP.put(sourceName, checkAlias);
     }
 
@@ -138,7 +134,7 @@ public class SuppressWarningsHolder
                     .substring(index + 1));
             }
             else if (!sourceAlias.isEmpty()) {
-                throw new ConversionException(
+                throw new IllegalArgumentException(
                     "'=' expected in alias list item: " + sourceAlias);
             }
         }
@@ -168,6 +164,7 @@ public class SuppressWarningsHolder
                 && event.getModuleId().equals(entry.getCheckName());
             if (afterStart && beforeEnd && (nameMatches || idMatches)) {
                 suppressed = true;
+                break;
             }
         }
         return suppressed;
@@ -205,17 +202,17 @@ public class SuppressWarningsHolder
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.ANNOTATION};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.ANNOTATION};
     }
 
     @Override
@@ -232,7 +229,6 @@ public class SuppressWarningsHolder
             identifier = identifier.substring(JAVA_LANG_PREFIX.length());
         }
         if ("SuppressWarnings".equals(identifier)) {
-
             final List<String> values = getAllAnnotationValues(ast);
             if (!isAnnotationEmpty(values)) {
                 final DetailAST targetAST = getAnnotationTarget(ast);
@@ -409,16 +405,18 @@ public class SuppressWarningsHolder
      * @throws IllegalArgumentException if the AST is invalid
      */
     private static String getIdentifier(DetailAST ast) {
-        if (ast != null) {
-            if (ast.getType() == TokenTypes.IDENT) {
-                return ast.getText();
-            }
-            else {
-                return getIdentifier(ast.getFirstChild()) + "."
-                        + getIdentifier(ast.getLastChild());
-            }
+        if (ast == null) {
+            throw new IllegalArgumentException("Identifier AST expected, but get null.");
         }
-        throw new IllegalArgumentException("Identifier AST expected, but get null.");
+        final String identifier;
+        if (ast.getType() == TokenTypes.IDENT) {
+            identifier = ast.getText();
+        }
+        else {
+            identifier = getIdentifier(ast.getFirstChild()) + "."
+                + getIdentifier(ast.getLastChild());
+        }
+        return identifier;
     }
 
     /**
@@ -458,17 +456,19 @@ public class SuppressWarningsHolder
      * @throws IllegalArgumentException if the AST is invalid
      */
     private static List<String> getAnnotationValues(DetailAST ast) {
+        final List<String> annotationValues;
         switch (ast.getType()) {
             case TokenTypes.EXPR:
-                return Collections.singletonList(getStringExpr(ast));
-
+                annotationValues = Collections.singletonList(getStringExpr(ast));
+                break;
             case TokenTypes.ANNOTATION_ARRAY_INIT:
-                return findAllExpressionsInChildren(ast);
-
+                annotationValues = findAllExpressionsInChildren(ast);
+                break;
             default:
                 throw new IllegalArgumentException(
                         "Expression or annotation array initializer AST expected: " + ast);
         }
+        return annotationValues;
     }
 
     /**
@@ -490,6 +490,7 @@ public class SuppressWarningsHolder
 
     /** Records a particular suppression for a region of a file. */
     private static class Entry {
+
         /** The source name of the suppressed check. */
         private final String checkName;
         /** The suppression region for the check - first line. */
@@ -557,5 +558,7 @@ public class SuppressWarningsHolder
         public int getLastColumn() {
             return lastColumn;
         }
+
     }
+
 }

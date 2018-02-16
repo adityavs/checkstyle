@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -45,6 +45,7 @@ import org.apache.commons.beanutils.converters.IntegerConverter;
 import org.apache.commons.beanutils.converters.LongConverter;
 import org.apache.commons.beanutils.converters.ShortConverter;
 
+import com.puppycrawl.tools.checkstyle.checks.naming.AccessModifier;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
@@ -52,10 +53,42 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * calling the bean's setters for all configuration attributes.
  * @author lkuehne
  */
-public class AutomaticBean
+// -@cs[AbstractClassName] We can not brake compatibility with previous versions.
+public abstract class AutomaticBean
     implements Configurable, Contextualizable {
+
+    /**
+     * Enum to specify behaviour regarding ignored modules.
+     */
+    public enum OutputStreamOptions {
+
+        /**
+         * Close stream in the end.
+         */
+        CLOSE,
+
+        /**
+         * Do nothing in the end.
+         */
+        NONE
+
+    }
+
+    /** Comma separator for StringTokenizer. */
+    private static final String COMMA_SEPARATOR = ",";
+
     /** The configuration of this bean. */
     private Configuration configuration;
+
+    /**
+     * Provides a hook to finish the part of this component's setup that
+     * was not handled by the bean introspection.
+     * <p>
+     * The default implementation does nothing.
+     * </p>
+     * @throws CheckstyleException if there is a configuration error.
+     */
+    protected abstract void finishLocalSetup() throws CheckstyleException;
 
     /**
      * Creates a BeanUtilsBean that is configured to use
@@ -127,9 +160,10 @@ public class AutomaticBean
      */
     private static void registerCustomTypes(ConvertUtilsBean cub) {
         cub.register(new PatternConverter(), Pattern.class);
-        cub.register(new ServerityLevelConverter(), SeverityLevel.class);
+        cub.register(new SeverityLevelConverter(), SeverityLevel.class);
         cub.register(new ScopeConverter(), Scope.class);
         cub.register(new UriConverter(), URI.class);
+        cub.register(new RelaxedAccessModifierArrayConverter(), AccessModifier[].class);
     }
 
     /**
@@ -176,7 +210,6 @@ public class AutomaticBean
      */
     private void tryCopyProperty(String moduleName, String key, Object value, boolean recheck)
             throws CheckstyleException {
-
         final BeanUtilsBean beanUtils = createBeanUtilsBean();
 
         try {
@@ -219,7 +252,6 @@ public class AutomaticBean
     @Override
     public final void contextualize(Context context)
             throws CheckstyleException {
-
         final Collection<String> attributes = context.getAttributeNames();
 
         for (final String key : attributes) {
@@ -238,18 +270,6 @@ public class AutomaticBean
     }
 
     /**
-     * Provides a hook to finish the part of this component's setup that
-     * was not handled by the bean introspection.
-     * <p>
-     * The default implementation does nothing.
-     * </p>
-     * @throws CheckstyleException if there is a configuration error.
-     */
-    protected void finishLocalSetup() throws CheckstyleException {
-        // No code by default, should be overridden only by demand at subclasses
-    }
-
-    /**
      * Called by configure() for every child of this component's Configuration.
      * <p>
      * The default implementation throws {@link CheckstyleException} if
@@ -265,39 +285,47 @@ public class AutomaticBean
             throws CheckstyleException {
         if (childConf != null) {
             throw new CheckstyleException(childConf.getName() + " is not allowed as a child in "
-                    + getConfiguration().getName());
+                    + configuration.getName() + ". Please review 'Parent Module' section "
+                    + "for this Check in web documentation if Check is standard.");
         }
     }
 
     /** A converter that converts strings to patterns. */
     private static class PatternConverter implements Converter {
+
         @SuppressWarnings({"unchecked", "rawtypes"})
         @Override
         public Object convert(Class type, Object value) {
             return CommonUtils.createPattern(value.toString());
         }
+
     }
 
     /** A converter that converts strings to severity level. */
-    private static class ServerityLevelConverter implements Converter {
+    private static class SeverityLevelConverter implements Converter {
+
         @SuppressWarnings({"unchecked", "rawtypes"})
         @Override
         public Object convert(Class type, Object value) {
             return SeverityLevel.getInstance(value.toString());
         }
+
     }
 
     /** A converter that converts strings to scope. */
     private static class ScopeConverter implements Converter {
+
         @SuppressWarnings({"unchecked", "rawtypes"})
         @Override
         public Object convert(Class type, Object value) {
             return Scope.getInstance(value.toString());
         }
+
     }
 
     /** A converter that converts strings to uri. */
     private static class UriConverter implements Converter {
+
         @SuppressWarnings({"unchecked", "rawtypes"})
         @Override
         public Object convert(Class type, Object value) {
@@ -309,12 +337,13 @@ public class AutomaticBean
                     result = CommonUtils.getUriByFilename(url);
                 }
                 catch (CheckstyleException ex) {
-                    throw new ConversionException(ex);
+                    throw new IllegalArgumentException(ex);
                 }
             }
 
             return result;
         }
+
     }
 
     /**
@@ -323,12 +352,13 @@ public class AutomaticBean
      * with this characters.
      */
     private static class RelaxedStringArrayConverter implements Converter {
+
         @SuppressWarnings({"unchecked", "rawtypes"})
         @Override
         public Object convert(Class type, Object value) {
             // Convert to a String and trim it for the tokenizer.
             final StringTokenizer tokenizer = new StringTokenizer(
-                value.toString().trim(), ",");
+                value.toString().trim(), COMMA_SEPARATOR);
             final List<String> result = new ArrayList<>();
 
             while (tokenizer.hasMoreTokens()) {
@@ -338,5 +368,32 @@ public class AutomaticBean
 
             return result.toArray(new String[result.size()]);
         }
+
     }
+
+    /**
+     * A converter that converts strings to {@link AccessModifier}.
+     * This implementation does not care whether the array elements contain characters like '_'.
+     * The normal {@link ArrayConverter} class has problems with this character.
+     */
+    private static class RelaxedAccessModifierArrayConverter implements Converter {
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override
+        public Object convert(Class type, Object value) {
+            // Converts to a String and trims it for the tokenizer.
+            final StringTokenizer tokenizer = new StringTokenizer(
+                value.toString().trim(), COMMA_SEPARATOR);
+            final List<AccessModifier> result = new ArrayList<>();
+
+            while (tokenizer.hasMoreTokens()) {
+                final String token = tokenizer.nextToken();
+                result.add(AccessModifier.getInstance(token.trim()));
+            }
+
+            return result.toArray(new AccessModifier[result.size()]);
+        }
+
+    }
+
 }

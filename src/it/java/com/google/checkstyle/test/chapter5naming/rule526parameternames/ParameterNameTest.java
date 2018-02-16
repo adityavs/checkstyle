@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,83 +19,43 @@
 
 package com.google.checkstyle.test.chapter5naming.rule526parameternames;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.checkstyle.test.base.BaseCheckTestSupport;
-import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.google.checkstyle.test.base.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 
-public class ParameterNameTest extends BaseCheckTestSupport {
+public class ParameterNameTest extends AbstractModuleTestSupport {
 
     private static final String MSG_KEY = "name.invalidPattern";
-    private static String privFormat;
-    private static String pubFormat;
-    private static Configuration privConfig;
-    private static Configuration pubConfig;
 
     @Override
-    protected String getPath(String fileName) throws IOException {
-        return super.getPath("chapter5naming" + File.separator + "rule526parameternames"
-                + File.separator + fileName);
-    }
-
-    @BeforeClass
-    public static void setConfigurationBuilder() throws CheckstyleException {
-        final List<Configuration> configs = getCheckConfigs("ParameterName");
-
-        Assert.assertEquals(configs.size(), 2);
-
-        privConfig = configs.get(0);
-        Assert.assertEquals(privConfig.getAttribute("excludeScope"), "public");
-        privFormat = privConfig.getAttribute("format");
-
-        pubConfig = configs.get(1);
-        Assert.assertEquals(pubConfig.getAttribute("scope"), "public");
-        pubFormat = pubConfig.getAttribute("format");
+    protected String getPackageLocation() {
+        return "com/google/checkstyle/test/chapter5naming/rule526parameternames";
     }
 
     @Test
-    public void privParameterNameTest() throws Exception {
-
+    public void testGeneralParameterName() throws Exception {
+        final Configuration config = getModuleConfig("ParameterName");
+        final String format = config.getAttribute("format");
         final String[] expected = {
-            "8:21: " + getCheckMessage(privConfig.getMessages(), MSG_KEY, "$arg1", privFormat),
-            "9:21: " + getCheckMessage(privConfig.getMessages(), MSG_KEY, "ar$g2", privFormat),
-            "10:21: " + getCheckMessage(privConfig.getMessages(), MSG_KEY, "arg3$", privFormat),
-            "11:21: " + getCheckMessage(privConfig.getMessages(), MSG_KEY, "a_rg4", privFormat),
-            "12:21: " + getCheckMessage(privConfig.getMessages(), MSG_KEY, "_arg5", privFormat),
-            "13:21: " + getCheckMessage(privConfig.getMessages(), MSG_KEY, "arg6_", privFormat),
-            "14:21: " + getCheckMessage(privConfig.getMessages(), MSG_KEY, "aArg7", privFormat),
-            "15:21: " + getCheckMessage(privConfig.getMessages(), MSG_KEY, "aArg8", privFormat),
-            "16:21: " + getCheckMessage(privConfig.getMessages(), MSG_KEY, "aar_g", privFormat),
+            "10:21: " + getCheckMessage(config.getMessages(), MSG_KEY, "bB", format),
+            "33:22: " + getCheckMessage(config.getMessages(), MSG_KEY, "llll_llll", format),
+            "34:21: " + getCheckMessage(config.getMessages(), MSG_KEY, "bB", format),
+            "64:13: " + getCheckMessage(config.getMessages(), MSG_KEY, "$arg1", format),
+            "65:13: " + getCheckMessage(config.getMessages(), MSG_KEY, "ar$g2", format),
+            "66:13: " + getCheckMessage(config.getMessages(), MSG_KEY, "arg3$", format),
+            "67:13: " + getCheckMessage(config.getMessages(), MSG_KEY, "a_rg4", format),
+            "68:13: " + getCheckMessage(config.getMessages(), MSG_KEY, "_arg5", format),
+            "69:13: " + getCheckMessage(config.getMessages(), MSG_KEY, "arg6_", format),
+            "70:13: " + getCheckMessage(config.getMessages(), MSG_KEY, "aArg7", format),
+            "71:13: " + getCheckMessage(config.getMessages(), MSG_KEY, "aArg8", format),
+            "72:13: " + getCheckMessage(config.getMessages(), MSG_KEY, "aar_g", format),
         };
 
-        final String filePath = getPath("InputParameterNameSimplePriv.java");
+        final String filePath = getPath("InputParameterName.java");
 
         final Integer[] warnList = getLinesWithWarn(filePath);
-        verify(privConfig, filePath, expected, warnList);
+        verify(config, filePath, expected, warnList);
     }
 
-    @Test
-    public void pubParameterNameTest() throws Exception {
-
-        final String[] expected = {
-            "10:21: " + getCheckMessage(pubConfig.getMessages(), MSG_KEY, "bB", pubFormat),
-            "33:22: " + getCheckMessage(pubConfig.getMessages(), MSG_KEY, "llll_llll", pubFormat),
-            "34:21: " + getCheckMessage(pubConfig.getMessages(), MSG_KEY, "bB", pubFormat),
-            "44:23: " + getCheckMessage(pubConfig.getMessages(), MSG_KEY, "p", pubFormat),
-            "53:31: " + getCheckMessage(pubConfig.getMessages(), MSG_KEY, "p", pubFormat),
-            "58:44: " + getCheckMessage(pubConfig.getMessages(), MSG_KEY, "p", pubFormat),
-        };
-
-        final String filePath = getPath("InputParameterNameSimplePub.java");
-
-        final Integer[] warnList = getLinesWithWarn(filePath);
-        verify(pubConfig, filePath, expected, warnList);
-    }
 }

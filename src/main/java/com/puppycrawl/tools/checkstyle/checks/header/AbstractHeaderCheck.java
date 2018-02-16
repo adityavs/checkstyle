@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,13 +28,12 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import org.apache.commons.beanutils.ConversionException;
 
 import com.google.common.io.Closeables;
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
@@ -49,6 +48,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  */
 public abstract class AbstractHeaderCheck extends AbstractFileSetCheck
     implements ExternalResourceHolder {
+
     /** Pattern to detect occurrences of '\n' in text. */
     private static final Pattern ESCAPED_LINE_FEED_PATTERN = Pattern.compile("\\\\n");
 
@@ -59,7 +59,7 @@ public abstract class AbstractHeaderCheck extends AbstractFileSetCheck
     private URI headerFile;
 
     /** Name of a charset to use for loading the header from a file. */
-    private String charset = System.getProperty("file.encoding", "UTF-8");
+    private String charset = System.getProperty("file.encoding", StandardCharsets.UTF_8.name());
 
     /**
      * Hook method for post processing header lines.
@@ -127,11 +127,11 @@ public abstract class AbstractHeaderCheck extends AbstractFileSetCheck
 
     /**
      * Called before initializing the header.
-     * @throws ConversionException if header has already been set
+     * @throws IllegalArgumentException if header has already been set
      */
     private void checkHeaderNotInitialized() {
         if (!readerLines.isEmpty()) {
-            throw new ConversionException(
+            throw new IllegalArgumentException(
                     "header has already been set - "
                     + "set either header or headerFile, not both");
         }
@@ -141,7 +141,7 @@ public abstract class AbstractHeaderCheck extends AbstractFileSetCheck
      * Set the header to check against. Individual lines in the header
      * must be separated by '\n' characters.
      * @param header header content to check against.
-     * @throws ConversionException if the header cannot be interpreted
+     * @throws IllegalArgumentException if the header cannot be interpreted
      */
     public void setHeader(String header) {
         if (!CommonUtils.isBlank(header)) {
@@ -155,7 +155,7 @@ public abstract class AbstractHeaderCheck extends AbstractFileSetCheck
                 loadHeader(headerReader);
             }
             catch (final IOException ex) {
-                throw new ConversionException("unable to load header", ex);
+                throw new IllegalArgumentException("unable to load header", ex);
             }
             finally {
                 Closeables.closeQuietly(headerReader);
@@ -169,16 +169,23 @@ public abstract class AbstractHeaderCheck extends AbstractFileSetCheck
      * @throws IOException if
      */
     private void loadHeader(final Reader headerReader) throws IOException {
-        readerLines.clear();
         final LineNumberReader lnr = new LineNumberReader(headerReader);
-        while (true) {
-            final String line = lnr.readLine();
-            if (line == null) {
-                break;
+        try {
+            while (true) {
+                String line = lnr.readLine();
+                if (line == null) {
+                    break;
+                }
+                if (line.isEmpty()) {
+                    line = "^$";
+                }
+                readerLines.add(line);
             }
-            readerLines.add(line);
+            postProcessHeaderLines();
         }
-        postProcessHeaderLines();
+        finally {
+            Closeables.closeQuietly(lnr);
+        }
     }
 
     @Override
@@ -186,13 +193,20 @@ public abstract class AbstractHeaderCheck extends AbstractFileSetCheck
         if (headerFile != null) {
             loadHeaderFile();
         }
-        if (readerLines.isEmpty()) {
-            setHeader(null);
-        }
     }
 
     @Override
     public Set<String> getExternalResourceLocations() {
-        return Collections.singleton(headerFile.toString());
+        final Set<String> result;
+
+        if (headerFile == null) {
+            result = Collections.emptySet();
+        }
+        else {
+            result = Collections.singleton(headerFile.toString());
+        }
+
+        return result;
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,32 +23,53 @@ import static com.puppycrawl.tools.checkstyle.checks.design.OneTopLevelClassChec
 import static org.junit.Assert.assertArrayEquals;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.google.common.collect.ImmutableMap;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-public class OneTopLevelClassCheckTest extends BaseCheckTestSupport {
-    @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "design" + File.separator + filename);
-    }
+public class OneTopLevelClassCheckTest extends AbstractModuleTestSupport {
 
     @Override
-    protected String getNonCompilablePath(String filename) throws IOException {
-        return super.getNonCompilablePath("checks" + File.separator
-                + "design" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/design/onetoplevelclass";
     }
 
     @Test
     public void testGetRequiredTokens() {
         final OneTopLevelClassCheck checkObj = new OneTopLevelClassCheck();
-        assertArrayEquals(CommonUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
+        assertArrayEquals("Required tokens array is not empty",
+                CommonUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
+    }
+
+    @Test
+    public void testClearState() throws Exception {
+        final DefaultConfiguration checkConfig =
+                createModuleConfig(OneTopLevelClassCheck.class);
+        final String firstInputFilePath = getPath("InputOneTopLevelClassDeclarationOrder.java");
+        final String secondInputFilePath = getPath("InputOneTopLevelClassInterface2.java");
+
+        final File[] inputs = {
+            new File(firstInputFilePath),
+            new File(secondInputFilePath),
+        };
+
+        final List<String> expectedFirstInput = Collections.singletonList(
+            "10: " + getCheckMessage(MSG_KEY, "InputDeclarationOrderEnum"));
+        final List<String> expectedSecondInput = Arrays.asList(
+            "3: " + getCheckMessage(MSG_KEY, "InputOneTopLevelClassInterface2inner1"),
+            "11: " + getCheckMessage(MSG_KEY, "InputOneTopLevelClassInterface2inner2"));
+
+        verify(createChecker(checkConfig), inputs,
+            ImmutableMap.of(firstInputFilePath, expectedFirstInput,
+                secondInputFilePath, expectedSecondInput));
     }
 
     @Test
@@ -57,13 +78,14 @@ public class OneTopLevelClassCheckTest extends BaseCheckTestSupport {
         check.getAcceptableTokens();
         // ZERO tokens as Check do Traverse of Tree himself, he does not need to subscribed to
         // Tokens
-        Assert.assertEquals(0, check.getAcceptableTokens().length);
+        Assert.assertEquals("Acceptable tokens array size larger than 0",
+                0, check.getAcceptableTokens().length);
     }
 
     @Test
     public void testFileWithOneTopLevelClass() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(OneTopLevelClassCheck.class);
+            createModuleConfig(OneTopLevelClassCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputOneTopLevelClass.java"), expected);
     }
@@ -71,23 +93,23 @@ public class OneTopLevelClassCheckTest extends BaseCheckTestSupport {
     @Test
     public void testFileWithOneTopLevelInterface() throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(OneTopLevelClassCheck.class);
+                createModuleConfig(OneTopLevelClassCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getPath("InputOneTopLevelInterface.java"), expected);
+        verify(checkConfig, getPath("InputOneTopLevelClassInterface.java"), expected);
     }
 
     @Test
     public void testFileWithOneTopLevelEnum() throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(OneTopLevelClassCheck.class);
+                createModuleConfig(OneTopLevelClassCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getPath("InputOneTopLevelEnum.java"), expected);
+        verify(checkConfig, getPath("InputOneTopLevelClassEnum.java"), expected);
     }
 
     @Test
     public void testFileWithNoPublicTopLevelClass() throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(OneTopLevelClassCheck.class);
+                createModuleConfig(OneTopLevelClassCheck.class);
         final String[] expected = {
             "8: " + getCheckMessage(MSG_KEY, "InputOneTopLevelClassNoPublic2"),
         };
@@ -97,29 +119,29 @@ public class OneTopLevelClassCheckTest extends BaseCheckTestSupport {
     @Test
     public void testFileWithThreeTopLevelInterface() throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(OneTopLevelClassCheck.class);
+                createModuleConfig(OneTopLevelClassCheck.class);
         final String[] expected = {
-            "3: " + getCheckMessage(MSG_KEY, "InputOneTopLevelInterface2inner1"),
-            "11: " + getCheckMessage(MSG_KEY, "InputOneTopLevelInterface2inner2"),
+            "3: " + getCheckMessage(MSG_KEY, "InputOneTopLevelClassInterface2inner1"),
+            "11: " + getCheckMessage(MSG_KEY, "InputOneTopLevelClassInterface2inner2"),
         };
-        verify(checkConfig, getPath("InputOneTopLevelInterface2.java"), expected);
+        verify(checkConfig, getPath("InputOneTopLevelClassInterface2.java"), expected);
     }
 
     @Test
     public void testFileWithThreeTopLevelEnum() throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(OneTopLevelClassCheck.class);
+                createModuleConfig(OneTopLevelClassCheck.class);
         final String[] expected = {
-            "3: " + getCheckMessage(MSG_KEY, "InputOneTopLevelEnum2inner1"),
-            "11: " + getCheckMessage(MSG_KEY, "InputOneTopLevelEnum2inner2"),
+            "3: " + getCheckMessage(MSG_KEY, "InputOneTopLevelClassEnum2inner1"),
+            "11: " + getCheckMessage(MSG_KEY, "InputOneTopLevelClassEnum2inner2"),
         };
-        verify(checkConfig, getPath("InputOneTopLevelEnum2.java"), expected);
+        verify(checkConfig, getPath("InputOneTopLevelClassEnum2.java"), expected);
     }
 
     @Test
     public void testFileWithFewTopLevelClasses() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(OneTopLevelClassCheck.class);
+            createModuleConfig(OneTopLevelClassCheck.class);
         final String[] expected = {
             "25: " + getCheckMessage(MSG_KEY, "NoSuperClone"),
             "29: " + getCheckMessage(MSG_KEY, "InnerClone"),
@@ -129,23 +151,24 @@ public class OneTopLevelClassCheckTest extends BaseCheckTestSupport {
             "45: " + getCheckMessage(MSG_KEY, "AnotherClass"),
             "48: " + getCheckMessage(MSG_KEY, "NativeTest"),
         };
-        verify(checkConfig, getPath("InputClone.java"), expected);
+        verify(checkConfig, getPath("InputOneTopLevelClassClone.java"), expected);
     }
 
     @Test
     public void testFileWithSecondEnumTopLevelClass() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(OneTopLevelClassCheck.class);
+            createModuleConfig(OneTopLevelClassCheck.class);
         final String[] expected = {
             "10: " + getCheckMessage(MSG_KEY, "InputDeclarationOrderEnum"),
         };
-        verify(checkConfig, getPath("InputDeclarationOrder.java"), expected);
+        verify(checkConfig, getPath("InputOneTopLevelClassDeclarationOrder.java"), expected);
     }
 
     @Test
     public void testPackageInfoWithNoTypesDeclared() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(OneTopLevelClassCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(OneTopLevelClassCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getNonCompilablePath("package-info.java"), expected);
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,8 +21,7 @@ package com.puppycrawl.tools.checkstyle.checks.blocks;
 
 import java.util.Locale;
 
-import org.apache.commons.beanutils.ConversionException;
-
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.Scope;
@@ -52,6 +51,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  *  {@link TokenTypes#LITERAL_DO LITERAL_DO}.
  *  {@link TokenTypes#STATIC_INIT STATIC_INIT}.
  *  {@link TokenTypes#INSTANCE_INIT INSTANCE_INIT}.
+ *  {@link TokenTypes#LAMBDA LAMBDA}.
  * </p>
  * <p>
  * <b>shouldStartLine</b> - does the check need to check
@@ -82,7 +82,9 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author Andrei Selkin
  * @author <a href="mailto:piotr.listkiewicz@gmail.com">liscju</a>
  */
+@StatelessCheck
 public class RightCurlyCheck extends AbstractCheck {
+
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -114,16 +116,16 @@ public class RightCurlyCheck extends AbstractCheck {
     private RightCurlyOption option = RightCurlyOption.SAME;
 
     /**
-     * Set the option to enforce.
+     * Sets the option to enforce.
      * @param optionStr string to decode option from
-     * @throws ConversionException if unable to decode
+     * @throws IllegalArgumentException if unable to decode
      */
     public void setOption(String optionStr) {
         try {
             option = RightCurlyOption.valueOf(optionStr.trim().toUpperCase(Locale.ENGLISH));
         }
         catch (IllegalArgumentException iae) {
-            throw new ConversionException("unable to parse " + optionStr, iae);
+            throw new IllegalArgumentException("unable to parse " + optionStr, iae);
         }
     }
 
@@ -162,6 +164,7 @@ public class RightCurlyCheck extends AbstractCheck {
             TokenTypes.LITERAL_DO,
             TokenTypes.STATIC_INIT,
             TokenTypes.INSTANCE_INIT,
+            TokenTypes.LAMBDA,
         };
     }
 
@@ -172,19 +175,11 @@ public class RightCurlyCheck extends AbstractCheck {
 
     @Override
     public void visitToken(DetailAST ast) {
-        final Details details = getDetails(ast);
+        final Details details = Details.getDetails(ast);
         final DetailAST rcurly = details.rcurly;
 
-        if (rcurly != null && rcurly.getType() == TokenTypes.RCURLY) {
-            final String violation;
-            if (shouldStartLine) {
-                final String targetSourceLine = getLines()[rcurly.getLineNo() - 1];
-                violation = validate(details, option, true, targetSourceLine);
-            }
-            else {
-                violation = validate(details, option, false, "");
-            }
-
+        if (rcurly != null) {
+            final String violation = validate(details);
             if (!violation.isEmpty()) {
                 log(rcurly, violation, "}", rcurly.getColumnNo() + 1);
             }
@@ -194,40 +189,40 @@ public class RightCurlyCheck extends AbstractCheck {
     /**
      * Does general validation.
      * @param details for validation.
-     * @param bracePolicy for placing the right curly brace.
-     * @param shouldStartLine do we need to check if right curly starts line.
-     * @param targetSourceLine line that we need to check if shouldStartLine is true.
      * @return violation message or empty string
      *     if there was not violation during validation.
      */
-    private static String validate(Details details, RightCurlyOption bracePolicy,
-                                   boolean shouldStartLine, String targetSourceLine) {
-        final DetailAST rcurly = details.rcurly;
-        final DetailAST lcurly = details.lcurly;
-        final DetailAST nextToken = details.nextToken;
-        final boolean shouldCheckLastRcurly = details.shouldCheckLastRcurly;
+    private String validate(Details details) {
         String violation = "";
-
-        if (bracePolicy == RightCurlyOption.SAME
-                && !hasLineBreakBefore(rcurly)
-                && lcurly.getLineNo() != rcurly.getLineNo()) {
+        if (shouldHaveLineBreakBefore(option, details)) {
             violation = MSG_KEY_LINE_BREAK_BEFORE;
         }
-        else if (shouldCheckLastRcurly) {
-            if (rcurly.getLineNo() == nextToken.getLineNo()) {
-                violation = MSG_KEY_LINE_ALONE;
-            }
-        }
-        else if (shouldBeOnSameLine(bracePolicy, details)) {
+        else if (shouldBeOnSameLine(option, details)) {
             violation = MSG_KEY_LINE_SAME;
         }
-        else if (shouldBeAloneOnLine(bracePolicy, details)) {
+        else if (shouldBeAloneOnLine(option, details)) {
             violation = MSG_KEY_LINE_ALONE;
         }
-        else if (shouldStartLine && !isOnStartOfLine(details, targetSourceLine)) {
-            violation = MSG_KEY_LINE_NEW;
+        else if (shouldStartLine) {
+            final String targetSourceLine = getLines()[details.rcurly.getLineNo() - 1];
+            if (!isOnStartOfLine(details, targetSourceLine)) {
+                violation = MSG_KEY_LINE_NEW;
+            }
         }
         return violation;
+    }
+
+    /**
+     * Checks whether a right curly should have a line break before.
+     * @param bracePolicy option for placing the right curly brace.
+     * @param details details for validation.
+     * @return true if a right curly should have a line break before.
+     */
+    private static boolean shouldHaveLineBreakBefore(RightCurlyOption bracePolicy,
+                                                     Details details) {
+        return bracePolicy == RightCurlyOption.SAME
+                && !hasLineBreakBefore(details.rcurly)
+                && details.lcurly.getLineNo() != details.rcurly.getLineNo();
     }
 
     /**
@@ -238,6 +233,7 @@ public class RightCurlyCheck extends AbstractCheck {
      */
     private static boolean shouldBeOnSameLine(RightCurlyOption bracePolicy, Details details) {
         return bracePolicy == RightCurlyOption.SAME
+                && !details.shouldCheckLastRcurly
                 && details.rcurly.getLineNo() != details.nextToken.getLineNo();
     }
 
@@ -249,10 +245,31 @@ public class RightCurlyCheck extends AbstractCheck {
      */
     private static boolean shouldBeAloneOnLine(RightCurlyOption bracePolicy, Details details) {
         return bracePolicy == RightCurlyOption.ALONE
-                && !isAloneOnLine(details)
-                && !isEmptyBody(details.lcurly)
+                    && shouldBeAloneOnLineWithAloneOption(details)
                 || bracePolicy == RightCurlyOption.ALONE_OR_SINGLELINE
-                && !isAloneOnLine(details)
+                    && shouldBeAloneOnLineWithAloneOrSinglelineOption(details)
+                || details.shouldCheckLastRcurly
+                    && details.rcurly.getLineNo() == details.nextToken.getLineNo();
+    }
+
+    /**
+     * Whether right curly should be alone on line when ALONE option is used.
+     * @param details details for validation.
+     * @return true, if right curly should be alone on line when ALONE option is used.
+     */
+    private static boolean shouldBeAloneOnLineWithAloneOption(Details details) {
+        return !isAloneOnLine(details)
+                && !isEmptyBody(details.lcurly);
+    }
+
+    /**
+     * Whether right curly should be alone on line when ALONE_OR_SINGLELINE option is used.
+     * @param details details for validation.
+     * @return true, if right curly should be alone on line
+     *         when ALONE_OR_SINGLELINE option is used.
+     */
+    private static boolean shouldBeAloneOnLineWithAloneOrSinglelineOption(Details details) {
+        return !isAloneOnLine(details)
                 && !isSingleLineBlock(details)
                 && !isAnonInnerClassInit(details.lcurly)
                 && !isEmptyBody(details.lcurly);
@@ -306,98 +323,6 @@ public class RightCurlyCheck extends AbstractCheck {
     }
 
     /**
-     * Collects validation details.
-     * @param ast detail ast.
-     * @return object that contain all details to make a validation.
-     */
-    // -@cs[JavaNCSS] getDetails() method is a huge SWITCH, it has to be monolithic
-    // -@cs[ExecutableStatementCount] getDetails() method is a huge SWITCH, it has to be monolithic
-    private static Details getDetails(DetailAST ast) {
-        // Attempt to locate the tokens to do the check
-        boolean shouldCheckLastRcurly = false;
-        DetailAST rcurly = null;
-        final DetailAST lcurly;
-        DetailAST nextToken;
-
-        switch (ast.getType()) {
-            case TokenTypes.LITERAL_TRY:
-                lcurly = ast.getFirstChild();
-                nextToken = lcurly.getNextSibling();
-                rcurly = lcurly.getLastChild();
-                break;
-            case TokenTypes.LITERAL_CATCH:
-                nextToken = ast.getNextSibling();
-                lcurly = ast.getLastChild();
-                rcurly = lcurly.getLastChild();
-                if (nextToken == null) {
-                    shouldCheckLastRcurly = true;
-                    nextToken = getNextToken(ast);
-                }
-                break;
-            case TokenTypes.LITERAL_IF:
-                nextToken = ast.findFirstToken(TokenTypes.LITERAL_ELSE);
-                if (nextToken == null) {
-                    shouldCheckLastRcurly = true;
-                    nextToken = getNextToken(ast);
-                    lcurly = ast.getLastChild();
-                    rcurly = lcurly.getLastChild();
-                }
-                else {
-                    lcurly = nextToken.getPreviousSibling();
-                    rcurly = lcurly.getLastChild();
-                }
-                break;
-            case TokenTypes.LITERAL_ELSE:
-            case TokenTypes.LITERAL_FINALLY:
-                shouldCheckLastRcurly = true;
-                nextToken = getNextToken(ast);
-                lcurly = ast.getFirstChild();
-                rcurly = lcurly.getLastChild();
-                break;
-            case TokenTypes.CLASS_DEF:
-                final DetailAST child = ast.getLastChild();
-                lcurly = child.getFirstChild();
-                rcurly = child.getLastChild();
-                nextToken = ast;
-                break;
-            case TokenTypes.CTOR_DEF:
-            case TokenTypes.STATIC_INIT:
-            case TokenTypes.INSTANCE_INIT:
-                lcurly = ast.findFirstToken(TokenTypes.SLIST);
-                rcurly = lcurly.getLastChild();
-                nextToken = getNextToken(ast);
-                break;
-            case TokenTypes.LITERAL_DO:
-                nextToken = ast.findFirstToken(TokenTypes.DO_WHILE);
-                lcurly = ast.findFirstToken(TokenTypes.SLIST);
-                rcurly = lcurly.getLastChild();
-                break;
-            default:
-                // ATTENTION! We have default here, but we expect case TokenTypes.METHOD_DEF,
-                // TokenTypes.LITERAL_FOR, TokenTypes.LITERAL_WHILE, only.
-                // It has been done to improve coverage to 100%. I couldn't replace it with
-                // if-else-if block because code was ugly and didn't pass pmd check.
-
-                lcurly = ast.findFirstToken(TokenTypes.SLIST);
-                if (lcurly != null) {
-                    // SLIST could be absent if method is abstract,
-                    // and code like "while(true);"
-                    rcurly = lcurly.getLastChild();
-                }
-                nextToken = getNextToken(ast);
-                break;
-        }
-
-        final Details details = new Details();
-        details.rcurly = rcurly;
-        details.lcurly = lcurly;
-        details.nextToken = nextToken;
-        details.shouldCheckLastRcurly = shouldCheckLastRcurly;
-
-        return details;
-    }
-
-    /**
      * Checks if definition body is empty.
      * @param lcurly left curly.
      * @return true if definition body is empty.
@@ -416,21 +341,6 @@ public class RightCurlyCheck extends AbstractCheck {
     }
 
     /**
-     * Finds next token after the given one.
-     * @param ast the given node.
-     * @return the token which represents next lexical item.
-     */
-    private static DetailAST getNextToken(DetailAST ast) {
-        DetailAST next = null;
-        DetailAST parent = ast;
-        while (next == null) {
-            next = parent.getNextSibling();
-            parent = parent.getParent();
-        }
-        return CheckUtils.getFirstNode(next);
-    }
-
-    /**
      * Checks if right curly has line break before.
      * @param rightCurly right curly token.
      * @return true, if right curly has line break before.
@@ -444,14 +354,241 @@ public class RightCurlyCheck extends AbstractCheck {
     /**
      * Structure that contains all details for validation.
      */
-    private static class Details {
+    private static final class Details {
+
         /** Right curly. */
-        private DetailAST rcurly;
+        private final DetailAST rcurly;
         /** Left curly. */
-        private DetailAST lcurly;
+        private final DetailAST lcurly;
         /** Next token. */
-        private DetailAST nextToken;
+        private final DetailAST nextToken;
         /** Should check last right curly. */
-        private boolean shouldCheckLastRcurly;
+        private final boolean shouldCheckLastRcurly;
+
+        /**
+         * Constructor.
+         * @param lcurly the lcurly of the token whose details are being collected
+         * @param rcurly the rcurly of the token whose details are being collected
+         * @param nextToken the token after the token whose details are being collected
+         * @param shouldCheckLastRcurly boolean value to determine if to check last rcurly
+         */
+        private Details(DetailAST lcurly, DetailAST rcurly,
+                        DetailAST nextToken, boolean shouldCheckLastRcurly) {
+            this.lcurly = lcurly;
+            this.rcurly = rcurly;
+            this.nextToken = nextToken;
+            this.shouldCheckLastRcurly = shouldCheckLastRcurly;
+        }
+
+        /**
+         * Collects validation Details.
+         * @param ast a {@code DetailAST} value
+         * @return object containing all details to make a validation
+         */
+        private static Details getDetails(DetailAST ast) {
+            final Details details;
+            switch (ast.getType()) {
+                case TokenTypes.LITERAL_TRY:
+                case TokenTypes.LITERAL_CATCH:
+                case TokenTypes.LITERAL_FINALLY:
+                    details = getDetailsForTryCatchFinally(ast);
+                    break;
+                case TokenTypes.LITERAL_IF:
+                case TokenTypes.LITERAL_ELSE:
+                    details = getDetailsForIfElse(ast);
+                    break;
+                case TokenTypes.LITERAL_DO:
+                case TokenTypes.LITERAL_WHILE:
+                case TokenTypes.LITERAL_FOR:
+                    details = getDetailsForLoops(ast);
+                    break;
+                case TokenTypes.LAMBDA:
+                    details = getDetailsForLambda(ast);
+                    break;
+                default:
+                    details = getDetailsForOthers(ast);
+                    break;
+            }
+            return details;
+        }
+
+        /**
+         * Collects validation details for LITERAL_TRY, LITERAL_CATCH, and LITERAL_FINALLY.
+         * @param ast a {@code DetailAST} value
+         * @return object containing all details to make a validation
+         */
+        private static Details getDetailsForTryCatchFinally(DetailAST ast) {
+            boolean shouldCheckLastRcurly = false;
+            final DetailAST rcurly;
+            final DetailAST lcurly;
+            DetailAST nextToken;
+            final int tokenType = ast.getType();
+            if (tokenType == TokenTypes.LITERAL_TRY) {
+                if (ast.getFirstChild().getType() == TokenTypes.RESOURCE_SPECIFICATION) {
+                    lcurly = ast.getFirstChild().getNextSibling();
+                }
+                else {
+                    lcurly = ast.getFirstChild();
+                }
+                nextToken = lcurly.getNextSibling();
+                rcurly = lcurly.getLastChild();
+
+                if (nextToken == null) {
+                    shouldCheckLastRcurly = true;
+                    nextToken = getNextToken(ast);
+                }
+            }
+            else if (tokenType == TokenTypes.LITERAL_CATCH) {
+                nextToken = ast.getNextSibling();
+                lcurly = ast.getLastChild();
+                rcurly = lcurly.getLastChild();
+                if (nextToken == null) {
+                    shouldCheckLastRcurly = true;
+                    nextToken = getNextToken(ast);
+                }
+            }
+            else {
+                shouldCheckLastRcurly = true;
+                nextToken = getNextToken(ast);
+                lcurly = ast.getFirstChild();
+                rcurly = lcurly.getLastChild();
+            }
+            return new Details(lcurly, rcurly, nextToken, shouldCheckLastRcurly);
+        }
+
+        /**
+         * Collects validation details for LITERAL_IF and LITERAL_ELSE.
+         * @param ast a {@code DetailAST} value
+         * @return object containing all details to make a validation
+         */
+        private static Details getDetailsForIfElse(DetailAST ast) {
+            boolean shouldCheckLastRcurly = false;
+            DetailAST rcurly = null;
+            final DetailAST lcurly;
+            DetailAST nextToken;
+            final int tokenType = ast.getType();
+            if (tokenType == TokenTypes.LITERAL_IF) {
+                nextToken = ast.findFirstToken(TokenTypes.LITERAL_ELSE);
+                if (nextToken == null) {
+                    shouldCheckLastRcurly = true;
+                    nextToken = getNextToken(ast);
+                    lcurly = ast.getLastChild();
+                }
+                else {
+                    lcurly = nextToken.getPreviousSibling();
+                }
+                if (lcurly.getType() == TokenTypes.SLIST) {
+                    rcurly = lcurly.getLastChild();
+                }
+            }
+            else {
+                shouldCheckLastRcurly = true;
+                nextToken = getNextToken(ast);
+                lcurly = ast.getFirstChild();
+                if (lcurly.getType() == TokenTypes.SLIST) {
+                    rcurly = lcurly.getLastChild();
+                }
+            }
+            return new Details(lcurly, rcurly, nextToken, shouldCheckLastRcurly);
+        }
+
+        /**
+         * Collects validation details for CLASS_DEF, METHOD DEF, CTOR_DEF, STATIC_INIT, and
+         * INSTANCE_INIT.
+         * @param ast a {@code DetailAST} value
+         * @return an object containing all details to make a validation
+         */
+        private static Details getDetailsForOthers(DetailAST ast) {
+            DetailAST rcurly = null;
+            final DetailAST lcurly;
+            final DetailAST nextToken;
+            final int tokenType = ast.getType();
+            if (tokenType == TokenTypes.CLASS_DEF) {
+                final DetailAST child = ast.getLastChild();
+                lcurly = child.getFirstChild();
+                rcurly = child.getLastChild();
+                nextToken = ast;
+            }
+            else if (tokenType == TokenTypes.METHOD_DEF) {
+                lcurly = ast.findFirstToken(TokenTypes.SLIST);
+                if (lcurly != null) {
+                    // SLIST could be absent if method is abstract
+                    rcurly = lcurly.getLastChild();
+                }
+                nextToken = getNextToken(ast);
+            }
+            else {
+                lcurly = ast.findFirstToken(TokenTypes.SLIST);
+                rcurly = lcurly.getLastChild();
+                nextToken = getNextToken(ast);
+            }
+            return new Details(lcurly, rcurly, nextToken, false);
+        }
+
+        /**
+         * Collects validation details for loops' tokens.
+         * @param ast a {@code DetailAST} value
+         * @return an object containing all details to make a validation
+         */
+        private static Details getDetailsForLoops(DetailAST ast) {
+            DetailAST rcurly = null;
+            final DetailAST lcurly;
+            final DetailAST nextToken;
+            final int tokenType = ast.getType();
+            if (tokenType == TokenTypes.LITERAL_DO) {
+                nextToken = ast.findFirstToken(TokenTypes.DO_WHILE);
+                lcurly = ast.findFirstToken(TokenTypes.SLIST);
+                if (lcurly != null) {
+                    rcurly = lcurly.getLastChild();
+                }
+            }
+            else {
+                lcurly = ast.findFirstToken(TokenTypes.SLIST);
+                if (lcurly != null) {
+                    // SLIST could be absent in code like "while(true);"
+                    rcurly = lcurly.getLastChild();
+                }
+                nextToken = getNextToken(ast);
+            }
+            return new Details(lcurly, rcurly, nextToken, false);
+        }
+
+        /**
+         * Collects validation details for Lambdas.
+         * @param ast a {@code DetailAST} value
+         * @return an object containing all details to make a validation
+         */
+        private static Details getDetailsForLambda(DetailAST ast) {
+            final DetailAST lcurly = ast.findFirstToken(TokenTypes.SLIST);
+            boolean shouldCheckLastRcurly = false;
+            DetailAST nextToken = getNextToken(ast);
+            if (nextToken.getType() != TokenTypes.RPAREN
+                    && nextToken.getType() != TokenTypes.COMMA) {
+                shouldCheckLastRcurly = true;
+                nextToken = getNextToken(nextToken);
+            }
+            DetailAST rcurly = null;
+            if (lcurly != null) {
+                rcurly = lcurly.getLastChild();
+            }
+            return new Details(lcurly, rcurly, nextToken, shouldCheckLastRcurly);
+        }
+
+        /**
+         * Finds next token after the given one.
+         * @param ast the given node.
+         * @return the token which represents next lexical item.
+         */
+        private static DetailAST getNextToken(DetailAST ast) {
+            DetailAST next = null;
+            DetailAST parent = ast;
+            while (next == null) {
+                next = parent.getNextSibling();
+                parent = parent.getParent();
+            }
+            return CheckUtils.getFirstNode(next);
+        }
+
     }
+
 }

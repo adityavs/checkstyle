@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,13 +19,12 @@
 
 package com.puppycrawl.tools.checkstyle.grammars;
 
-import java.io.File;
-import java.io.IOException;
+import static com.puppycrawl.tools.checkstyle.checks.naming.AbstractNameCheck.MSG_INVALID_PATTERN;
 
 import org.junit.Assume;
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
@@ -35,7 +34,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author Rick Giles
  */
 public class GeneratedJava14LexerTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
 
     /**
      * <p>Is {@code true} if this is Windows.</p>
@@ -45,26 +44,21 @@ public class GeneratedJava14LexerTest
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("grammars" + File.separator + filename);
-    }
-
-    @Override
-    protected String getNonCompilablePath(String filename) throws IOException {
-        return super.getNonCompilablePath("grammars" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/grammars";
     }
 
     @Test
     public void testUnexpectedChar() throws Exception {
         // Encoding problems can occur in Windows
-        Assume.assumeFalse(IS_WINDOWS);
+        Assume.assumeFalse("Problems with encoding may occur", IS_WINDOWS);
 
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
         // input is 'ÃЯ'
         final String[] expected = {
-            "7:9: Name '" + (char) 0xC3 + (char) 0x042F
-                 + "' must match pattern '^[a-z][a-zA-Z0-9]*$'.",
+            "7:9: " + getCheckMessage(MemberNameCheck.class, MSG_INVALID_PATTERN,
+                    new String(new char[] {0xC3, 0x042F}), "^[a-z][a-zA-Z0-9]*$"),
         };
         verify(checkConfig, getPath("InputGrammar.java"), expected);
     }
@@ -72,8 +66,9 @@ public class GeneratedJava14LexerTest
     @Test
     public void testSemicolonBetweenImports() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getNonCompilablePath("InputSemicolonBetweenImports.java"), expected);
     }
+
 }

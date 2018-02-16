@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,34 +22,28 @@ package com.google.checkstyle.test.chapter5naming.rule521packagenames;
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.checkstyle.test.base.BaseCheckTestSupport;
-import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.google.checkstyle.test.base.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-public class PackageNameTest extends BaseCheckTestSupport {
+public class PackageNameTest extends AbstractModuleTestSupport {
 
     private static final String MSG_KEY = "name.invalidPattern";
-    private static Configuration checkConfig;
-    private static String format;
 
-    private String getPath(String packageName, String fileName) throws IOException {
-        return getPath("chapter5naming" + File.separator + "rule521" + packageName
-                + File.separator + fileName);
+    @Override
+    protected String getPackageLocation() {
+        return "com/google/checkstyle/test/chapter5naming";
     }
 
-    @BeforeClass
-    public static void setConfigurationBuilder() throws CheckstyleException {
-        checkConfig = getCheckConfig("PackageName");
-        format = checkConfig.getAttribute("format");
+    private String getPath(String packageName, String fileName) throws IOException {
+        return getPath("rule521" + packageName + File.separator + fileName);
     }
 
     @Test
-    public void goodPackageNameTest() throws Exception {
-
+    public void testGoodPackageName() throws Exception {
+        final Configuration checkConfig = getModuleConfig("PackageName");
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         final String filePath = getPath("packagenames", "InputPackageNameGood.java");
@@ -59,10 +53,11 @@ public class PackageNameTest extends BaseCheckTestSupport {
     }
 
     @Test
-    public void badPackageNameTest() throws Exception {
-
+    public void testBadPackageName() throws Exception {
         final String packagePath =
                 "com.google.checkstyle.test.chapter5naming.rule521packageNamesCamelCase";
+        final Configuration checkConfig = getModuleConfig("PackageName");
+        final String format = checkConfig.getAttribute("format");
         final String msg = getCheckMessage(checkConfig.getMessages(), MSG_KEY, packagePath, format);
 
         final String[] expected = {
@@ -76,9 +71,10 @@ public class PackageNameTest extends BaseCheckTestSupport {
     }
 
     @Test
-    public void badPackageName2Test() throws Exception {
-
+    public void testBadPackageName2() throws Exception {
         final String packagePath = "com.google.checkstyle.test.chapter5naming.rule521_packagenames";
+        final Configuration checkConfig = getModuleConfig("PackageName");
+        final String format = checkConfig.getAttribute("format");
         final String msg = getCheckMessage(checkConfig.getMessages(), MSG_KEY, packagePath, format);
 
         final String[] expected = {
@@ -92,9 +88,10 @@ public class PackageNameTest extends BaseCheckTestSupport {
     }
 
     @Test
-    public void badPackageName3Test() throws Exception {
-
+    public void testBadPackageName3() throws Exception {
         final String packagePath = "com.google.checkstyle.test.chapter5naming.rule521$packagenames";
+        final Configuration checkConfig = getModuleConfig("PackageName");
+        final String format = checkConfig.getAttribute("format");
         final String msg = getCheckMessage(checkConfig.getMessages(), MSG_KEY, packagePath, format);
 
         final String[] expected = {
@@ -106,4 +103,5 @@ public class PackageNameTest extends BaseCheckTestSupport {
         final Integer[] warnList = getLinesWithWarn(filePath);
         verify(checkConfig, filePath, expected, warnList);
     }
+
 }

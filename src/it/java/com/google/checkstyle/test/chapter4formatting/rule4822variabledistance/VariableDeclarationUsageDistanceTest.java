@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,26 +19,21 @@
 
 package com.google.checkstyle.test.chapter4formatting.rule4822variabledistance;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.google.checkstyle.test.base.BaseCheckTestSupport;
+import com.google.checkstyle.test.base.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.checks.coding.VariableDeclarationUsageDistanceCheck;
 
-public class VariableDeclarationUsageDistanceTest extends BaseCheckTestSupport {
+public class VariableDeclarationUsageDistanceTest extends AbstractModuleTestSupport {
 
     @Override
-    protected String getPath(String fileName) throws IOException {
-        return super.getPath("chapter4formatting" + File.separator + "rule4822variabledistance"
-                + File.separator + fileName);
+    protected String getPackageLocation() {
+        return "com/google/checkstyle/test/chapter4formatting/rule4822variabledistance";
     }
 
     @Test
-    public void arrayTypeStyleTest() throws Exception {
-
+    public void testArrayTypeStyle() throws Exception {
         final String msgExt = "variable.declaration.usage.distance.extend";
         final Class<VariableDeclarationUsageDistanceCheck> clazz =
                 VariableDeclarationUsageDistanceCheck.class;
@@ -51,10 +46,11 @@ public class VariableDeclarationUsageDistanceTest extends BaseCheckTestSupport {
         };
 
         final Configuration checkConfig =
-            getCheckConfig("VariableDeclarationUsageDistance");
+            getModuleConfig("VariableDeclarationUsageDistance");
         final String filePath = getPath("InputVariableDeclarationUsageDistanceCheck.java");
 
         final Integer[] warnList = getLinesWithWarn(filePath);
         verify(checkConfig, filePath, expected, warnList);
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,6 +28,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author jrichard
  */
 public class MethodCallHandler extends AbstractExpressionHandler {
+
     /**
      * Construct an instance of this handler with the given indentation check,
      * abstract syntax tree, and parent handler.
@@ -81,13 +82,13 @@ public class MethodCallHandler extends AbstractExpressionHandler {
      * Checks if ast2 is a chained method call that starts on the same level as ast1 ends.
      * In other words, if the right paren of ast1 is on the same level as the lparen of ast2:
      *
-     * <code>
+     * {@code
      *     value.methodOne(
      *         argument1
      *     ).methodTwo(
      *         argument2
      *     );
-     * </code>
+     * }
      *
      * @param ast1 Ast1
      * @param ast2 Ast2
@@ -176,7 +177,7 @@ public class MethodCallHandler extends AbstractExpressionHandler {
 
             final DetailAST lparen = getMainAst();
             final DetailAST rparen = getMainAst().findFirstToken(TokenTypes.RPAREN);
-            checkLParen(lparen);
+            checkLeftParen(lparen);
 
             if (rparen.getLineNo() != lparen.getLineNo()) {
                 checkExpressionSubtree(
@@ -184,7 +185,7 @@ public class MethodCallHandler extends AbstractExpressionHandler {
                     new IndentLevel(getIndent(), getBasicOffset()),
                     false, true);
 
-                checkRParen(lparen, rparen);
+                checkRightParen(lparen, rparen);
                 checkWrappingIndentation(getMainAst(), getMethodCallLastNode(getMainAst()));
             }
         }
@@ -205,4 +206,5 @@ public class MethodCallHandler extends AbstractExpressionHandler {
     private static DetailAST getMethodCallLastNode(DetailAST firstNode) {
         return firstNode.getLastChild();
     }
+
 }

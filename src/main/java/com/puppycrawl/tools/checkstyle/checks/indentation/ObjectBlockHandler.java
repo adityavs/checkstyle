@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,6 +28,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author jrichard
  */
 public class ObjectBlockHandler extends BlockParentHandler {
+
     /**
      * Construct an instance of this handler with the given indentation check,
      * abstract syntax tree, and parent handler.
@@ -47,12 +48,12 @@ public class ObjectBlockHandler extends BlockParentHandler {
     }
 
     @Override
-    protected DetailAST getLCurly() {
+    protected DetailAST getLeftCurly() {
         return getMainAst().findFirstToken(TokenTypes.LCURLY);
     }
 
     @Override
-    protected DetailAST getRCurly() {
+    protected DetailAST getRightCurly() {
         return getMainAst().findFirstToken(TokenTypes.RCURLY);
     }
 
@@ -87,15 +88,10 @@ public class ObjectBlockHandler extends BlockParentHandler {
     }
 
     @Override
-    protected void checkRCurly() {
-        final DetailAST rcurly = getRCurly();
-        final int rcurlyPos = expandedTabsColumnNo(rcurly);
-        final IndentLevel level = curlyIndent();
-        level.addAcceptedIndent(level.getFirstIndentLevel() + getLineWrappingIndentation());
-
-        if (!level.isAcceptable(rcurlyPos) && isOnStartOfLine(rcurly)) {
-            logError(rcurly, "rcurly", rcurlyPos, level);
-        }
+    protected IndentLevel curlyIndent() {
+        final IndentLevel indent = super.curlyIndent();
+        indent.addAcceptedIndent(indent.getFirstIndentLevel() + getLineWrappingIndentation());
+        return indent;
     }
 
     /**
@@ -106,4 +102,5 @@ public class ObjectBlockHandler extends BlockParentHandler {
     private int getLineWrappingIndentation() {
         return getIndentCheck().getLineWrappingIndentation();
     }
+
 }

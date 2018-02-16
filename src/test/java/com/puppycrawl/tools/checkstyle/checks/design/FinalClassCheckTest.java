@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,42 +22,34 @@ package com.puppycrawl.tools.checkstyle.checks.design;
 import static com.puppycrawl.tools.checkstyle.checks.design.FinalClassCheck.MSG_KEY;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
 public class FinalClassCheckTest
-    extends BaseCheckTestSupport {
-    @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "design" + File.separator + filename);
-    }
+    extends AbstractModuleTestSupport {
 
     @Override
-    protected String getNonCompilablePath(String filename) throws IOException {
-        return super.getNonCompilablePath("checks" + File.separator
-                + "design" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/design/finalclass";
     }
 
     @Test
     public void testGetRequiredTokens() {
         final FinalClassCheck checkObj = new FinalClassCheck();
         final int[] expected = {TokenTypes.CLASS_DEF, TokenTypes.CTOR_DEF, TokenTypes.PACKAGE_DEF};
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testFinalClass() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(FinalClassCheck.class);
+            createModuleConfig(FinalClassCheck.class);
         final String[] expected = {
             "7: " + getCheckMessage(MSG_KEY, "InputFinalClass"),
             "15: " + getCheckMessage(MSG_KEY, "test4"),
@@ -69,12 +61,13 @@ public class FinalClassCheckTest
     @Test
     public void testClassWithPrivateCtorAndNestedExtendingSubclass() throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(FinalClassCheck.class);
+                createModuleConfig(FinalClassCheck.class);
         final String[] expected = {
             "15: " + getCheckMessage(MSG_KEY, "C"),
         };
         verify(checkConfig,
-                getNonCompilablePath("InputClassWithPrivateCtorWithNestedExtendingClass.java"),
+                getNonCompilablePath(
+                        "InputFinalClassClassWithPrivateCtorWithNestedExtendingClass.java"),
                 expected);
     }
 
@@ -82,13 +75,13 @@ public class FinalClassCheckTest
     public void testClassWithPrivateCtorAndNestedExtendingSubclassWithoutPackage()
             throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(FinalClassCheck.class);
+                createModuleConfig(FinalClassCheck.class);
         final String[] expected = {
             "7: " + getCheckMessage(MSG_KEY, "C"),
         };
         verify(checkConfig,
                 getNonCompilablePath(
-                        "InputClassWithPrivateCtorWithNestedExtendingClassWithoutPackage.java"),
+                "InputFinalClassClassWithPrivateCtorWithNestedExtendingClassWithoutPackage.java"),
                 expected);
     }
 
@@ -111,6 +104,8 @@ public class FinalClassCheckTest
     public void testGetAcceptableTokens() {
         final FinalClassCheck obj = new FinalClassCheck();
         final int[] expected = {TokenTypes.CLASS_DEF, TokenTypes.CTOR_DEF, TokenTypes.PACKAGE_DEF};
-        assertArrayEquals(expected, obj.getAcceptableTokens());
+        assertArrayEquals("Default acceptable tokens are invalid",
+            expected, obj.getAcceptableTokens());
     }
+
 }

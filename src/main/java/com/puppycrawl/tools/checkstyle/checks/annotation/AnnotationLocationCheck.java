@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.annotation;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -31,12 +32,12 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * on separate line from target element.
  * <p>
  * Attention: Annotations among modifiers are ignored (looks like false-negative)
- * as there might be a problem with annotations for return types
+ * as there might be a problem with annotations for return types.
  * </p>
  * <pre>public @Nullable Long getStartTimeOrNull() { ... }</pre>.
  * <p>
  * Such annotations are better to keep close to type.
- * Due to limitations Checkstyle can not examin target of annotation.
+ * Due to limitations, Checkstyle can not examine the target of an annotation.
  * </p>
  *
  * <p>
@@ -50,21 +51,21 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * </pre>
  *
  * <p>
- * Check have following options:
+ * The check has the following options:
  * </p>
  * <ul>
  * <li>allowSamelineMultipleAnnotations - to allow annotation to be located on
- * the same line as target element. Default value is false.
+ * the same line as the target element. Default value is false.
  * </li>
  *
  * <li>
  * allowSamelineSingleParameterlessAnnotation - to allow single parameterless
- * annotation to be located on the same line as target element. Default value is false.
+ * annotation to be located on the same line as the target element. Default value is false.
  * </li>
  *
  * <li>
  * allowSamelineParameterizedAnnotation - to allow parameterized annotation
- * to be located on the same line as target element. Default value is false.
+ * to be located on the same line as the target element. Default value is false.
  * </li>
  * </ul>
  * <br>
@@ -75,7 +76,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * &#64;Override public int hashCode() { ... }
  * </pre>
  *
- * <p>Use following configuration:
+ * <p>Use the following configuration:
  * <pre>
  * &lt;module name=&quot;AnnotationLocation&quot;&gt;
  *    &lt;property name=&quot;allowSamelineMultipleAnnotations&quot; value=&quot;false&quot;/&gt;
@@ -93,7 +94,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * &#64;SuppressWarnings("deprecation") &#64;Mock DataLoader loader;
  * </pre>
  *
- * <p>Use following configuration:
+ * <p>Use the following configuration:
  * <pre>
  * &lt;module name=&quot;AnnotationLocation&quot;&gt;
  *    &lt;property name=&quot;allowSamelineMultipleAnnotations&quot; value=&quot;true&quot;/&gt;
@@ -111,7 +112,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * &#64;Partial &#64;Mock DataLoader loader;
  * </pre>
  *
- * <p>Use following configuration:
+ * <p>Use the following configuration:
  * <pre>
  * &lt;module name=&quot;AnnotationLocation&quot;&gt;
  *    &lt;property name=&quot;allowSamelineMultipleAnnotations&quot; value=&quot;true&quot;/&gt;
@@ -158,7 +159,9 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author maxvetrenko
  */
+@StatelessCheck
 public class AnnotationLocationCheck extends AbstractCheck {
+
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -263,34 +266,39 @@ public class AnnotationLocationCheck extends AbstractCheck {
         final DetailAST modifiersNode = ast.findFirstToken(TokenTypes.MODIFIERS);
 
         if (hasAnnotations(modifiersNode)) {
-            checkAnnotations(modifiersNode, getAnnotationLevel(modifiersNode));
+            checkAnnotations(modifiersNode, getExpectedAnnotationIndentation(modifiersNode));
         }
     }
 
     /**
-     * Some javadoc.
-     * @param modifierNode Some javadoc.
-     * @return Some javadoc.
+     * Checks whether a given modifier node has an annotation.
+     * @param modifierNode modifier node.
+     * @return true if the given modifier node has the annotation.
      */
     private static boolean hasAnnotations(DetailAST modifierNode) {
-        return modifierNode != null && modifierNode.findFirstToken(TokenTypes.ANNOTATION) != null;
+        return modifierNode != null
+            && modifierNode.findFirstToken(TokenTypes.ANNOTATION) != null;
     }
 
     /**
-     * Some javadoc.
-     * @param modifierNode Some javadoc.
-     * @return Some javadoc.
+     * Returns an expected annotation indentation.
+     * The expected indentation should be the same as the indentation of the node
+     * which is the parent of the target modifier node.
+     * @param modifierNode modifier node.
+     * @return the annotation indentation.
      */
-    private static int getAnnotationLevel(DetailAST modifierNode) {
+    private static int getExpectedAnnotationIndentation(DetailAST modifierNode) {
         return modifierNode.getParent().getColumnNo();
     }
 
     /**
-     * Some javadoc.
-     * @param modifierNode Some javadoc.
-     * @param correctLevel Some javadoc.
+     * Checks annotations positions in code:
+     * 1) Checks whether the annotations locations are correct.
+     * 2) Checks whether the annotations have the valid indentation level.
+     * @param modifierNode modifiers node.
+     * @param correctIndentation correct indentation of the annotation.
      */
-    private void checkAnnotations(DetailAST modifierNode, int correctLevel) {
+    private void checkAnnotations(DetailAST modifierNode, int correctIndentation) {
         DetailAST annotation = modifierNode.getFirstChild();
 
         while (annotation != null && annotation.getType() == TokenTypes.ANNOTATION) {
@@ -300,27 +308,27 @@ public class AnnotationLocationCheck extends AbstractCheck {
                 log(annotation.getLineNo(),
                         MSG_KEY_ANNOTATION_LOCATION_ALONE, getAnnotationName(annotation));
             }
-            else if (annotation.getColumnNo() != correctLevel && !hasNodeBefore(annotation)) {
+            else if (annotation.getColumnNo() != correctIndentation && !hasNodeBefore(annotation)) {
                 log(annotation.getLineNo(), MSG_KEY_ANNOTATION_LOCATION,
-                    getAnnotationName(annotation), annotation.getColumnNo(), correctLevel);
+                    getAnnotationName(annotation), annotation.getColumnNo(), correctIndentation);
             }
             annotation = annotation.getNextSibling();
         }
     }
 
     /**
-     * Some javadoc.
-     * @param annotation Some javadoc.
-     * @return Some javadoc.
+     * Checks whether an annotation has parameters.
+     * @param annotation annotation node.
+     * @return true if the annotation has parameters.
      */
     private static boolean isParameterized(DetailAST annotation) {
         return annotation.findFirstToken(TokenTypes.EXPR) != null;
     }
 
     /**
-     * Some javadoc.
-     * @param annotation Some javadoc.
-     * @return Some javadoc.
+     * Returns the name of the given annotation.
+     * @param annotation annotation node.
+     * @return annotation name.
      */
     private static String getAnnotationName(DetailAST annotation) {
         DetailAST identNode = annotation.findFirstToken(TokenTypes.IDENT);
@@ -331,10 +339,19 @@ public class AnnotationLocationCheck extends AbstractCheck {
     }
 
     /**
-     * Some javadoc.
-     * @param annotation Some javadoc.
-     * @param hasParams Some javadoc.
-     * @return Some javadoc.
+     * Checks whether an annotation has a correct location.
+     * Annotation location is considered correct
+     * if {@link AnnotationLocationCheck#allowSamelineMultipleAnnotations} is set to true.
+     * The method also:
+     * 1) checks parameterized annotation location considering
+     * the value of {@link AnnotationLocationCheck#allowSamelineParameterizedAnnotation};
+     * 2) checks parameterless annotation location considering
+     * the value of {@link AnnotationLocationCheck#allowSamelineSingleParameterlessAnnotation};
+     * 3) checks annotation location considering the elements
+     * of {@link AnnotationLocationCheck#SINGLELINE_ANNOTATION_PARENTS};
+     * @param annotation annotation node.
+     * @param hasParams whether an annotation has parameters.
+     * @return true if the annotation has a correct location.
      */
     private boolean isCorrectLocation(DetailAST annotation, boolean hasParams) {
         final boolean allowingCondition;
@@ -352,9 +369,9 @@ public class AnnotationLocationCheck extends AbstractCheck {
     }
 
     /**
-     * Some javadoc.
-     * @param annotation Some javadoc.
-     * @return Some javadoc.
+     * Checks whether an annotation node has any node before on the same line.
+     * @param annotation annotation node.
+     * @return true if an annotation node has any node before on the same line.
      */
     private static boolean hasNodeBefore(DetailAST annotation) {
         final int annotationLineNo = annotation.getLineNo();
@@ -364,18 +381,18 @@ public class AnnotationLocationCheck extends AbstractCheck {
     }
 
     /**
-     * Some javadoc.
-     * @param annotation Some javadoc.
-     * @return Some javadoc.
+     * Checks whether an annotation node has any node before or after on the same line.
+     * @param annotation annotation node.
+     * @return true if an annotation node has any node before or after on the same line.
      */
     private static boolean hasNodeBeside(DetailAST annotation) {
         return hasNodeBefore(annotation) || hasNodeAfter(annotation);
     }
 
     /**
-     * Some javadoc.
-     * @param annotation Some javadoc.
-     * @return Some javadoc.
+     * Checks whether an annotation node has any node after on the same line.
+     * @param annotation annotation node.
+     * @return true if an annotation node has any node after on the same line.
      */
     private static boolean hasNodeAfter(DetailAST annotation) {
         final int annotationLineNo = annotation.getLineNo();
@@ -394,7 +411,7 @@ public class AnnotationLocationCheck extends AbstractCheck {
      * @param allowedPositions an array of allowed annotation positions.
      * @return true if position of annotation is allowed.
      */
-    public static boolean isAllowedPosition(DetailAST annotation, int... allowedPositions) {
+    private static boolean isAllowedPosition(DetailAST annotation, int... allowedPositions) {
         boolean allowed = false;
         for (int position : allowedPositions) {
             if (isInSpecificCodeBlock(annotation, position)) {
@@ -422,4 +439,5 @@ public class AnnotationLocationCheck extends AbstractCheck {
         }
         return returnValue;
     }
+
 }

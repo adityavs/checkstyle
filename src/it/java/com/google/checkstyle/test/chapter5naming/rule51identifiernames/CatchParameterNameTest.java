@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,32 +19,31 @@
 
 package com.google.checkstyle.test.chapter5naming.rule51identifiernames;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.google.checkstyle.test.base.BaseCheckTestSupport;
+import com.google.checkstyle.test.base.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 
-public class CatchParameterNameTest extends BaseCheckTestSupport {
+public class CatchParameterNameTest extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String fileName) throws IOException {
-        return super.getPath("chapter5naming" + File.separator + "rule51identifiernames"
-            + File.separator + fileName);
+    protected String getPackageLocation() {
+        return "com/google/checkstyle/test/chapter5naming/rule51identifiernames";
     }
 
     @Test
-    public void catchParameterNameTest() throws Exception {
-        final Configuration checkConfig = getCheckConfig("CatchParameterName");
+    public void testCatchParameterName() throws Exception {
         final String msgKey = "name.invalidPattern";
-        final String format = "^[a-z][a-z0-9][a-zA-Z0-9]*$";
+        final Configuration checkConfig = getModuleConfig("CatchParameterName");
+        final String format = checkConfig.getAttribute("format");
 
         final String[] expected = {
-            "6:28: " + getCheckMessage(checkConfig.getMessages(), msgKey, "e", format),
-            "24:28: " + getCheckMessage(checkConfig.getMessages(), msgKey, "t", format),
             "47:28: " + getCheckMessage(checkConfig.getMessages(), msgKey, "iException", format),
-            "50:28: " + getCheckMessage(checkConfig.getMessages(), msgKey, "x", format),
+            "50:28: " + getCheckMessage(checkConfig.getMessages(), msgKey, "ex_1", format),
+            "53:28: " + getCheckMessage(checkConfig.getMessages(), msgKey, "eX", format),
+            "56:28: " + getCheckMessage(checkConfig.getMessages(), msgKey, "eXX", format),
+            "59:28: " + getCheckMessage(checkConfig.getMessages(), msgKey, "x_y_z", format),
+            "62:28: " + getCheckMessage(checkConfig.getMessages(), msgKey, "Ex", format),
         };
 
         final String filePath = getPath("InputCatchParameterName.java");
@@ -52,4 +51,5 @@ public class CatchParameterNameTest extends BaseCheckTestSupport {
         final Integer[] warnList = getLinesWithWarn(filePath);
         verify(checkConfig, filePath, expected, warnList);
     }
+
 }

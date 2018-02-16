@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,16 +19,18 @@
 
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.AnnotationUtility;
+import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
 
 /**
  * <p>
@@ -51,6 +53,7 @@ import com.puppycrawl.tools.checkstyle.utils.AnnotationUtility;
  * @author John Sirois
  * @author <a href="mailto:nesterenko-aleksey@list.ru">Aleksey Nesterenko</a>
  */
+@StatelessCheck
 public final class IllegalThrowsCheck extends AbstractCheck {
 
     /**
@@ -61,11 +64,12 @@ public final class IllegalThrowsCheck extends AbstractCheck {
 
     /** Methods which should be ignored. */
     private final Set<String> ignoredMethodNames =
-        Stream.of("finalize").collect(Collectors.toSet());
+        Arrays.stream(new String[] {"finalize", }).collect(Collectors.toSet());
 
     /** Illegal class names. */
-    private final Set<String> illegalClassNames = Stream.of("Error", "RuntimeException",
-        "Throwable", "java.lang.Error", "java.lang.RuntimeException", "java.lang.Throwable")
+    private final Set<String> illegalClassNames = Arrays.stream(
+        new String[] {"Error", "RuntimeException", "Throwable", "java.lang.Error",
+                      "java.lang.RuntimeException", "java.lang.Throwable", })
         .collect(Collectors.toSet());
 
     /** Property for ignoring overridden methods. */
@@ -79,38 +83,31 @@ public final class IllegalThrowsCheck extends AbstractCheck {
      */
     public void setIllegalClassNames(final String... classNames) {
         illegalClassNames.clear();
-        for (final String name : classNames) {
-            illegalClassNames.add(name);
-            final int lastDot = name.lastIndexOf('.');
-            if (lastDot > 0 && lastDot < name.length() - 1) {
-                final String shortName = name
-                        .substring(name.lastIndexOf('.') + 1);
-                illegalClassNames.add(shortName);
-            }
-        }
+        illegalClassNames.addAll(
+                CheckUtils.parseClassNames(classNames));
     }
 
     @Override
     public int[] getDefaultTokens() {
-        return new int[] {TokenTypes.LITERAL_THROWS};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getDefaultTokens();
+        return new int[] {TokenTypes.LITERAL_THROWS};
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.LITERAL_THROWS};
+        return getRequiredTokens();
     }
 
     @Override
     public void visitToken(DetailAST detailAST) {
         final DetailAST methodDef = detailAST.getParent();
-        DetailAST token = detailAST.getFirstChild();
         // Check if the method with the given name should be ignored.
         if (!isIgnorableMethod(methodDef)) {
+            DetailAST token = detailAST.getFirstChild();
             while (token != null) {
                 if (token.getType() != TokenTypes.COMMA) {
                     final FullIdent ident = FullIdent.createFullIdent(token);
@@ -160,4 +157,5 @@ public final class IllegalThrowsCheck extends AbstractCheck {
     public void setIgnoreOverriddenMethods(boolean ignoreOverriddenMethods) {
         this.ignoreOverriddenMethods = ignoreOverriddenMethods;
     }
+
 }

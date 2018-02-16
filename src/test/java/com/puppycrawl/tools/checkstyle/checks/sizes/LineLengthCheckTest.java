@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,59 +22,54 @@ package com.puppycrawl.tools.checkstyle.checks.sizes;
 import static com.puppycrawl.tools.checkstyle.checks.sizes.LineLengthCheck.MSG_KEY;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-public class LineLengthCheckTest extends BaseCheckTestSupport {
-    @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "sizes" + File.separator + filename);
-    }
+public class LineLengthCheckTest extends AbstractModuleTestSupport {
 
     @Override
-    protected String getNonCompilablePath(String filename) throws IOException {
-        return super.getNonCompilablePath("checks" + File.separator
-                + "sizes" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/sizes/linelength";
     }
 
     @Test
     public void testGetRequiredTokens() {
         final LineLengthCheck checkObj = new LineLengthCheck();
-        assertArrayEquals(CommonUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
+        assertArrayEquals(
+            "LineLengthCheck#getRequiredTokens should return empty array by default",
+            CommonUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testGetAcceptableTokens() {
         final LineLengthCheck checkObj = new LineLengthCheck();
-        assertArrayEquals(CommonUtils.EMPTY_INT_ARRAY, checkObj.getAcceptableTokens());
+        assertArrayEquals(
+            "LineLengthCheck#getAcceptabletokens should return empty array by default",
+            CommonUtils.EMPTY_INT_ARRAY, checkObj.getAcceptableTokens());
     }
 
     @Test
     public void testSimple()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(LineLengthCheck.class);
+            createModuleConfig(LineLengthCheck.class);
         checkConfig.addAttribute("max", "80");
         checkConfig.addAttribute("ignorePattern", "^.*is OK.*regexp.*$");
         final String[] expected = {
             "18: " + getCheckMessage(MSG_KEY, 80, 81),
             "145: " + getCheckMessage(MSG_KEY, 80, 83),
         };
-        verify(checkConfig, getPath("InputSimple.java"), expected);
+        verify(checkConfig, getPath("InputLineLengthSimple.java"), expected);
     }
 
     @Test
     public void shouldLogActualLineLength()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(LineLengthCheck.class);
+            createModuleConfig(LineLengthCheck.class);
         checkConfig.addAttribute("max", "80");
         checkConfig.addAttribute("ignorePattern", "^.*is OK.*regexp.*$");
         checkConfig.addMessage("maxLineLen", "{0},{1}");
@@ -82,28 +77,30 @@ public class LineLengthCheckTest extends BaseCheckTestSupport {
             "18: 80,81",
             "145: 80,83",
         };
-        verify(checkConfig, getPath("InputSimple.java"), expected);
+        verify(checkConfig, getPath("InputLineLengthSimple.java"), expected);
     }
 
     @Test
     public void shouldNotLogLongImportStatements() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(LineLengthCheck.class);
+            createModuleConfig(LineLengthCheck.class);
         checkConfig.addAttribute("max", "80");
         final String[] expected = {
             "9: " + getCheckMessage(MSG_KEY, 80, 87),
         };
-        verify(checkConfig, getPath("InputLongImportStatements.java"), expected);
+        verify(checkConfig, getPath("InputLineLengthLongImportStatements.java"), expected);
     }
 
     @Test
     public void shouldNotLogLongPackageStatements() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(LineLengthCheck.class);
+            createModuleConfig(LineLengthCheck.class);
         checkConfig.addAttribute("max", "80");
         final String[] expected = {
             "6: " + getCheckMessage(MSG_KEY, 80, 88),
         };
-        verify(checkConfig, getNonCompilablePath("InputLongPackageStatement.java"), expected);
+        verify(checkConfig, getNonCompilablePath("InputLineLengthLongPackageStatement.java"),
+                expected);
     }
+
 }

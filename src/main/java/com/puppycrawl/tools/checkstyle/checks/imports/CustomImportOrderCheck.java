@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,10 +25,12 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * <p>
@@ -157,7 +159,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *          <td>string</td><td>null</td></tr>
  *      <tr><td>standardPackageRegExp</td><td>RegExp for STANDARD_JAVA_PACKAGE group imports.</td>
  *          <td>regular expression</td><td>^(java|javax)\.</td></tr>
- *      <tr><td>thirdPartyPackageRegExp</td><td>RegExp for THIRDPARTY_PACKAGE group imports.</td>
+ *      <tr><td>thirdPartyPackageRegExp</td><td>RegExp for THIRD_PARTY_PACKAGE group imports.</td>
  *          <td>regular expression</td><td>.*</td></tr>
  *      <tr><td>specialImportsRegExp</td><td>RegExp for SPECIAL_IMPORTS group imports.</td>
  *          <td>regular expression</td><td>^$</td></tr>
@@ -301,6 +303,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author maxvetrenko
  * @author <a href="mailto:nesterenko-aleksey@list.ru">Aleksey Nesterenko</a>
  */
+@FileStatefulCheck
 public class CustomImportOrderCheck extends AbstractCheck {
 
     /**
@@ -366,7 +369,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
     /** RegExp for STANDARD_JAVA_PACKAGE group imports. */
     private Pattern standardPackageRegExp = Pattern.compile("^(java|javax)\\.");
 
-    /** RegExp for THIRDPARTY_PACKAGE group imports. */
+    /** RegExp for THIRD_PARTY_PACKAGE group imports. */
     private Pattern thirdPartyPackageRegExp = Pattern.compile(".*");
 
     /** RegExp for SPECIAL_IMPORTS group imports. */
@@ -433,7 +436,6 @@ public class CustomImportOrderCheck extends AbstractCheck {
      *        user value.
      */
     public final void setCustomImportOrderRules(final String inputCustomImportOrder) {
-        customImportOrderRules.clear();
         for (String currentState : GROUP_SEPARATOR_PATTERN.split(inputCustomImportOrder)) {
             addRulesToList(currentState);
         }
@@ -442,21 +444,21 @@ public class CustomImportOrderCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
+        return getRequiredTokens();
+    }
+
+    @Override
+    public int[] getRequiredTokens() {
         return new int[] {
             TokenTypes.IMPORT,
             TokenTypes.STATIC_IMPORT,
             TokenTypes.PACKAGE_DEF,
         };
-    }
-
-    @Override
-    public int[] getRequiredTokens() {
-        return getAcceptableTokens();
     }
 
     @Override
@@ -484,7 +486,6 @@ public class CustomImportOrderCheck extends AbstractCheck {
 
     @Override
     public void finishTree(DetailAST rootAST) {
-
         if (!importToGroupList.isEmpty()) {
             finishImportList();
         }
@@ -502,6 +503,9 @@ public class CustomImportOrderCheck extends AbstractCheck {
             final String importGroup = importObject.getImportGroup();
             final String fullImportIdent = importObject.getImportFullPath();
 
+            if (getCountOfEmptyLinesBefore(importObject.getLineNumber()) > 1) {
+                log(importObject.getLineNumber(), MSG_LINE_SEPARATOR, fullImportIdent);
+            }
             if (importGroup.equals(currentGroup)) {
                 if (sortImportsInGroupAlphabetically
                         && previousImportFromCurrentGroup != null
@@ -519,7 +523,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
                     final String nextGroup = getNextImportGroup(currentGroupNumber + 1);
                     if (importGroup.equals(nextGroup)) {
                         if (separateLineBetweenGroups
-                                && !hasEmptyLineBefore(importObject.getLineNumber())) {
+                                && getCountOfEmptyLinesBefore(importObject.getLineNumber()) == 0) {
                             log(importObject.getLineNumber(), MSG_LINE_SEPARATOR, fullImportIdent);
                         }
                         currentGroup = nextGroup;
@@ -590,12 +594,14 @@ public class CustomImportOrderCheck extends AbstractCheck {
      *        true, if current group contains at least one import.
      */
     private boolean hasAnyImportInCurrentGroup(String currentGroup) {
+        boolean result = false;
         for (ImportDetails currentImport : importToGroupList) {
             if (currentGroup.equals(currentImport.getImportGroup())) {
-                return true;
+                result = true;
+                break;
             }
         }
-        return false;
+        return result;
     }
 
     /**
@@ -614,7 +620,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
         }
         else if (customImportOrderRules.contains(SAME_PACKAGE_RULE_GROUP)) {
             final String importPathTrimmedToSamePackageDepth =
-                    getFirstNDomainsFromIdent(samePackageMatchingDepth, importPath);
+                    getFirstDomainsFromIdent(samePackageMatchingDepth, importPath);
             if (samePackageDomainsRegExp.equals(importPathTrimmedToSamePackageDepth)) {
                 bestMatch.group = SAME_PACKAGE_RULE_GROUP;
                 bestMatch.matchLength = importPath.length();
@@ -628,7 +634,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
                 }
                 if (SPECIAL_IMPORTS_RULE_GROUP.equals(group)) {
                     bestMatch = findBetterPatternMatch(importPath,
-                            SPECIAL_IMPORTS_RULE_GROUP, specialImportsRegExp, bestMatch);
+                            group, specialImportsRegExp, bestMatch);
                 }
             }
         }
@@ -683,7 +689,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
         final String separator = "\\.";
         final String[] import1Tokens = import1.split(separator);
         final String[] import2Tokens = import2.split(separator);
-        for (int i = 0; i < import1Tokens.length && i != import2Tokens.length; i++) {
+        for (int i = 0; i != import1Tokens.length && i != import2Tokens.length; i++) {
             final String import1Token = import1Tokens[i];
             final String import2Token = import2Tokens[i];
             result = import1Token.compareTo(import2Token);
@@ -691,20 +697,30 @@ public class CustomImportOrderCheck extends AbstractCheck {
                 break;
             }
         }
+        if (result == 0) {
+            result = Integer.compare(import1Tokens.length, import2Tokens.length);
+        }
         return result;
     }
 
     /**
-     * Checks if a token has a empty line before.
+     * Counts empty lines before given.
      * @param lineNo
      *        Line number of current import.
-     * @return true, if token have empty line before.
+     * @return count of empty lines before given.
      */
-    private boolean hasEmptyLineBefore(int lineNo) {
+    private int getCountOfEmptyLinesBefore(int lineNo) {
+        int result = 0;
+        final String[] lines = getLines();
         //  [lineNo - 2] is the number of the previous line
         //  because the numbering starts from zero.
-        final String lineBefore = getLine(lineNo - 2);
-        return lineBefore.trim().isEmpty();
+        int lineBeforeIndex = lineNo - 2;
+        while (lineBeforeIndex >= 0
+                && CommonUtils.isBlank(lines[lineBeforeIndex])) {
+            lineBeforeIndex--;
+            result++;
+        }
+        return result;
     }
 
     /**
@@ -714,12 +730,11 @@ public class CustomImportOrderCheck extends AbstractCheck {
      * @return full path or null.
      */
     private static String getFullImportIdent(DetailAST token) {
-        if (token == null) {
-            return "";
+        String ident = "";
+        if (token != null) {
+            ident = FullIdent.createFullIdent(token.findFirstToken(TokenTypes.DOT)).getText();
         }
-        else {
-            return FullIdent.createFullIdent(token.findFirstToken(TokenTypes.DOT)).getText();
-        }
+        return ident;
     }
 
     /**
@@ -733,10 +748,8 @@ public class CustomImportOrderCheck extends AbstractCheck {
                 || STANDARD_JAVA_PACKAGE_RULE_GROUP.equals(ruleStr)
                 || SPECIAL_IMPORTS_RULE_GROUP.equals(ruleStr)) {
             customImportOrderRules.add(ruleStr);
-
         }
         else if (ruleStr.startsWith(SAME_PACKAGE_RULE_GROUP)) {
-
             final String rule = ruleStr.substring(ruleStr.indexOf('(') + 1,
                     ruleStr.indexOf(')'));
             samePackageMatchingDepth = Integer.parseInt(rule);
@@ -745,7 +758,6 @@ public class CustomImportOrderCheck extends AbstractCheck {
                         "SAME_PACKAGE rule parameter should be positive integer: " + ruleStr);
             }
             customImportOrderRules.add(SAME_PACKAGE_RULE_GROUP);
-
         }
         else {
             throw new IllegalStateException("Unexpected rule: " + ruleStr);
@@ -763,11 +775,11 @@ public class CustomImportOrderCheck extends AbstractCheck {
     private static String createSamePackageRegexp(int firstPackageDomainsCount,
              DetailAST packageNode) {
         final String packageFullPath = getFullImportIdent(packageNode);
-        return getFirstNDomainsFromIdent(firstPackageDomainsCount, packageFullPath);
+        return getFirstDomainsFromIdent(firstPackageDomainsCount, packageFullPath);
     }
 
     /**
-     * Extracts defined amount of domains from the left side of package/import identifier
+     * Extracts defined amount of domains from the left side of package/import identifier.
      * @param firstPackageDomainsCount
      *        number of first package domains.
      * @param packageFullPath
@@ -775,9 +787,9 @@ public class CustomImportOrderCheck extends AbstractCheck {
      * @return String with defined amount of domains or full identifier
      *        (if full identifier had less domain then specified)
      */
-    private static String getFirstNDomainsFromIdent(
+    private static String getFirstDomainsFromIdent(
             final int firstPackageDomainsCount, final String packageFullPath) {
-        final StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder(256);
         final StringTokenizer tokens = new StringTokenizer(packageFullPath, ".");
         int count = firstPackageDomainsCount;
 
@@ -794,6 +806,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
      * @author max
      */
     private static class ImportDetails {
+
         /** Import full path. */
         private final String importFullPath;
 
@@ -807,6 +820,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
         private final boolean staticImport;
 
         /**
+         * Initialise importFullPath, lineNumber, importGroup, staticImport.
          * @param importFullPath
          *        import full path.
          * @param lineNumber
@@ -855,6 +869,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
         public boolean isStaticImport() {
             return staticImport;
         }
+
     }
 
     /**
@@ -863,6 +878,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
      * @author ivanov-alex
      */
     private static class RuleMatchForImport {
+
         /** Position of matching string for current best match. */
         private final int matchPosition;
         /** Length of matching string for current best match. */
@@ -883,5 +899,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
             matchLength = length;
             matchPosition = position;
         }
+
     }
+
 }

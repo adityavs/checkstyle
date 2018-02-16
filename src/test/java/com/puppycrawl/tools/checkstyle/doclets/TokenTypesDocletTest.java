@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,21 +19,26 @@
 
 package com.puppycrawl.tools.checkstyle.doclets;
 
-import static com.puppycrawl.tools.checkstyle.internal.TestUtils.assertUtilsClassHasPrivateConstructor;
+import static com.puppycrawl.tools.checkstyle.internal.utils.TestUtil.isUtilsClassHasPrivateConstructor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.tools.JavaFileObject;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.puppycrawl.tools.checkstyle.AbstractPathTestSupport;
 import com.sun.javadoc.RootDoc;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.ListBuffer;
@@ -41,23 +46,26 @@ import com.sun.tools.javadoc.JavadocTool;
 import com.sun.tools.javadoc.Messager;
 import com.sun.tools.javadoc.ModifierFilter;
 
-public class TokenTypesDocletTest {
-    private static String getPath(String filename) {
-        return "src/test/resources/com/puppycrawl/tools/checkstyle/doclets/" + filename;
+public class TokenTypesDocletTest extends AbstractPathTestSupport {
+
+    @Override
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/doclets/tokentypesdoclet";
     }
 
     @Test
     public void testIsProperUtilsClass() throws ReflectiveOperationException {
-        assertUtilsClassHasPrivateConstructor(TokenTypesDoclet.class);
+        assertTrue("Constructor is not private",
+                isUtilsClassHasPrivateConstructor(TokenTypesDoclet.class, true));
     }
 
     @Test
     public void testOptionLength() {
         // optionLength returns 2 for option "-destfile"
-        assertEquals(2, TokenTypesDoclet.optionLength("-destfile"));
+        assertEquals("Invalid option length", 2, TokenTypesDoclet.optionLength("-destfile"));
 
         // optionLength returns 0 for options different from "-destfile"
-        assertEquals(0, TokenTypesDoclet.optionLength("-anyOtherOption"));
+        assertEquals("Invalid option length", 0, TokenTypesDoclet.optionLength("-anyOtherOption"));
     }
 
     @Test
@@ -65,24 +73,25 @@ public class TokenTypesDocletTest {
         final Context context = new Context();
         final TestMessager testMessager = new TestMessager(context);
 
-        //pass invalid options - empty array
         final String[][] options = new String[3][1];
-        assertFalse(TokenTypesDoclet.checkOptions(options, testMessager));
+        assertFalse("Should return false when options are empty",
+                TokenTypesDoclet.checkOptions(options, testMessager));
 
-        //pass valid options - array with one "-destfile" option
         options[0][0] = "-destfile";
-        assertTrue(TokenTypesDoclet.checkOptions(options, testMessager));
+        assertTrue("Should return true when options are valid",
+                TokenTypesDoclet.checkOptions(options, testMessager));
 
         //pass invalid options - array with more than one "-destfile" option
         options[1][0] = "-destfile";
-        assertFalse(TokenTypesDoclet.checkOptions(options, testMessager));
+        assertFalse("Should return false when more then one '-destfile' option passed",
+                TokenTypesDoclet.checkOptions(options, testMessager));
 
         final String[] expected = {
             "Usage: javadoc -destfile file -doclet TokenTypesDoclet ...",
             "Only one -destfile option allowed.",
         };
 
-        Assert.assertArrayEquals(expected, testMessager.messages.toArray());
+        Assert.assertArrayEquals("Invalid message", expected, testMessager.messages.toArray());
     }
 
     @Test
@@ -99,11 +108,12 @@ public class TokenTypesDocletTest {
         names.add(getPath("InputTokenTypesDocletNotConstants.java"));
 
         final Context context = new Context();
-        new TestMessager(context);
+        final TestMessager test = new TestMessager(context);
+        assertNotNull("should be able to create TestMessager without issue", test);
         final JavadocTool javadocTool = JavadocTool.make0(context);
         final RootDoc rootDoc = getRootDoc(javadocTool, options, names);
 
-        assertTrue(TokenTypesDoclet.start(rootDoc));
+        assertTrue("Should process valid root doc", TokenTypesDoclet.start(rootDoc));
     }
 
     @Test
@@ -115,7 +125,8 @@ public class TokenTypesDocletTest {
         names.add(getPath("InputTokenTypesDocletEmptyJavadoc.java"));
 
         final Context context = new Context();
-        new TestMessager(context);
+        final TestMessager test = new TestMessager(context);
+        assertNotNull("should be able to create TestMessager without issue", test);
         final JavadocTool javadocTool = JavadocTool.make0(context);
         final RootDoc rootDoc = getRootDoc(javadocTool, options, names);
 
@@ -139,11 +150,34 @@ public class TokenTypesDocletTest {
         names.add(getPath("InputTokenTypesDocletCorrect.java"));
 
         final Context context = new Context();
-        new TestMessager(context);
+        final TestMessager test = new TestMessager(context);
+        assertNotNull("should be able to create TestMessager without issue", test);
         final JavadocTool javadocTool = JavadocTool.make0(context);
         final RootDoc rootDoc = getRootDoc(javadocTool, options, names);
 
-        assertTrue(TokenTypesDoclet.start(rootDoc));
+        assertTrue("Should process valid root doc", TokenTypesDoclet.start(rootDoc));
+        final String fileContent =
+                FileUtils.readFileToString(new File("target/tokentypes.properties"),
+                        StandardCharsets.UTF_8);
+        assertTrue("File content is not expected",
+                fileContent.startsWith("EOF=The end of file token."));
+    }
+
+    @Test
+    public void testJavadocTagPassValidation() throws Exception {
+        final ListBuffer<String[]> options = new ListBuffer<>();
+        options.add(new String[] {"-destfile", "target/tokentypes.properties"});
+
+        final ListBuffer<String> names = new ListBuffer<>();
+        names.add(getPath("InputTokenTypesDocletJavadocParseError.java"));
+
+        final Context context = new Context();
+        final TestMessager test = new TestMessager(context);
+        assertNotNull("should be able to create TestMessager without issue", test);
+        final JavadocTool javadocTool = JavadocTool.make0(context);
+        final RootDoc rootDoc = getRootDoc(javadocTool, options, names);
+
+        assertTrue("Should process valid root doc", TokenTypesDoclet.start(rootDoc));
     }
 
     private static RootDoc getRootDoc(JavadocTool javadocTool, ListBuffer<String[]> options,
@@ -151,7 +185,8 @@ public class TokenTypesDocletTest {
         final Method getRootDocImpl = getMethodGetRootDocImplByReflection();
         final RootDoc rootDoc;
         if (System.getProperty("java.version").startsWith("1.7.")) {
-            rootDoc = (RootDoc) getRootDocImpl.invoke(javadocTool, "", "UTF-8",
+            rootDoc = (RootDoc) getRootDocImpl.invoke(javadocTool, "",
+                    StandardCharsets.UTF_8.name(),
                     new ModifierFilter(ModifierFilter.ALL_ACCESS),
                     names.toList(),
                     options.toList(),
@@ -161,7 +196,8 @@ public class TokenTypesDocletTest {
                     false, false, false);
         }
         else {
-            rootDoc = (RootDoc) getRootDocImpl.invoke(javadocTool, "", "UTF-8",
+            rootDoc = (RootDoc) getRootDocImpl.invoke(javadocTool, "",
+                    StandardCharsets.UTF_8.name(),
                     new ModifierFilter(ModifierFilter.ALL_ACCESS),
                     names.toList(),
                     options.toList(),
@@ -199,7 +235,6 @@ public class TokenTypesDocletTest {
             messages.add(message);
         }
 
-        @Override
-        public void printNotice(String message) { }
     }
+
 }

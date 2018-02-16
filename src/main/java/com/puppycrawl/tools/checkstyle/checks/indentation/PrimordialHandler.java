@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@ package com.puppycrawl.tools.checkstyle.checks.indentation;
  * @author jrichard
  */
 public class PrimordialHandler extends AbstractExpressionHandler {
+
     /**
      * Construct an instance of this handler with the given indentation check.
      *
@@ -41,11 +42,12 @@ public class PrimordialHandler extends AbstractExpressionHandler {
 
     @Override
     public IndentLevel getSuggestedChildIndent(AbstractExpressionHandler child) {
-        return new IndentLevel(0);
+        return getIndentImpl();
     }
 
     @Override
     protected IndentLevel getIndentImpl() {
         return new IndentLevel(0);
     }
+
 }

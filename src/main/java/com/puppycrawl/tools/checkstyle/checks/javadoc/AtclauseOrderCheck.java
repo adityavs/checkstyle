@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -32,7 +32,12 @@ import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
 
 /**
  * <p>
- * Checks the order of at-clauses.
+ * Checks the order of
+ * <a href="https://docs.oracle.com/javase/8/docs/technotes/tools/windows/javadoc.html#CHDBEFIF">
+ * javadoc block-tags or javadoc tags</a>.
+ * </p>
+ * <p>
+ * Note: Google used term "at-clauses" for block tags in his guide till 2017-02-28.
  * </p>
  *
  * <p>
@@ -136,16 +141,6 @@ public class AtclauseOrderCheck extends AbstractJavadocCheck {
     }
 
     @Override
-    public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.BLOCK_COMMENT_BEGIN};
-    }
-
-    @Override
-    public int[] getRequiredTokens() {
-        return getAcceptableTokens();
-    }
-
-    @Override
     public void visitJavadocToken(DetailNode ast) {
         final int parentType = getParentType(getBlockCommentAst());
 
@@ -191,4 +186,5 @@ public class AtclauseOrderCheck extends AbstractJavadocCheck {
         }
         return type;
     }
+
 }

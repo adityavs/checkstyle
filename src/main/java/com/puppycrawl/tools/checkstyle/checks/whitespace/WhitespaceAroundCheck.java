@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.whitespace;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -163,6 +164,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author maxvetrenko
  * @author Andrei Selkin
  */
+@StatelessCheck
 public class WhitespaceAroundCheck extends AbstractCheck {
 
     /**
@@ -187,6 +189,8 @@ public class WhitespaceAroundCheck extends AbstractCheck {
     private boolean allowEmptyLoops;
     /** Whether or not empty lambda blocks are allowed. */
     private boolean allowEmptyLambdas;
+    /** Whether or not empty catch blocks are allowed. */
+    private boolean allowEmptyCatches;
     /** Whether or not to ignore a colon in a enhanced for loop. */
     private boolean ignoreEnhancedForColon = true;
 
@@ -305,6 +309,7 @@ public class WhitespaceAroundCheck extends AbstractCheck {
             TokenTypes.WILDCARD_TYPE,
             TokenTypes.GENERIC_START,
             TokenTypes.GENERIC_END,
+            TokenTypes.ELLIPSIS,
         };
     }
 
@@ -360,6 +365,14 @@ public class WhitespaceAroundCheck extends AbstractCheck {
      */
     public void setAllowEmptyLambdas(boolean allow) {
         allowEmptyLambdas = allow;
+    }
+
+    /**
+     * Sets whether or not empty catch blocks are allowed.
+     * @param allow {@code true} to allow empty catch blocks.
+     */
+    public void setAllowEmptyCatches(boolean allow) {
+        allowEmptyCatches = allow;
     }
 
     @Override
@@ -423,7 +436,7 @@ public class WhitespaceAroundCheck extends AbstractCheck {
      * This function is needed to recognise double brace initialization as valid,
      * unfortunately its not possible to implement this functionality
      * in isNotRelevantSituation method, because in this method when we return
-     * true(is not relevant) ast is later doesnt check at all. For example:
+     * true(is not relevant) ast is later doesn't check at all. For example:
      * new Properties() {{setProperty("double curly braces", "are not a style error");
      * }};
      * For second left curly brace in first line when we would return true from
@@ -478,7 +491,8 @@ public class WhitespaceAroundCheck extends AbstractCheck {
         return isEmptyMethodBlock(ast, parentType)
                 || isEmptyCtorBlock(ast, parentType)
                 || isEmptyLoop(ast, parentType)
-                || isEmptyLambda(ast, parentType);
+                || isEmptyLambda(ast, parentType)
+                || isEmptyCatch(ast, parentType);
     }
 
     /**
@@ -497,18 +511,21 @@ public class WhitespaceAroundCheck extends AbstractCheck {
      *         node.
      */
     private static boolean isEmptyBlock(DetailAST ast, int parentType, int match) {
+        final boolean result;
         final int type = ast.getType();
         if (type == TokenTypes.RCURLY) {
             final DetailAST parent = ast.getParent();
             final DetailAST grandParent = ast.getParent().getParent();
-            return parentType == TokenTypes.SLIST
+            result = parentType == TokenTypes.SLIST
                     && parent.getFirstChild().getType() == TokenTypes.RCURLY
                     && grandParent.getType() == match;
         }
-
-        return type == TokenTypes.SLIST
+        else {
+            result = type == TokenTypes.SLIST
                 && parentType == match
                 && ast.getFirstChild().getType() == TokenTypes.RCURLY;
+        }
+        return result;
     }
 
     /**
@@ -574,7 +591,7 @@ public class WhitespaceAroundCheck extends AbstractCheck {
     }
 
     /**
-     *
+     * Checks if loop is empty.
      * @param ast ast the {@code DetailAST} to test.
      * @param parentType the token type of {@code ast}'s parent.
      * @return {@code true} if {@code ast} makes up part of an
@@ -597,6 +614,18 @@ public class WhitespaceAroundCheck extends AbstractCheck {
      */
     private boolean isEmptyLambda(DetailAST ast, int parentType) {
         return allowEmptyLambdas && isEmptyBlock(ast, parentType, TokenTypes.LAMBDA);
+    }
+
+    /**
+     * Tests if the given {@code DetailAst} is part of an allowed empty
+     * catch block.
+     * @param ast the {@code DetailAst} to test.
+     * @param parentType the token type of {@code ast}'s parent
+     * @return {@code true} if {@code ast} makes up part of an
+     *         allowed empty catch block.
+     */
+    private boolean isEmptyCatch(DetailAST ast, int parentType) {
+        return allowEmptyCatches && isEmptyBlock(ast, parentType, TokenTypes.LITERAL_CATCH);
     }
 
     /**
@@ -654,4 +683,5 @@ public class WhitespaceAroundCheck extends AbstractCheck {
             && ast.getParent().getParent().getNextSibling().getType() == TokenTypes.RCURLY;
         return classBeginBeforeInitializerBegin || initalizerEndsBeforeClassEnds;
     }
+
 }

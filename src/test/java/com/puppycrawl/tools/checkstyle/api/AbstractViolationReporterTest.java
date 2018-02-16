@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,6 @@ import java.util.SortedSet;
 
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
@@ -36,7 +35,8 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author lkuehne
  */
-public class AbstractViolationReporterTest extends BaseCheckTestSupport {
+public class AbstractViolationReporterTest {
+
     private final AbstractCheck emptyCheck = new EmptyCheck();
 
     private static Method getGetMessageBundleMethod() throws Exception {
@@ -48,78 +48,82 @@ public class AbstractViolationReporterTest extends BaseCheckTestSupport {
         return getMessageBundleMethod;
     }
 
+    protected static DefaultConfiguration createModuleConfig(Class<?> clazz) {
+        return new DefaultConfiguration(clazz.getName());
+    }
+
     @Test
     public void testGetMessageBundleWithPackage() throws Exception {
-        assertEquals("com.mycompany.checks.messages",
+        assertEquals("Message bundle differs from expected",
+                "com.mycompany.checks.messages",
             getGetMessageBundleMethod().invoke(null, "com.mycompany.checks.MyCoolCheck"));
     }
 
     @Test
     public void testGetMessageBundleWithoutPackage() throws Exception {
-        assertEquals("messages",
+        assertEquals("Message bundle differs from expected",
+                "messages",
             getGetMessageBundleMethod().invoke(null, "MyCoolCheck"));
     }
 
     @Test
     public void testCustomId() {
         emptyCheck.setId("MyId");
-        assertEquals("MyId", emptyCheck.getId());
+        assertEquals("Id differs from expected", "MyId", emptyCheck.getId());
     }
 
     @Test
     public void testCustomMessage() throws Exception {
-        final DefaultConfiguration config = createCheckConfig(emptyCheck.getClass());
+        final DefaultConfiguration config = createModuleConfig(emptyCheck.getClass());
         config.addMessage("msgKey", "This is a custom message.");
         emptyCheck.configure(config);
 
-        final LocalizedMessages collector = new LocalizedMessages();
-        emptyCheck.setMessages(collector);
-
         emptyCheck.log(0, "msgKey");
 
-        final SortedSet<LocalizedMessage> messages = collector.getMessages();
-        assertEquals(1, messages.size());
-        assertEquals("This is a custom message.", messages.first()
+        final SortedSet<LocalizedMessage> messages = emptyCheck.getMessages();
+
+        assertEquals("Amount of messages differs from expected",
+                1, messages.size());
+        assertEquals("Message differs from expected",
+                "This is a custom message.", messages.first()
                 .getMessage());
     }
 
     @Test
     public void testCustomMessageWithParameters() throws Exception {
-        final DefaultConfiguration config = createCheckConfig(emptyCheck.getClass());
+        final DefaultConfiguration config = createModuleConfig(emptyCheck.getClass());
         config.addMessage("msgKey", "This is a custom message with {0}.");
         emptyCheck.configure(config);
 
-        final LocalizedMessages collector = new LocalizedMessages();
-        emptyCheck.setMessages(collector);
-
         emptyCheck.log(0, "msgKey", "TestParam");
+        final SortedSet<LocalizedMessage> messages = emptyCheck.getMessages();
 
-        final SortedSet<LocalizedMessage> messages = collector.getMessages();
-        assertEquals(1, messages.size());
+        assertEquals("Amount of messages differs from expected",
+                1, messages.size());
 
-        assertEquals("This is a custom message with TestParam.",
+        assertEquals("Message differs from expected",
+                "This is a custom message with TestParam.",
                 messages.first().getMessage());
     }
 
     @Test
     public void testCustomMessageWithParametersNegative() throws Exception {
-        final DefaultConfiguration config = createCheckConfig(emptyCheck.getClass());
+        final DefaultConfiguration config = createModuleConfig(emptyCheck.getClass());
         config.addMessage("msgKey", "This is a custom message {0.");
         emptyCheck.configure(config);
-
-        final LocalizedMessages collector = new LocalizedMessages();
-        emptyCheck.setMessages(collector);
 
         try {
             emptyCheck.log(0, "msgKey", "TestParam");
             fail("exception expected");
         }
         catch (IllegalArgumentException ex) {
-            assertEquals("Unmatched braces in the pattern.", ex.getMessage());
+            assertEquals("Error message is unexpected",
+                    "Unmatched braces in the pattern.", ex.getMessage());
         }
     }
 
     private static class EmptyCheck extends AbstractCheck {
+
         @Override
         public int[] getDefaultTokens() {
             return CommonUtils.EMPTY_INT_ARRAY;
@@ -134,5 +138,7 @@ public class AbstractViolationReporterTest extends BaseCheckTestSupport {
         public int[] getRequiredTokens() {
             return CommonUtils.EMPTY_INT_ARRAY;
         }
+
     }
+
 }

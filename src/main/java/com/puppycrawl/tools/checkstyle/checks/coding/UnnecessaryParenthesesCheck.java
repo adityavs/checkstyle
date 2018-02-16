@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -51,6 +52,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author Eric Roe
  */
+@FileStatefulCheck
 public class UnnecessaryParenthesesCheck extends AbstractCheck {
 
     /**
@@ -88,6 +90,12 @@ public class UnnecessaryParenthesesCheck extends AbstractCheck {
      * file.
      */
     public static final String MSG_RETURN = "unnecessary.paren.return";
+
+    /**
+     * A key is pointing to the warning message text in "messages.properties"
+     * file.
+     */
+    public static final String MSG_LAMBDA = "unnecessary.paren.lambda";
 
     /** The maximum string length before we chop the string. */
     private static final int MAX_QUOTED_LENGTH = 25;
@@ -153,6 +161,7 @@ public class UnnecessaryParenthesesCheck extends AbstractCheck {
             TokenTypes.SL_ASSIGN,
             TokenTypes.SR_ASSIGN,
             TokenTypes.STAR_ASSIGN,
+            TokenTypes.LAMBDA,
         };
     }
 
@@ -181,6 +190,7 @@ public class UnnecessaryParenthesesCheck extends AbstractCheck {
             TokenTypes.SL_ASSIGN,
             TokenTypes.SR_ASSIGN,
             TokenTypes.STAR_ASSIGN,
+            TokenTypes.LAMBDA,
         };
     }
 
@@ -190,14 +200,17 @@ public class UnnecessaryParenthesesCheck extends AbstractCheck {
         return CommonUtils.EMPTY_INT_ARRAY;
     }
 
+    // -@cs[CyclomaticComplexity] All logs should be in visit token.
     @Override
     public void visitToken(DetailAST ast) {
         final int type = ast.getType();
         final DetailAST parent = ast.getParent();
 
-        if (type != TokenTypes.ASSIGN
+        if (type == TokenTypes.LAMBDA && isLambdaSingleParameterSurrounded(ast)) {
+            log(ast, MSG_LAMBDA, ast.getText());
+        }
+        else if (type != TokenTypes.ASSIGN
             || parent.getType() != TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR) {
-
             final boolean surrounded = isSurrounded(ast);
             // An identifier surrounded by parentheses.
             if (surrounded && type == TokenTypes.IDENT) {
@@ -236,7 +249,6 @@ public class UnnecessaryParenthesesCheck extends AbstractCheck {
             || parent.getType() != TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR) {
             // An expression is surrounded by parentheses.
             if (type == TokenTypes.EXPR) {
-
                 // If 'parentToSkip' == 'ast', then we've already logged a
                 // warning about an immediate child node in visitToken, so we don't
                 // need to log another one here.
@@ -258,8 +270,6 @@ public class UnnecessaryParenthesesCheck extends AbstractCheck {
             else if (isInTokenList(type, ASSIGNMENTS)) {
                 assignDepth--;
             }
-
-            super.leaveToken(ast);
         }
     }
 
@@ -292,6 +302,22 @@ public class UnnecessaryParenthesesCheck extends AbstractCheck {
     }
 
     /**
+     * Tests if the given lambda node has a single parameter, no defined type, and is surrounded
+     * by parentheses.
+     * @param ast a {@code DetailAST} whose type is
+     *        {@code TokenTypes.LAMBDA}.
+     * @return {@code true} if the lambda has a single parameter, no defined type, and is
+     *         surrounded by parentheses.
+     */
+    private static boolean isLambdaSingleParameterSurrounded(DetailAST ast) {
+        final DetailAST firstChild = ast.getFirstChild();
+        return firstChild.getType() == TokenTypes.LPAREN
+                && firstChild.getNextSibling().getChildCount(TokenTypes.PARAMETER_DEF) == 1
+                && firstChild.getNextSibling().getFirstChild().findFirstToken(TokenTypes.TYPE)
+                        .getChildCount() == 0;
+    }
+
+    /**
      * Check if the given token type can be found in an array of token types.
      * @param type the token type.
      * @param tokens an array of token types to search.
@@ -319,9 +345,11 @@ public class UnnecessaryParenthesesCheck extends AbstractCheck {
      *         {@code MAX_QUOTED_LENGTH}; otherwise {@code string}.
      */
     private static String chopString(String value) {
+        String result = value;
         if (value.length() > MAX_QUOTED_LENGTH) {
-            return value.substring(0, MAX_QUOTED_LENGTH) + "...\"";
+            result = value.substring(0, MAX_QUOTED_LENGTH) + "...\"";
         }
-        return value;
+        return result;
     }
+
 }

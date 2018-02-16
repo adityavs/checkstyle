@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -49,6 +49,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  */
 public class ClassTypeParameterNameCheck
     extends AbstractNameCheck {
+
     /** Creates a new {@code ClassTypeParameterNameCheck} instance. */
     public ClassTypeParameterNameCheck() {
         super("^[A-Z]$");
@@ -56,19 +57,19 @@ public class ClassTypeParameterNameCheck
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public final int[] getAcceptableTokens() {
-        return new int[] {
-            TokenTypes.TYPE_PARAMETER,
-        };
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {
+            TokenTypes.TYPE_PARAMETER,
+        };
     }
 
     @Override
@@ -77,4 +78,5 @@ public class ClassTypeParameterNameCheck
             ast.getParent().getParent();
         return location.getType() == TokenTypes.CLASS_DEF;
     }
+
 }

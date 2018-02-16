@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,52 +22,51 @@ package com.puppycrawl.tools.checkstyle.checks.design;
 import static com.puppycrawl.tools.checkstyle.checks.design.DesignForExtensionCheck.MSG_KEY;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class DesignForExtensionCheckTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "design" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/design/designforextension";
     }
 
     @Test
     public void testGetRequiredTokens() {
         final DesignForExtensionCheck checkObj = new DesignForExtensionCheck();
         final int[] expected = {TokenTypes.METHOD_DEF};
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testIt() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(DesignForExtensionCheck.class);
+            createModuleConfig(DesignForExtensionCheck.class);
         final String[] expected = {
             "46:5: " + getCheckMessage(MSG_KEY, "InputDesignForExtension", "doh"),
             "100:9: " + getCheckMessage(MSG_KEY, "anotherNonFinalClass", "someMethod"),
         };
         verify(checkConfig, getPath("InputDesignForExtension.java"), expected);
-
     }
 
     @Test
     public void testGetAcceptableTokens() {
         final DesignForExtensionCheck obj = new DesignForExtensionCheck();
         final int[] expected = {TokenTypes.METHOD_DEF};
-        assertArrayEquals(expected, obj.getAcceptableTokens());
+        assertArrayEquals("Default acceptable tokens are invalid",
+            expected, obj.getAcceptableTokens());
     }
 
     @Test
     public void testOverridableMethods() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(DesignForExtensionCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(DesignForExtensionCheck.class);
         final String[] expected = {
             "6:9: " + getCheckMessage(MSG_KEY, "A", "foo1"),
             "30:9: " + getCheckMessage(MSG_KEY, "A", "foo8"),
@@ -81,30 +80,45 @@ public class DesignForExtensionCheckTest
             "96:9: " + getCheckMessage(MSG_KEY, "A", "foo23"),
             "110:9: " + getCheckMessage(MSG_KEY, "A", "foo26"),
             "117:9: " + getCheckMessage(MSG_KEY, "A", "foo27"),
+            "197:9: " + getCheckMessage(MSG_KEY, "A", "foo41"),
         };
         verify(checkConfig, getPath("InputDesignForExtensionOverridableMethods.java"), expected);
     }
 
     @Test
     public void testIgnoredAnnotationsOption() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(DesignForExtensionCheck.class);
-        checkConfig.addAttribute("ignoredAnnotations", "Override, Deprecated");
+        final DefaultConfiguration checkConfig = createModuleConfig(DesignForExtensionCheck.class);
+        checkConfig.addAttribute("ignoredAnnotations", "Override, Deprecated, MyAnnotation");
         final String[] expected = {
             "31:5: "
                 + getCheckMessage(MSG_KEY, "InputDesignForExtensionIgnoredAnnotations", "foo1"),
             "141:5: "
                 + getCheckMessage(MSG_KEY, "InputDesignForExtensionIgnoredAnnotations", "foo21"),
+            "146:5: "
+                + getCheckMessage(MSG_KEY, "InputDesignForExtensionIgnoredAnnotations", "setAge"),
+            "161:5: "
+                + getCheckMessage(MSG_KEY, "InputDesignForExtensionIgnoredAnnotations", "foo24"),
         };
         verify(checkConfig, getPath("InputDesignForExtensionIgnoredAnnotations.java"), expected);
     }
 
     @Test
+    public void testIgnoreAnnotationsOptionWithMultipleAnnotations() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(DesignForExtensionCheck.class);
+        checkConfig.addAttribute("ignoredAnnotations",
+            "Override, Deprecated, Before, After, BeforeClass, AfterClass");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputDesignForExtensionMultipleAnnotations.java"), expected);
+    }
+
+    @Test
     public void testNativeMethods() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(DesignForExtensionCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(DesignForExtensionCheck.class);
         checkConfig.addAttribute("ignoredAnnotations", "Deprecated");
         final String[] expected = {
             "8:5: " + getCheckMessage(MSG_KEY, "InputDesignForExtensionNativeMethods", "foo1"),
         };
         verify(checkConfig, getPath("InputDesignForExtensionNativeMethods.java"), expected);
     }
+
 }

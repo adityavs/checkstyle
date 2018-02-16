@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,47 +19,36 @@
 
 package com.puppycrawl.tools.checkstyle.grammars.java8;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-public class DefaultMethodsTest extends BaseCheckTestSupport {
-    @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("grammars" + File.separator
-                + "java8" + File.separator + filename);
-    }
+public class DefaultMethodsTest extends AbstractModuleTestSupport {
 
     @Override
-    protected String getNonCompilablePath(String filename) throws IOException {
-        return super.getNonCompilablePath("grammars" + File.separator
-                + "java8" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/grammars/java8";
     }
 
     @Test
     public void testCanParse()
             throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(MemberNameCheck.class);
+                createModuleConfig(MemberNameCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputDefaultMethods.java"), expected);
-
     }
 
     @Test
     public void testSwitch()
             throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(MemberNameCheck.class);
+                createModuleConfig(MemberNameCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputDefaultMethods2.java"), expected);
-
     }
 
 }

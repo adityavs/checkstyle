@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,33 +23,32 @@ import static com.puppycrawl.tools.checkstyle.checks.TodoCommentCheck.MSG_KEY;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
 public class TodoCommentCheckTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/todocomment";
     }
 
     @Test
     public void testGetRequiredTokens() {
         final TodoCommentCheck checkObj = new TodoCommentCheck();
         final int[] expected = {TokenTypes.COMMENT_CONTENT};
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Required tokens differs from expected",
+                expected, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testIt() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(TodoCommentCheck.class);
+            createModuleConfig(TodoCommentCheck.class);
         checkConfig.addAttribute("format", "FIXME:");
         final String[] expected = {
             "161: " + getCheckMessage(MSG_KEY, "FIXME:"),
@@ -57,7 +56,7 @@ public class TodoCommentCheckTest
             "163: " + getCheckMessage(MSG_KEY, "FIXME:"),
             "167: " + getCheckMessage(MSG_KEY, "FIXME:"),
         };
-        verify(checkConfig, getPath("InputSimple.java"), expected);
+        verify(checkConfig, getPath("InputTodoCommentSimple.java"), expected);
     }
 
     @Test
@@ -65,7 +64,10 @@ public class TodoCommentCheckTest
         final int[] expected = {TokenTypes.COMMENT_CONTENT };
         final TodoCommentCheck check = new TodoCommentCheck();
         final int[] actual = check.getAcceptableTokens();
-        assertEquals(1, actual.length);
-        assertArrayEquals(expected, actual);
+        assertEquals("Amount of acceptable tokens differs from expected",
+                1, actual.length);
+        assertArrayEquals("Acceptable tokens differs from expected",
+                expected, actual);
     }
+
 }

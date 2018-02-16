@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,10 +21,11 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
+import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
-import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
 
 /**
  * <p>
@@ -51,6 +52,7 @@ import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
  * </pre>
  * @author Rick Giles
  */
+@StatelessCheck
 public class IllegalTokenTextCheck
     extends AbstractCheck {
 
@@ -67,13 +69,13 @@ public class IllegalTokenTextCheck
     private String message = "";
 
     /** The format string of the regexp. */
-    private String format = "$^";
+    private String formatString = "$^";
 
     /** The regexp to match against. */
-    private Pattern regexp = Pattern.compile(format);
+    private Pattern format = Pattern.compile(formatString);
 
-    /** The flags to use with the regexp. */
-    private int compileFlags;
+    /** {@code true} if the casing should be ignored. */
+    private boolean ignoreCase;
 
     @Override
     public int[] getDefaultTokens() {
@@ -82,7 +84,16 @@ public class IllegalTokenTextCheck
 
     @Override
     public int[] getAcceptableTokens() {
-        return TokenUtils.getAllTokenIds();
+        return new int[] {
+            TokenTypes.NUM_DOUBLE,
+            TokenTypes.NUM_FLOAT,
+            TokenTypes.NUM_INT,
+            TokenTypes.NUM_LONG,
+            TokenTypes.IDENT,
+            TokenTypes.COMMENT_CONTENT,
+            TokenTypes.STRING_LITERAL,
+            TokenTypes.CHAR_LITERAL,
+        };
     }
 
     @Override
@@ -98,7 +109,7 @@ public class IllegalTokenTextCheck
     @Override
     public void visitToken(DetailAST ast) {
         final String text = ast.getText();
-        if (regexp.matcher(text).find()) {
+        if (format.matcher(text).find()) {
             String customMessage = message;
             if (customMessage.isEmpty()) {
                 customMessage = MSG_KEY;
@@ -107,7 +118,7 @@ public class IllegalTokenTextCheck
                 ast.getLineNo(),
                 ast.getColumnNo(),
                 customMessage,
-                format);
+                formatString);
         }
     }
 
@@ -131,30 +142,33 @@ public class IllegalTokenTextCheck
      * @throws org.apache.commons.beanutils.ConversionException unable to parse format
      */
     public void setFormat(String format) {
-        this.format = format;
+        formatString = format;
         updateRegexp();
     }
 
     /**
      * Set whether or not the match is case sensitive.
      * @param caseInsensitive true if the match is case insensitive.
+     * @noinspection BooleanParameter
      */
     public void setIgnoreCase(boolean caseInsensitive) {
-        if (caseInsensitive) {
+        ignoreCase = caseInsensitive;
+        updateRegexp();
+    }
+
+    /**
+     * Updates the {@link #format} based on the values from {@link #formatString} and
+     * {@link #ignoreCase}.
+     */
+    private void updateRegexp() {
+        final int compileFlags;
+        if (ignoreCase) {
             compileFlags = Pattern.CASE_INSENSITIVE;
         }
         else {
             compileFlags = 0;
         }
-
-        updateRegexp();
+        format = CommonUtils.createPattern(formatString, compileFlags);
     }
 
-    /**
-     * Updates the {@link #regexp} based on the values from {@link #format} and
-     * {@link #compileFlags}.
-     */
-    private void updateRegexp() {
-        regexp = CommonUtils.createPattern(format, compileFlags);
-    }
 }

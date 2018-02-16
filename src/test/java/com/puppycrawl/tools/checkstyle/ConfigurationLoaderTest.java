@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,16 +22,24 @@ package com.puppycrawl.tools.checkstyle;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 
@@ -43,22 +51,24 @@ import com.puppycrawl.tools.checkstyle.api.Configuration;
  * @author Rick Giles
  * @author lkuehne
  */
-public class ConfigurationLoaderTest {
-    private static String getConfigPath(String filename) {
-        return "src/test/resources/com/puppycrawl/tools/checkstyle/configs/" + filename;
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({DefaultConfiguration.class, ConfigurationLoader.class})
+public class ConfigurationLoaderTest extends AbstractPathTestSupport {
+
+    @Override
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/configurationloader";
     }
 
-    private static Configuration loadConfiguration(String name)
-            throws CheckstyleException {
+    private Configuration loadConfiguration(String name) throws Exception {
         return loadConfiguration(name, new Properties());
     }
 
-    private static Configuration loadConfiguration(
-        String name, Properties props) throws CheckstyleException {
-        final String fName = getConfigPath(name);
+    private Configuration loadConfiguration(
+        String name, Properties props) throws Exception {
+        final String fName = getPath(name);
 
-        return ConfigurationLoader.loadConfiguration(
-                fName, new PropertiesExpander(props));
+        return ConfigurationLoader.loadConfiguration(fName, new PropertiesExpander(props));
     }
 
     private static Method getReplacePropertiesMethod() throws Exception {
@@ -81,7 +91,7 @@ public class ConfigurationLoaderTest {
         // load config that's only found in the classpath
         final DefaultConfiguration config =
             (DefaultConfiguration) ConfigurationLoader.loadConfiguration(
-                getConfigPath("checkstyle_checks.xml"), new PropertiesExpander(props));
+                getPath("InputConfigurationLoaderChecks.xml"), new PropertiesExpander(props));
 
         //verify the root, and property substitution
         final Properties attributes = new Properties();
@@ -91,61 +101,142 @@ public class ConfigurationLoaderTest {
     }
 
     @Test
+    public void testResourceLoadConfigurationWithMultiThreadConfiguration() throws Exception {
+        final Properties props = new Properties();
+        props.setProperty("checkstyle.basedir", "basedir");
+
+        final PropertiesExpander propertiesExpander = new PropertiesExpander(props);
+        final String configPath = getPath("InputConfigurationLoaderChecks.xml");
+        final ThreadModeSettings multiThreadModeSettings =
+            new ThreadModeSettings(4, 2);
+
+        try {
+            ConfigurationLoader.loadConfiguration(
+                configPath, propertiesExpander, multiThreadModeSettings);
+            fail("An exception is expected");
+        }
+        catch (IllegalArgumentException ex) {
+            assertEquals("Invalid exception message",
+                "Multi thread mode for Checker module is not implemented",
+                ex.getMessage());
+        }
+    }
+
+    @Test
+    public void testResourceLoadConfigurationWithSingleThreadConfiguration() throws Exception {
+        final Properties props = new Properties();
+        props.setProperty("checkstyle.basedir", "basedir");
+
+        final PropertiesExpander propertiesExpander = new PropertiesExpander(props);
+        final String configPath = getPath("InputConfigurationLoaderChecks.xml");
+        final ThreadModeSettings singleThreadModeSettings =
+            ThreadModeSettings.SINGLE_THREAD_MODE_INSTANCE;
+
+        final DefaultConfiguration config =
+            (DefaultConfiguration) ConfigurationLoader.loadConfiguration(
+                configPath, propertiesExpander, singleThreadModeSettings);
+
+        final Properties attributes = new Properties();
+        attributes.setProperty("tabWidth", "4");
+        attributes.setProperty("basedir", "basedir");
+        verifyConfigNode(config, "Checker", 3, attributes);
+    }
+
+    @Test
     public void testEmptyConfiguration() throws Exception {
         final DefaultConfiguration config =
-            (DefaultConfiguration) loadConfiguration("empty_configuration.xml");
+            (DefaultConfiguration) loadConfiguration("InputConfigurationLoaderEmpty.xml");
         verifyConfigNode(config, "Checker", 0, new Properties());
     }
 
     @Test
-    public void testMissingPropertyName() {
+    public void testEmptyModuleResolver() throws Exception {
+        final DefaultConfiguration config =
+            (DefaultConfiguration) loadConfiguration(
+                "InputConfigurationLoaderEmpty.xml", new Properties());
+        verifyConfigNode(config, "Checker", 0, new Properties());
+    }
+
+    @Test
+    public void testMissingPropertyName() throws Exception {
         try {
-            loadConfiguration("missing_property_name.xml");
+            loadConfiguration("InputConfigurationLoaderMissingPropertyName.xml");
             fail("missing property name");
         }
         catch (CheckstyleException ex) {
-            assertTrue(ex.getMessage().contains("\"name\""));
-            assertTrue(ex.getMessage().contains("\"property\""));
-            assertTrue(ex.getMessage().endsWith(":8:41"));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().contains("\"name\""));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().contains("\"property\""));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().endsWith(":8:41"));
         }
     }
 
     @Test
-    public void testMissingPropertyValue() {
+    public void testMissingPropertyNameInMethodWithBooleanParameter() throws Exception {
         try {
-            loadConfiguration("missing_property_value.xml");
+            final String fName = getPath("InputConfigurationLoaderMissingPropertyName.xml");
+            ConfigurationLoader.loadConfiguration(fName, new PropertiesExpander(new Properties()),
+                    false);
+
+            fail("missing property name");
+        }
+        catch (CheckstyleException ex) {
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().contains("\"name\""));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().contains("\"property\""));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().endsWith(":8:41"));
+        }
+    }
+
+    @Test
+    public void testMissingPropertyValue() throws Exception {
+        try {
+            loadConfiguration("InputConfigurationLoaderMissingPropertyValue.xml");
             fail("missing property value");
         }
         catch (CheckstyleException ex) {
-            assertTrue(ex.getMessage().contains("\"value\""));
-            assertTrue(ex.getMessage().contains("\"property\""));
-            assertTrue(ex.getMessage().endsWith(":8:41"));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().contains("\"value\""));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().contains("\"property\""));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().endsWith(":8:41"));
         }
     }
 
     @Test
-    public void testMissingConfigName() {
+    public void testMissingConfigName() throws Exception {
         try {
-            loadConfiguration("missing_config_name.xml");
+            loadConfiguration("InputConfigurationLoaderMissingConfigName.xml");
             fail("missing module name");
         }
         catch (CheckstyleException ex) {
-            assertTrue(ex.getMessage().contains("\"name\""));
-            assertTrue(ex.getMessage().contains("\"module\""));
-            assertTrue(ex.getMessage().endsWith(":7:23"));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().contains("\"name\""));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().contains("\"module\""));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().endsWith(":7:23"));
         }
     }
 
     @Test
-    public void testMissingConfigParent() {
+    public void testMissingConfigParent() throws Exception {
         try {
-            loadConfiguration("missing_config_parent.xml");
+            loadConfiguration("InputConfigurationLoaderMissingConfigParent.xml");
             fail("missing module parent");
         }
         catch (CheckstyleException ex) {
-            assertTrue(ex.getMessage().contains("\"property\""));
-            assertTrue(ex.getMessage().contains("\"module\""));
-            assertTrue(ex.getMessage().endsWith(":8:38"));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().contains("\"property\""));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().contains("\"module\""));
+            assertTrue("Invalid exception message: " + ex.getMessage(),
+                    ex.getMessage().endsWith(":8:38"));
         }
     }
 
@@ -156,7 +247,7 @@ public class ConfigurationLoaderTest {
 
         final DefaultConfiguration config =
             (DefaultConfiguration) loadConfiguration(
-                "checkstyle_checks.xml", props);
+                "InputConfigurationLoaderChecks.xml", props);
 
         //verify the root, and property substitution
         final Properties atts = new Properties();
@@ -203,19 +294,21 @@ public class ConfigurationLoaderTest {
     }
 
     @Test
-    public void testCustomMessages() throws CheckstyleException {
+    public void testCustomMessages() throws Exception {
         final Properties props = new Properties();
         props.setProperty("checkstyle.basedir", "basedir");
 
         final DefaultConfiguration config =
             (DefaultConfiguration) loadConfiguration(
-                "custom_messages.xml", props);
+                "InputConfigurationLoaderCustomMessages.xml", props);
 
         final Configuration[] children = config.getChildren();
         final Configuration[] grandchildren = children[0].getChildren();
 
-        assertTrue(grandchildren[0].getMessages()
-            .containsKey("name.invalidPattern"));
+        final String expectedKey = "name.invalidPattern";
+        assertTrue("Messages should contain key: " + expectedKey,
+            grandchildren[0].getMessages()
+            .containsKey(expectedKey));
     }
 
     private static void verifyConfigNode(
@@ -259,7 +352,8 @@ public class ConfigurationLoaderTest {
             fail("expected to fail, instead got: " + value);
         }
         catch (InvocationTargetException ex) {
-            assertEquals("Syntax error in property: ${a", ex.getCause().getMessage());
+            assertEquals("Invalid exception cause message",
+                "Syntax error in property: ${a", ex.getCause().getMessage());
         }
     }
 
@@ -272,7 +366,8 @@ public class ConfigurationLoaderTest {
             fail("expected to fail, instead got: " + value);
         }
         catch (InvocationTargetException ex) {
-            assertEquals("Property ${c} has not been set", ex.getCause().getMessage());
+            assertEquals("Invalid exception cause message",
+                "Property ${c} has not been set", ex.getCause().getMessage());
         }
     }
 
@@ -315,7 +410,7 @@ public class ConfigurationLoaderTest {
 
         final DefaultConfiguration config =
             (DefaultConfiguration) loadConfiguration(
-                "including.xml", props);
+                "InputConfigurationLoaderExternalEntity.xml", props);
 
         final Properties atts = new Properties();
         atts.setProperty("tabWidth", "4");
@@ -330,7 +425,7 @@ public class ConfigurationLoaderTest {
 
         final DefaultConfiguration config =
             (DefaultConfiguration) loadConfiguration(
-                "subdir/including.xml", props);
+                "subdir/InputConfigurationLoaderExternalEntitySubDir.xml", props);
 
         final Properties attributes = new Properties();
         attributes.setProperty("tabWidth", "4");
@@ -343,7 +438,8 @@ public class ConfigurationLoaderTest {
         final Properties props = new Properties();
         props.setProperty("checkstyle.basedir", "basedir");
 
-        final File file = new File(getConfigPath("subdir/including.xml"));
+        final File file = new File(
+                getPath("subdir/InputConfigurationLoaderExternalEntitySubDir.xml"));
         final DefaultConfiguration config =
             (DefaultConfiguration) ConfigurationLoader.loadConfiguration(
                     file.toURI().toString(), new PropertiesExpander(props));
@@ -358,88 +454,108 @@ public class ConfigurationLoaderTest {
     public void testIncorrectTag() throws Exception {
         try {
             final Class<?> aClassParent = ConfigurationLoader.class;
-            Constructor<?> ctorParent = null;
-            final Constructor<?>[] parentConstructors = aClassParent.getDeclaredConstructors();
-            for (Constructor<?> parentConstructor: parentConstructors) {
-                parentConstructor.setAccessible(true);
-                ctorParent = parentConstructor;
-            }
+            final Constructor<?> ctorParent = aClassParent.getDeclaredConstructor(
+                    PropertyResolver.class, boolean.class, ThreadModeSettings.class);
+            ctorParent.setAccessible(true);
+            final Object objParent = ctorParent.newInstance(null, true, null);
+
             final Class<?> aClass = Class.forName("com.puppycrawl.tools.checkstyle."
                     + "ConfigurationLoader$InternalLoader");
-            Constructor<?> constructor = null;
-            final Constructor<?>[] constructors = aClass.getDeclaredConstructors();
-            for (Constructor<?> constr: constructors) {
-                constr.setAccessible(true);
-                constructor = constr;
-            }
+            final Constructor<?> constructor = aClass.getConstructor(objParent.getClass());
+            constructor.setAccessible(true);
 
-            final Class<?>[] param = new Class<?>[4];
-            param[0] = String.class;
-            param[1] = String.class;
-            param[2] = String.class;
-            param[3] = Attributes.class;
-            final Method method = aClass.getDeclaredMethod("startElement", param);
-            final Object objParent = ctorParent.newInstance(null, true);
             final Object obj = constructor.newInstance(objParent);
+
+            final Class<?>[] param = new Class<?>[] {String.class, String.class,
+                String.class, Attributes.class, };
+            final Method method = aClass.getDeclaredMethod("startElement", param);
 
             method.invoke(obj, "", "", "hello", null);
 
             fail("Exception is expected");
-
         }
         catch (InvocationTargetException ex) {
-            assertTrue(ex.getCause() instanceof IllegalStateException);
-            assertEquals("Unknown name:" + "hello" + ".", ex.getCause().getMessage());
+            assertTrue("Invalid exception cause",
+                ex.getCause() instanceof IllegalStateException);
+            assertEquals("Invalid exception cause message",
+                "Unknown name:" + "hello" + ".", ex.getCause().getMessage());
         }
     }
 
     @Test
-    public void testNonExistingPropertyName() {
+    public void testPrivateConstructorWithPropertyResolverAndOmitIgnoreModules() throws Exception {
+        final Class<?> configurationLoaderClass = ConfigurationLoader.class;
+        final Constructor<?> configurationLoaderCtor =
+                configurationLoaderClass.getDeclaredConstructor(
+                        PropertyResolver.class, boolean.class);
+        configurationLoaderCtor.setAccessible(true);
+
+        final Properties properties = new Properties();
+        final PropertyResolver propertyResolver = new PropertiesExpander(properties);
+        final ConfigurationLoader configurationLoader =
+                (ConfigurationLoader) configurationLoaderCtor.newInstance(
+                        propertyResolver, true);
+
+        final Field overridePropsResolverField =
+                configurationLoaderClass.getDeclaredField("overridePropsResolver");
+        overridePropsResolverField.setAccessible(true);
+        assertEquals("Invalid property resolver",
+            propertyResolver, overridePropsResolverField.get(configurationLoader));
+
+        final Field omitIgnoredModulesField =
+                configurationLoaderClass.getDeclaredField("omitIgnoredModules");
+        omitIgnoredModulesField.setAccessible(true);
+        assertEquals("omitIgnoredModules should be set to true",
+            true, omitIgnoredModulesField.get(configurationLoader));
+    }
+
+    @Test
+    public void testNonExistentPropertyName() throws Exception {
         try {
-            loadConfiguration("config_nonexisting_property.xml");
+            loadConfiguration("InputConfigurationLoaderNonexistentProperty.xml");
             fail("exception in expected");
         }
         catch (CheckstyleException ex) {
-            assertEquals("unable to parse configuration stream", ex.getMessage());
-            assertEquals("Property ${nonexisting} has not been set",
+            assertEquals("Invalid exception message",
+                "unable to parse configuration stream", ex.getMessage());
+            assertEquals("Invalid exception cause message",
+                "Property ${nonexistent} has not been set",
                     ex.getCause().getMessage());
         }
     }
 
     @Test
-    public void testConfigWithIgnore() throws CheckstyleException {
-
+    public void testConfigWithIgnore() throws Exception {
         final DefaultConfiguration config =
                 (DefaultConfiguration) ConfigurationLoader.loadConfiguration(
-                        getConfigPath("config_with_ignore.xml"),
+                        getPath("InputConfigurationLoaderModuleIgnoreSeverity.xml"),
                         new PropertiesExpander(new Properties()), true);
 
         final Configuration[] children = config.getChildren();
-        assertEquals(0, children[0].getChildren().length);
+        assertEquals("Invalid children count", 0, children[0].getChildren().length);
     }
 
     @Test
-    public void testConfigWithIgnoreUsingInputSource() throws CheckstyleException {
-
+    public void testConfigWithIgnoreUsingInputSource() throws Exception {
         final DefaultConfiguration config =
                 (DefaultConfiguration) ConfigurationLoader.loadConfiguration(new InputSource(
-                        new File(getConfigPath("config_with_ignore.xml")).toURI().toString()),
+                        new File(getPath("InputConfigurationLoaderModuleIgnoreSeverity.xml"))
+                            .toURI().toString()),
                         new PropertiesExpander(new Properties()), true);
 
         final Configuration[] children = config.getChildren();
-        assertEquals(0, children[0].getChildren().length);
+        assertEquals("Invalid children count", 0, children[0].getChildren().length);
     }
 
     @Test
-    public void testConfigCheckerWithIgnore() throws CheckstyleException {
-
+    public void testConfigCheckerWithIgnore() throws Exception {
         final DefaultConfiguration config =
                 (DefaultConfiguration) ConfigurationLoader.loadConfiguration(
-                        getConfigPath("config_with_checker_ignore.xml"),
+                        getPath("InputConfigurationLoaderCheckerIgnoreSeverity.xml"),
                         new PropertiesExpander(new Properties()), true);
 
         final Configuration[] children = config.getChildren();
-        assertEquals(0, children.length);
+        assertEquals("Invalid children count", 0, children.length);
     }
 
     @Test
@@ -447,33 +563,31 @@ public class ConfigurationLoaderTest {
         try {
             final DefaultConfiguration config =
                     (DefaultConfiguration) ConfigurationLoader.loadConfiguration(
-                            ";config_with_ignore.xml",
+                            ";InputConfigurationLoaderModuleIgnoreSeverity.xml",
                             new PropertiesExpander(new Properties()), true);
 
             final Configuration[] children = config.getChildren();
-            assertEquals(0, children[0].getChildren().length);
+            assertEquals("Invalid children count", 0, children[0].getChildren().length);
             fail("Exception is expected");
         }
         catch (CheckstyleException ex) {
-            assertEquals("Unable to find: ;config_with_ignore.xml", ex.getMessage());
+            assertEquals("Invalid exception message",
+                    "Unable to find: ;InputConfigurationLoaderModuleIgnoreSeverity.xml",
+                    ex.getMessage());
         }
     }
 
     @Test
-    public void testLoadConfigurationDeprecated() {
-        try {
-            @SuppressWarnings("deprecation")
-            final DefaultConfiguration config =
-                    (DefaultConfiguration) ConfigurationLoader.loadConfiguration(
-                            new FileInputStream(getConfigPath("config_with_ignore.xml")),
-                            new PropertiesExpander(new Properties()), true);
+    public void testLoadConfigurationDeprecated() throws Exception {
+        final DefaultConfiguration config =
+                (DefaultConfiguration) ConfigurationLoader.loadConfiguration(
+                        new FileInputStream(
+                            getPath("InputConfigurationLoaderModuleIgnoreSeverity.xml")),
+                        new PropertiesExpander(new Properties()), true);
 
-            final Configuration[] children = config.getChildren();
-            assertEquals(0, children[0].getChildren().length);
-        }
-        catch (CheckstyleException | FileNotFoundException ex) {
-            fail("unexpected exception");
-        }
+        final Configuration[] children = config.getChildren();
+        assertEquals("Invalid children count",
+            0, children[0].getChildren().length);
     }
 
     @Test
@@ -484,23 +598,89 @@ public class ConfigurationLoaderTest {
         final String value = (String) getReplacePropertiesMethod().invoke(
             null, "${checkstyle.basedir}", new PropertiesExpander(props), defaultValue);
 
-        assertEquals(defaultValue, value);
+        assertEquals("Invalid property value", defaultValue, value);
     }
 
     @Test
-    public void testLoadConfigurationFromClassPath() {
-        try {
-            final DefaultConfiguration config =
-                    (DefaultConfiguration) ConfigurationLoader.loadConfiguration(
-                            "/com/puppycrawl/tools/checkstyle/configs/"
-                                    + "config_with_ignore.xml",
-                            new PropertiesExpander(new Properties()), true);
+    public void testLoadConfigurationFromClassPath() throws Exception {
+        final DefaultConfiguration config =
+                (DefaultConfiguration) ConfigurationLoader.loadConfiguration(
+                        getPath("InputConfigurationLoaderModuleIgnoreSeverity.xml"),
+                        new PropertiesExpander(new Properties()), true);
 
-            final Configuration[] children = config.getChildren();
-            assertEquals(0, children[0].getChildren().length);
+        final Configuration[] children = config.getChildren();
+        assertEquals("Invalid children count",
+            0, children[0].getChildren().length);
+    }
+
+    /**
+     * This SuppressWarning("unchecked") required to suppress
+     * "Unchecked generics array creation for varargs parameter" during mock.
+     * @throws Exception could happen from PowerMokito calls and getAttribute
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testConfigWithIgnoreExceptionalAttributes() throws Exception {
+        // emulate exception from unrelated code, but that is same try-catch
+        final DefaultConfiguration tested = PowerMockito.mock(DefaultConfiguration.class);
+        when(tested.getAttributeNames()).thenReturn(new String[] {"severity"});
+        when(tested.getName()).thenReturn("MemberName");
+        when(tested.getAttribute("severity")).thenThrow(CheckstyleException.class);
+        // to void creation of 2 other mocks for now reason, only one moc is used for all cases
+        PowerMockito.whenNew(DefaultConfiguration.class)
+                .withArguments("MemberName", ThreadModeSettings.SINGLE_THREAD_MODE_INSTANCE)
+                .thenReturn(tested);
+        PowerMockito.whenNew(DefaultConfiguration.class)
+                .withArguments("Checker", ThreadModeSettings.SINGLE_THREAD_MODE_INSTANCE)
+                .thenReturn(tested);
+        PowerMockito.whenNew(DefaultConfiguration.class)
+                .withArguments("TreeWalker", ThreadModeSettings.SINGLE_THREAD_MODE_INSTANCE)
+                .thenReturn(tested);
+
+        try {
+            ConfigurationLoader.loadConfiguration(
+                    getPath("InputConfigurationLoaderModuleIgnoreSeverity.xml"),
+                    new PropertiesExpander(new Properties()), true);
+            fail("Exception is expected");
         }
-        catch (CheckstyleException ex) {
-            fail("unexpected exception");
+        catch (CheckstyleException expected) {
+            assertEquals("Invalid exception cause message",
+                "Problem during accessing 'severity' attribute for MemberName",
+                    expected.getCause().getMessage());
         }
     }
+
+    @Test
+    public void testParsePropertyString() throws Exception {
+        final List<String> propertyRefs = new ArrayList<>();
+        final List<String> fragments = new ArrayList<>();
+
+        Whitebox.invokeMethod(ConfigurationLoader.class,
+                "parsePropertyString", "$",
+               fragments, propertyRefs);
+        assertEquals("Fragments list has unexpected amount of items",
+                1, fragments.size());
+    }
+
+    @Test
+    public void testConstructors() throws Exception {
+        final Properties props = new Properties();
+        props.setProperty("checkstyle.basedir", "basedir");
+        final String fName = getPath("InputConfigurationLoaderChecks.xml");
+
+        final Configuration configuration = ConfigurationLoader.loadConfiguration(fName,
+                new PropertiesExpander(props), ConfigurationLoader.IgnoredModulesOptions.OMIT);
+        assertEquals("Name is not expected", "Checker", configuration.getName());
+
+        final DefaultConfiguration configuration1 =
+                (DefaultConfiguration) ConfigurationLoader.loadConfiguration(
+                        new InputSource(new FileInputStream(
+                            getPath("InputConfigurationLoaderModuleIgnoreSeverity.xml"))),
+                        new PropertiesExpander(new Properties()),
+                        ConfigurationLoader.IgnoredModulesOptions.EXECUTE);
+
+        final Configuration[] children = configuration1.getChildren();
+        assertEquals("Unexpected children size", 1, children[0].getChildren().length);
+    }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ import java.util.Locale;
 
 import org.apache.commons.beanutils.ConversionException;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -69,8 +70,8 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * array comma preference a {@link TrailingArrayComma#IGNORE IGNORE} type
  * is provided.  Set this through the {@code trailingArrayComma} property.
  *
- * <p>By default the ElementStyle is set to EXPANDED, the TrailingArrayComma
- * is set to NEVER, and the ClosingParens is set to ALWAYS.
+ * <p>By default the ElementStyle is set to COMPACT_NO_ARRAY, the
+ * TrailingArrayComma is set to NEVER, and the ClosingParens is set to NEVER.
  *
  * <p>According to the JLS, it is legal to include a trailing comma
  * in arrays used in annotations but Sun's Java 5 &amp; 6 compilers will not
@@ -81,7 +82,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * 3.4.1.
  *
  * <p>See <a
- * href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-9.html#jls-9.7">
+ * href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-9.html#jls-9.7">
  * Java Language specification, &sect;9.7</a>.
  *
  * <p>An example shown below is set to enforce an EXPANDED style, with a
@@ -101,6 +102,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *
  * @author Travis Schneeberger
  */
+@StatelessCheck
 public final class AnnotationUseStyleCheck extends AbstractCheck {
 
     /**
@@ -136,6 +138,7 @@ public final class AnnotationUseStyleCheck extends AbstractCheck {
          * Mixed styles.
          */
         IGNORE,
+
     }
 
     /**
@@ -164,6 +167,7 @@ public final class AnnotationUseStyleCheck extends AbstractCheck {
          * Mixed styles.
          */
         IGNORE,
+
     }
 
     /**
@@ -192,6 +196,7 @@ public final class AnnotationUseStyleCheck extends AbstractCheck {
          * Mixed styles.
          */
         IGNORE,
+
     }
 
     /**
@@ -235,9 +240,6 @@ public final class AnnotationUseStyleCheck extends AbstractCheck {
      */
     private static final String ANNOTATION_ELEMENT_SINGLE_NAME =
             "value";
-
-    //not extending AbstractOptionCheck because check
-    //has more than one option type.
 
     /**
      * ElementStyle option.
@@ -301,7 +303,7 @@ public final class AnnotationUseStyleCheck extends AbstractCheck {
             return Enum.valueOf(enumClass, value.trim().toUpperCase(Locale.ENGLISH));
         }
         catch (final IllegalArgumentException iae) {
-            throw new ConversionException("unable to parse " + value, iae);
+            throw new IllegalArgumentException("unable to parse " + value, iae);
         }
     }
 
@@ -337,7 +339,6 @@ public final class AnnotationUseStyleCheck extends AbstractCheck {
      * @param annotation the annotation token
      */
     private void checkStyleType(final DetailAST annotation) {
-
         switch (elementStyle) {
             case COMPACT_NO_ARRAY:
                 checkCompactNoArrayStyle(annotation);
@@ -404,9 +405,6 @@ public final class AnnotationUseStyleCheck extends AbstractCheck {
         final int valuePairCount =
             annotation.getChildCount(TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR);
 
-        final DetailAST valuePair =
-            annotation.findFirstToken(TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR);
-
         //in compact style with one value
         if (arrayInit != null
             && arrayInit.getChildCount(TokenTypes.EXPR) == 1) {
@@ -415,6 +413,8 @@ public final class AnnotationUseStyleCheck extends AbstractCheck {
         }
         //in expanded style with one value and the correct element name
         else if (valuePairCount == 1) {
+            final DetailAST valuePair =
+                    annotation.findFirstToken(TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR);
             final DetailAST nestedArrayInit =
                 valuePair.findFirstToken(TokenTypes.ANNOTATION_ARRAY_INIT);
 
@@ -504,4 +504,5 @@ public final class AnnotationUseStyleCheck extends AbstractCheck {
             }
         }
     }
+
 }

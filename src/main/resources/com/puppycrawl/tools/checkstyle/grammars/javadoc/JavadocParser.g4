@@ -31,12 +31,13 @@ options { tokenVocab=JavadocLexer; }
         }
     }
 
-      boolean isSameTagNames(ParserRuleContext htmlTagOpen, ParserRuleContext htmlTagClose) {
-            String openTag = htmlTagOpen.getToken(HTML_TAG_NAME, 0).getText().toLowerCase();
-            String closeTag = htmlTagClose.getToken(HTML_TAG_NAME, 0).getText().toLowerCase();
-            System.out.println(openTag + " - " + closeTag);
-            return openTag.equals(closeTag);
-      }
+    boolean isSameTagNames(ParserRuleContext htmlTagStart, ParserRuleContext htmlTagEnd) {
+          String startTag = htmlTagStart.getToken(HTML_TAG_NAME, 0).getText().toLowerCase();
+          String endTag = htmlTagEnd.getToken(HTML_TAG_NAME, 0).getText().toLowerCase();
+          return startTag.equals(endTag);
+    }
+
+    public ParserRuleContext nonTightTagStartContext;
 }
 
 javadoc: (
@@ -69,73 +70,69 @@ htmlElement: htmlTag
             | thead
             | tfoot
 
-            | pTagOpen
-            | liTagOpen
-            | trTagOpen
-            | tdTagOpen
-            | thTagOpen
-            | bodyTagOpen
-            | colgroupTagOpen
-            | ddTagOpen
-            | dtTagOpen
-            | headTagOpen
-            | htmlTagOpen
-            | optionTagOpen
-            | tbodyTagOpen
-            | theadTagOpen
-            | tfootTagOpen
+            | pTagStart[true]
+            | liTagStart[true]
+            | trTagStart[true]
+            | tdTagStart[true]
+            | thTagStart[true]
+            | bodyTagStart[true]
+            | colgroupTagStart[true]
+            | ddTagStart[true]
+            | dtTagStart[true]
+            | headTagStart[true]
+            | htmlTagStart[true]
+            | optionTagStart[true]
+            | tbodyTagStart[true]
+            | theadTagStart[true]
+            | tfootTagStart[true]
 
-            | pTagClose
-            | liTagClose
-            | trTagClose
-            | tdTagClose
-            | thTagClose
-            | bodyTagClose
-            | colgroupTagClose
-            | ddTagClose
-            | dtTagClose
-            | headTagClose
-            | htmlTagClose
-            | optionTagClose
-            | tbodyTagClose
-            | theadTagClose
-            | tfootTagClose
+            | pTagEnd
+            | liTagEnd
+            | trTagEnd
+            | tdTagEnd
+            | thTagEnd
+            | bodyTagEnd
+            | colgroupTagEnd
+            | ddTagEnd
+            | dtTagEnd
+            | headTagEnd
+            | htmlTagEnd
+            | optionTagEnd
+            | tbodyTagEnd
+            | theadTagEnd
+            | tfootTagEnd
             ;
 
-htmlElementOpen:  OPEN HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-htmlElementClose: OPEN SLASH HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
+htmlElementStart:  START HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+htmlElementEnd: START SLASH HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
 attribute:    HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)*
               EQUALS (NEWLINE | LEADING_ASTERISK | WS)*
               (ATTR_VALUE | text | HTML_TAG_NAME);
 
-htmlTag: htmlElementOpen (htmlElement
+htmlTag: htmlElementStart (htmlElement
                               | ({!isNextJavadocTag()}? LEADING_ASTERISK)
                               | htmlComment
                               | CDATA
                               | NEWLINE
                               | text
-                               //{isSameTagNames($htmlElementOpen.ctx, $htmlElementClose.ctx)}?
-                              | javadocInlineTag)* htmlElementClose
-
-            | htmlElementOpen (htmlElement
-                              | ({!isNextJavadocTag()}? LEADING_ASTERISK)
-                              | htmlComment
-                              | CDATA
-                              | NEWLINE
-                              | text
-                              | javadocInlineTag)*
-            {notifyErrorListeners($htmlElementOpen.ctx.getToken(HTML_TAG_NAME, 0).getSymbol()
-                                         , "javadoc.missed.html.close", null);}
+                              | javadocInlineTag)* htmlElementEnd
+                              {isSameTagNames($htmlElementStart.ctx, $htmlElementEnd.ctx)}?
             ;
 
 //////////////////////////////////////////////////////////////////////////////////////
 ////////////////////  HTML TAGS WITH OPTIONAL END TAG ////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
-pTagOpen: OPEN P_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-pTagClose: OPEN SLASH P_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-paragraph: pTagOpen
+pTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START P_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+pTagEnd: START SLASH P_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+paragraph: pTagStart[false]
             (htmlTag
-            | singletonTag
+            | singletonElement
             | li
             | tr
             | td
@@ -150,34 +147,40 @@ paragraph: pTagOpen
             | tbody
             | thead
             | tfoot
-            | liTagOpen
-            | trTagOpen
-            | tdTagOpen
-            | thTagOpen
-            | bodyTagOpen
-            | colgroupTagOpen
-            | ddTagOpen
-            | dtTagOpen
-            | headTagOpen
-            | htmlTagOpen
-            | optionTagOpen
-            | tbodyTagOpen
-            | theadTagOpen
-            | tfootTagOpen
+            | liTagStart[true]
+            | trTagStart[true]
+            | tdTagStart[true]
+            | thTagStart[true]
+            | bodyTagStart[true]
+            | colgroupTagStart[true]
+            | ddTagStart[true]
+            | dtTagStart[true]
+            | headTagStart[true]
+            | htmlTagStart[true]
+            | optionTagStart[true]
+            | tbodyTagStart[true]
+            | theadTagStart[true]
+            | tfootTagStart[true]
             | ({!isNextJavadocTag()}? LEADING_ASTERISK)
             | htmlComment
             | CDATA
             | NEWLINE
             | text
             | javadocInlineTag)*
-        pTagClose
+        pTagEnd
         ;
 
-liTagOpen: OPEN LI_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-liTagClose: OPEN SLASH LI_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-li: liTagOpen
+liTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START LI_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+liTagEnd: START SLASH LI_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+li: liTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | tr
         | td
@@ -192,34 +195,40 @@ li: liTagOpen
         | tbody
         | thead
         | tfoot
-        | pTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    liTagClose
+    liTagEnd
     ;
 
-trTagOpen: OPEN TR_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-trTagClose: OPEN SLASH TR_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-tr: trTagOpen
+trTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START TR_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+trTagEnd: START SLASH TR_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+tr: trTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | td
@@ -234,34 +243,40 @@ tr: trTagOpen
         | tbody
         | thead
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    trTagClose
+    trTagEnd
     ;
 
-tdTagOpen: OPEN TD_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-tdTagClose: OPEN SLASH TD_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-td: tdTagOpen
+tdTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START TD_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+tdTagEnd: START SLASH TD_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+td: tdTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -276,34 +291,40 @@ td: tdTagOpen
         | tbody
         | thead
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    tdTagClose
+    tdTagEnd
     ;
 
-thTagOpen: OPEN TH_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-thTagClose: OPEN SLASH TH_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-th: thTagOpen
+thTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START TH_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+thTagEnd: START SLASH TH_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+th: thTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -318,34 +339,40 @@ th: thTagOpen
         | tbody
         | thead
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    thTagClose
+    thTagEnd
     ;
 
-bodyTagOpen: OPEN BODY_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-bodyTagClose: OPEN SLASH BODY_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-body: bodyTagOpen
+bodyTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START BODY_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+bodyTagEnd: START SLASH BODY_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+body: bodyTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -360,34 +387,40 @@ body: bodyTagOpen
         | tbody
         | thead
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    bodyTagClose
+    bodyTagEnd
     ;
 
-colgroupTagOpen: OPEN COLGROUP_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-colgroupTagClose: OPEN SLASH COLGROUP_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-colgroup: colgroupTagOpen
+colgroupTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START COLGROUP_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+colgroupTagEnd: START SLASH COLGROUP_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+colgroup: colgroupTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -402,34 +435,40 @@ colgroup: colgroupTagOpen
         | tbody
         | thead
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    colgroupTagClose
+    colgroupTagEnd
     ;
 
-ddTagOpen: OPEN DD_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-ddTagClose: OPEN SLASH DD_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-dd: ddTagOpen
+ddTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START DD_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+ddTagEnd: START SLASH DD_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+dd: ddTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -444,34 +483,40 @@ dd: ddTagOpen
         | tbody
         | thead
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    ddTagClose
+    ddTagEnd
     ;
 
-dtTagOpen: OPEN DT_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-dtTagClose: OPEN SLASH DT_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-dt: dtTagOpen
+dtTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START DT_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+dtTagEnd: START SLASH DT_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+dt: dtTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -486,34 +531,40 @@ dt: dtTagOpen
         | tbody
         | thead
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    dtTagClose
+    dtTagEnd
     ;
 
-headTagOpen: OPEN HEAD_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-headTagClose: OPEN SLASH HEAD_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-head: headTagOpen
+headTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START HEAD_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+headTagEnd: START SLASH HEAD_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+head: headTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -528,34 +579,40 @@ head: headTagOpen
         | tbody
         | thead
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    headTagClose
+    headTagEnd
     ;
 
-htmlTagOpen: OPEN HTML_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-htmlTagClose: OPEN SLASH HTML_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-html: htmlTagOpen
+htmlTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START HTML_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+htmlTagEnd: START SLASH HTML_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+html: htmlTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -570,34 +627,40 @@ html: htmlTagOpen
         | tbody
         | thead
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    htmlTagClose
+    htmlTagEnd
     ;
 
-optionTagOpen: OPEN OPTION_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-optionTagClose: OPEN SLASH OPTION_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-option: optionTagOpen
+optionTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START OPTION_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+optionTagEnd: START SLASH OPTION_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+option: optionTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -612,34 +675,40 @@ option: optionTagOpen
         | tbody
         | thead
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    optionTagClose
+    optionTagEnd
     ;
 
-tbodyTagOpen: OPEN TBODY_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-tbodyTagClose: OPEN SLASH TBODY_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-tbody: tbodyTagOpen
+tbodyTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START TBODY_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+tbodyTagEnd: START SLASH TBODY_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+tbody: tbodyTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -654,34 +723,40 @@ tbody: tbodyTagOpen
         | option
         | thead
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | theadTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | theadTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    tbodyTagClose
+    tbodyTagEnd
     ;
 
-tfootTagOpen: OPEN TFOOT_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-tfootTagClose: OPEN SLASH TFOOT_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-tfoot: tfootTagOpen
+tfootTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START TFOOT_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+tfootTagEnd: START SLASH TFOOT_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+tfoot: tfootTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -696,34 +771,40 @@ tfoot: tfootTagOpen
         | option
         | tbody
         | thead
-        | pTagOpen
-        | liTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | theadTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | theadTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    tfootTagClose
+    tfootTagEnd
     ;
 
-theadTagOpen: OPEN THEAD_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-theadTagClose: OPEN SLASH THEAD_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* CLOSE;
-thead: theadTagOpen
+theadTagStart[boolean isNonTight]
+@after {
+    if (isNonTight && nonTightTagStartContext == null) {
+        nonTightTagStartContext = _localctx;
+    }
+}
+    : START THEAD_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* END;
+theadTagEnd: START SLASH THEAD_HTML_TAG_NAME (NEWLINE | LEADING_ASTERISK | WS)* END;
+thead: theadTagStart[false]
     (htmlTag
-        | singletonTag
+        | singletonElement
         | paragraph
         | li
         | tr
@@ -738,33 +819,33 @@ thead: theadTagOpen
         | option
         | tbody
         | tfoot
-        | pTagOpen
-        | liTagOpen
-        | trTagOpen
-        | tdTagOpen
-        | thTagOpen
-        | bodyTagOpen
-        | colgroupTagOpen
-        | ddTagOpen
-        | dtTagOpen
-        | headTagOpen
-        | htmlTagOpen
-        | optionTagOpen
-        | tbodyTagOpen
-        | tfootTagOpen
+        | pTagStart[true]
+        | liTagStart[true]
+        | trTagStart[true]
+        | tdTagStart[true]
+        | thTagStart[true]
+        | bodyTagStart[true]
+        | colgroupTagStart[true]
+        | ddTagStart[true]
+        | dtTagStart[true]
+        | headTagStart[true]
+        | htmlTagStart[true]
+        | optionTagStart[true]
+        | tbodyTagStart[true]
+        | tfootTagStart[true]
         | ({!isNextJavadocTag()}? LEADING_ASTERISK)
         | htmlComment
         | CDATA
         | NEWLINE
         | text
         | javadocInlineTag)*
-    theadTagClose
+    theadTagEnd
     ;
 
 //////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////  SINLETON HTML TAGS  //////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
-singletonElement: singletonTag
+singletonElement: emptyTag
             | areaTag
             | baseTag
             | basefontTag
@@ -778,10 +859,15 @@ singletonElement: singletonTag
             | linkTag
             | metaTag
             | paramTag
+            | embedTag
+            | keygenTag
+            | sourceTag
+            | trackTag
+            | wbrTag
             | wrongSinletonTag
             ;
 
-singletonTag: OPEN
+emptyTag: START
                   (
                   HTML_TAG_NAME
                   | P_HTML_TAG_NAME
@@ -800,33 +886,33 @@ singletonTag: OPEN
                   | TFOOT_HTML_TAG_NAME
                   | THEAD_HTML_TAG_NAME
                   )
-                  (attribute | NEWLINE | LEADING_ASTERISK | WS)* SLASH_CLOSE;
+                  (attribute | NEWLINE | LEADING_ASTERISK | WS)* SLASH_END;
 
-areaTag: OPEN AREA_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
-         (SLASH_CLOSE | CLOSE);
-baseTag: OPEN BASE_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
-         (SLASH_CLOSE | CLOSE);
-basefontTag: OPEN BASEFONT_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
-         (SLASH_CLOSE | CLOSE);
-brTag: OPEN BR_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* (SLASH_CLOSE | CLOSE);
-colTag: OPEN COL_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* (SLASH_CLOSE | CLOSE);
-frameTag: OPEN FRAME_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
-         (SLASH_CLOSE | CLOSE);
-hrTag: OPEN HR_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* (SLASH_CLOSE | CLOSE);
-imgTag: OPEN IMG_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* (SLASH_CLOSE | CLOSE);
-inputTag: OPEN INPUT_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
-         (SLASH_CLOSE | CLOSE);
-isindexTag: OPEN ISINDEX_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
-         (SLASH_CLOSE | CLOSE);
-linkTag: OPEN LINK_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
-         (SLASH_CLOSE | CLOSE);
-metaTag: OPEN META_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
-         (SLASH_CLOSE | CLOSE);
-paramTag: OPEN PARAM_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
-         (SLASH_CLOSE | CLOSE);
+areaTag: START AREA_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+baseTag: START BASE_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+basefontTag: START BASEFONT_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+brTag: START BR_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* (SLASH_END | END);
+colTag: START COL_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* (SLASH_END | END);
+frameTag: START FRAME_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+hrTag: START HR_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* (SLASH_END | END);
+imgTag: START IMG_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)* (SLASH_END | END);
+inputTag: START INPUT_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+isindexTag: START ISINDEX_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+linkTag: START LINK_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+metaTag: START META_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+paramTag: START PARAM_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
 
-wrongSinletonTag: OPEN SLASH singletonTagName
-                  CLOSE {notifyErrorListeners($singletonTagName.start,
+wrongSinletonTag: START SLASH singletonTagName
+                  END {notifyErrorListeners($singletonTagName.start,
                              "javadoc.wrong.singleton.html.tag", null);}
                   ;
 singletonTagName: (AREA_HTML_TAG_NAME
@@ -842,6 +928,11 @@ singletonTagName: (AREA_HTML_TAG_NAME
                   | LINK_HTML_TAG_NAME
                   | META_HTML_TAG_NAME
                   | PARAM_HTML_TAG_NAME
+                  | EMBED_HTML_TAG_NAME
+                  | KEYGEN_HTML_TAG_NAME
+                  | SOURCE_HTML_TAG_NAME
+                  | TRACK_HTML_TAG_NAME
+                  | WBR_HTML_TAG_NAME
                   )
                   ;
 
@@ -859,41 +950,43 @@ description: (
                   | htmlElement
             )+;
 
-reference:
-      (
-            PACKAGE (DOT | CLASS)* HASH? MEMBER? parameters?
-            | (DOT | CLASS)+ HASH? MEMBER? parameters?
-            | HASH? MEMBER parameters?
-      )
-      ;
+reference:  PACKAGE_CLASS (HASH MEMBER parameters?)?
+            | HASH MEMBER parameters?
+    ;
+
 parameters: LEFT_BRACE (ARGUMENT | COMMA | WS | NEWLINE | LEADING_ASTERISK)* RIGHT_BRACE;
 
-javadocTag: AUTHOR_LITERAL (WS | NEWLINE)* description?
+javadocTag: AUTHOR_LITERAL (WS | NEWLINE)+ description
 
-    | DEPRECATED_LITERAL (WS | NEWLINE)* description?
+    | DEPRECATED_LITERAL (WS | NEWLINE)* ((WS | NEWLINE) description)?
 
-      | EXCEPTION_LITERAL (WS | NEWLINE)* CLASS_NAME? (WS | NEWLINE)* description?
+      | EXCEPTION_LITERAL (WS | NEWLINE | {!isNextJavadocTag()}? LEADING_ASTERISK)+ CLASS_NAME
+          (WS | NEWLINE)* ((WS | NEWLINE) description)?
 
-      | PARAM_LITERAL (WS | NEWLINE)* PARAMETER_NAME? (WS | NEWLINE)* description?
+      | PARAM_LITERAL (WS | NEWLINE | {!isNextJavadocTag()}? LEADING_ASTERISK)+ PARAMETER_NAME
+          (WS | NEWLINE)* ((WS | NEWLINE) description)?
 
-      | RETURN_LITERAL (WS | NEWLINE)* description?
+      | RETURN_LITERAL (WS | NEWLINE)+ description
 
-      | SEE_LITERAL (WS | NEWLINE)* reference? (STRING | htmlElement)* (WS | NEWLINE)* description?
+      | SEE_LITERAL (WS | NEWLINE | {!isNextJavadocTag()}? LEADING_ASTERISK)+
+          (reference | STRING | htmlElement) (WS | NEWLINE)* ((WS | NEWLINE) description)?
 
-      | SERIAL_LITERAL (WS | NEWLINE)* (LITERAL_INCLUDE | LITERAL_EXCLUDE)? description?
+      | SERIAL_LITERAL (WS | NEWLINE)*
+          ((WS | NEWLINE) description | LITERAL_INCLUDE | LITERAL_EXCLUDE)? (WS | NEWLINE)*
 
-      | SERIAL_DATA_LITERAL (WS | NEWLINE)* description?
+      | SERIAL_DATA_LITERAL (WS | NEWLINE)* ((WS | NEWLINE) description)?
 
-      | SERIAL_FIELD_LITERAL (WS | NEWLINE)* FIELD_NAME? (WS | NEWLINE)* FIELD_TYPE?
-              (WS | NEWLINE)* description?
+      | SERIAL_FIELD_LITERAL (WS | NEWLINE)* ((WS | NEWLINE) FIELD_NAME)? (WS | NEWLINE)*
+          ((WS | NEWLINE) FIELD_TYPE)? (WS | NEWLINE)* ((WS | NEWLINE) description)?
 
-      | SINCE_LITERAL (WS | NEWLINE)* description?
+      | SINCE_LITERAL (WS | NEWLINE)+ description
 
-      | THROWS_LITERAL (WS | NEWLINE)* CLASS_NAME? (WS | NEWLINE)* description?
+      | THROWS_LITERAL (WS | NEWLINE | {!isNextJavadocTag()}? LEADING_ASTERISK)+ CLASS_NAME
+          (WS | NEWLINE)* ((WS | NEWLINE) description)?
 
-      | VERSION_LITERAL (WS | NEWLINE)* description?
+      | VERSION_LITERAL (WS | NEWLINE)+ description
 
-      | CUSTOM_NAME (WS | NEWLINE)* description?
+      | CUSTOM_NAME (WS | NEWLINE)* ((WS | NEWLINE) description)?
     ;
 //////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////  JAVADOC INLINE TAGS  /////////////////////////////////////
@@ -904,11 +997,13 @@ javadocInlineTag:
             CODE_LITERAL (WS | NEWLINE | LEADING_ASTERISK | text)*
             | DOC_ROOT_LITERAL (WS | NEWLINE | LEADING_ASTERISK)*
             | INHERIT_DOC_LITERAL (WS | NEWLINE | LEADING_ASTERISK)*
-            | LINK_LITERAL (WS | NEWLINE | LEADING_ASTERISK)* reference description?
-            | LINKPLAIN_LITERAL (WS | NEWLINE | LEADING_ASTERISK)* reference description?
+            | LINK_LITERAL (WS | NEWLINE | LEADING_ASTERISK)+ reference (WS | NEWLINE)*
+                ((WS | NEWLINE) description)?
+            | LINKPLAIN_LITERAL (WS | NEWLINE | LEADING_ASTERISK)+ reference (WS | NEWLINE)*
+                ((WS | NEWLINE) description)?
             | LITERAL_LITERAL (WS | NEWLINE | LEADING_ASTERISK | text)*
-            | VALUE_LITERAL (WS | NEWLINE | LEADING_ASTERISK)* reference?
-            | CUSTOM_NAME (WS | NEWLINE | LEADING_ASTERISK)* description?
+            | VALUE_LITERAL (WS | NEWLINE | LEADING_ASTERISK)* ((WS | NEWLINE) reference)?
+            | CUSTOM_NAME (WS | NEWLINE | LEADING_ASTERISK)* ((WS | NEWLINE) description)?
       )
       JAVADOC_INLINE_TAG_END
       ;
@@ -923,3 +1018,14 @@ text : ((CHAR | WS)
   else if (_alt == 1) continue;
  }
        )+;
+
+embedTag: START EMBED_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+keygenTag: START KEYGEN_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+sourceTag: START SOURCE_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+trackTag: START TRACK_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);
+wbrTag: START WBR_HTML_TAG_NAME (attribute | NEWLINE | LEADING_ASTERISK | WS)*
+         (SLASH_END | END);

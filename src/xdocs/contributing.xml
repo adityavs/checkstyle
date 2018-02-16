@@ -38,7 +38,7 @@
 
         <a href="https://git-scm.com">GIT</a>,
         <a href="http://maven.apache.org">Maven</a>,
-        <a href="http://junit.org">JUnit</a>).
+        <a href="https://junit.org/junit5/">JUnit</a>).
       </p>
       <p>
         To start the development - visit our
@@ -52,12 +52,6 @@
         Please do not expect that we will accept any code that you send to us.
         Example of ideal <a href="https://github.com/checkstyle/checkstyle/issues/258">issue description</a>,
         and how it is commented on fix <a href="https://github.com/checkstyle/checkstyle/pull/601">Pull Request</a>.
-      </p>
-      <p>
-        <b>ATTENTION:</b> any new Check that you are going to introduce you need to contribute to our
-        sanbox project <a href="https://github.com/sevntu-checkstyle/sevntu.checkstyle">sevntu.checkstyle</a>.
-        We are receiving only bug fixes for now to our main project, here is a
-        <a href="https://groups.google.com/forum/#!topic/checkstyle-devel/JbhfiiSqKsQ">reason</a>.
       </p>
     </section>
 
@@ -137,19 +131,21 @@
         feature of <a href="https://github.com/">Github</a>.<br/>
         Please provide wide description of update with detailed explanation of problem
         and how you propose to resolve it.
-        <b>ATTENTION:</b> Please recheck that in your Pull Request there is ONLY your changes and all of them are rebased from most recent HEAD of our master branch.
+        <b>ATTENTION:</b> Please recheck that in your Pull Request there is ONLY your changes and
+        all of them are rebased from most recent HEAD of our master branch.
       </p>
 
       <p>
-        <b>ATTENTION:</b> Please provide single-line meaningful message for commit with reference to github issue or Pull Request for more details.<br/>
-        Ideal format for message is "Issue #Number: Brief single-line message ..... .". Where NUMBER is Issue or Pull Request number at github.
+        <b>ATTENTION:</b> Please provide single-line meaningful message for commit with reference
+        to github issue or Pull Request for more details.<br/>
+        Ideal format for message is "Issue #Number: Brief single-line message ..... .". Where
+        NUMBER is Issue or Pull Request number at github.
         <a href="https://github.com/checkstyle/checkstyle/commit/9303fd9d971eb55cdfd62686ba2f5698edb2c83e">Good example</a>
       </p>
 
       <p>
-        After you do Pull Request please recheck that our where is no problem from our build system:
-        <a href="https://travis-ci.org/checkstyle/checkstyle">Travis</a> and
-        <a href="https://coveralls.io/r/checkstyle/checkstyle">Coveralls</a>.
+        After you do Pull Request please recheck that where are no problems from our build systems:
+        <a href="https://travis-ci.org/checkstyle/checkstyle">Travis</a> and others ... .
         You will see that your Pull Request on Github is marked by that jobs automatically in few minutes.
       </p>
 

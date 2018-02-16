@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.blocks;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -133,7 +134,9 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author <a href="mailto:nesterenko-aleksey@list.ru">Aleksey Nesterenko</a>
  * @author <a href="mailto:andreyselkin@gmail.com">Andrei Selkin</a>
  */
+@StatelessCheck
 public class NeedBracesCheck extends AbstractCheck {
+
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -204,13 +207,28 @@ public class NeedBracesCheck extends AbstractCheck {
             && ast.findFirstToken(TokenTypes.LITERAL_IF) != null) {
             isElseIf = true;
         }
-
+        final boolean isDefaultInAnnotation = isDefaultInAnnotation(ast);
         final boolean skipStatement = isSkipStatement(ast);
         final boolean skipEmptyLoopBody = allowEmptyLoopBody && isEmptyLoopBody(ast);
 
-        if (slistAST == null && !isElseIf && !skipStatement && !skipEmptyLoopBody) {
+        if (slistAST == null && !isElseIf && !isDefaultInAnnotation
+                && !skipStatement && !skipEmptyLoopBody) {
             log(ast.getLineNo(), MSG_KEY_NEED_BRACES, ast.getText());
         }
+    }
+
+    /**
+     * Checks if ast is the default token of an annotation field.
+     * @param ast ast to test.
+     * @return true if current ast is default and it is part of annotation.
+     */
+    private static boolean isDefaultInAnnotation(DetailAST ast) {
+        boolean isDefaultInAnnotation = false;
+        if (ast.getType() == TokenTypes.LITERAL_DEFAULT
+                && ast.getParent().getType() == TokenTypes.ANNOTATION_FIELD_DEF) {
+            isDefaultInAnnotation = true;
+        }
+        return isDefaultInAnnotation;
     }
 
     /**
@@ -370,7 +388,6 @@ public class NeedBracesCheck extends AbstractCheck {
      */
     private static boolean isSingleLineIf(DetailAST literalIf) {
         boolean result = false;
-        final DetailAST ifCondition = literalIf.findFirstToken(TokenTypes.EXPR);
         if (literalIf.getParent().getType() == TokenTypes.SLIST) {
             final DetailAST literalIfLastChild = literalIf.getLastChild();
             final DetailAST block;
@@ -380,6 +397,7 @@ public class NeedBracesCheck extends AbstractCheck {
             else {
                 block = literalIfLastChild;
             }
+            final DetailAST ifCondition = literalIf.findFirstToken(TokenTypes.EXPR);
             result = ifCondition.getLineNo() == block.getLineNo();
         }
         return result;
@@ -410,6 +428,7 @@ public class NeedBracesCheck extends AbstractCheck {
      * {@code
      * case 1: doSomeStuff(); break;
      * case 2: doSomeStuff(); break;
+     * case 3: ;
      * }
      * </p>
      * @param literalCase {@link TokenTypes#LITERAL_CASE case statement}.
@@ -418,12 +437,17 @@ public class NeedBracesCheck extends AbstractCheck {
     private static boolean isSingleLineCase(DetailAST literalCase) {
         boolean result = false;
         final DetailAST slist = literalCase.getNextSibling();
-        final DetailAST block = slist.getFirstChild();
-        if (block.getType() != TokenTypes.SLIST) {
-            final DetailAST caseBreak = slist.findFirstToken(TokenTypes.LITERAL_BREAK);
-            final boolean atOneLine = literalCase.getLineNo() == block.getLineNo();
-            if (caseBreak != null) {
-                result = atOneLine && block.getLineNo() == caseBreak.getLineNo();
+        if (slist == null) {
+            result = true;
+        }
+        else {
+            final DetailAST block = slist.getFirstChild();
+            if (block.getType() != TokenTypes.SLIST) {
+                final DetailAST caseBreak = slist.findFirstToken(TokenTypes.LITERAL_BREAK);
+                if (caseBreak != null) {
+                    final boolean atOneLine = literalCase.getLineNo() == block.getLineNo();
+                    result = atOneLine && block.getLineNo() == caseBreak.getLineNo();
+                }
             }
         }
         return result;
@@ -442,9 +466,14 @@ public class NeedBracesCheck extends AbstractCheck {
     private static boolean isSingleLineDefault(DetailAST literalDefault) {
         boolean result = false;
         final DetailAST slist = literalDefault.getNextSibling();
-        final DetailAST block = slist.getFirstChild();
-        if (block.getType() != TokenTypes.SLIST) {
-            result = literalDefault.getLineNo() == block.getLineNo();
+        if (slist == null) {
+            result = true;
+        }
+        else {
+            final DetailAST block = slist.getFirstChild();
+            if (block != null && block.getType() != TokenTypes.SLIST) {
+                result = literalDefault.getLineNo() == block.getLineNo();
+            }
         }
         return result;
     }
@@ -467,4 +496,5 @@ public class NeedBracesCheck extends AbstractCheck {
         }
         return result;
     }
+
 }

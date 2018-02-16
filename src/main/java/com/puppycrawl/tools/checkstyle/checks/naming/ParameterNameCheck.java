@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,17 +19,17 @@
 
 package com.puppycrawl.tools.checkstyle.checks.naming;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
-import com.puppycrawl.tools.checkstyle.api.Scope;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
 import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
 
 /**
-* <p>
- * Checks that method and <code>catch</code> parameter names conform to a format specified
+ * <p>
+ * Checks that method and {@code catch} parameter names conform to a format specified
  * by the format property. The format is a
  * {@link java.util.regex.Pattern regular expression}
  * and defaults to
@@ -38,19 +38,15 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * <p>The check has the following options:</p>
  * <p><b>ignoreOverridden</b> - allows to skip methods with Override annotation from
  * validation. Default values is <b>false</b> .</p>
- * <p><b>scope</b> - visibility scope of methods to be checked.
- *  Default value is <b>anoninner</b> .</p>
- * <p><b>excludeScope</b> - visibility scope of methods not to be checked.
- *  Default value is <b>null</b> .</p>
- * <p>
- * An example of how to configure the check is:
- * </p>
+ * <p><b>accessModifiers</b> - access modifiers of methods which should to be checked.
+ * Default value is <b>public, protected, package, private</b> .</p>
+ * An example of how to configure the check:
  * <pre>
  * &lt;module name="ParameterName"/&gt;
  * </pre>
  * <p>
-  * An example of how to configure the check for names that begin with
- * a lower case letter, followed by letters, digits, and underscores is:
+ * An example of how to configure the check for names that begin with
+ * a lower case letter, followed by letters, digits, and underscores:
  * </p>
  * <pre>
  * &lt;module name="ParameterName"&gt;
@@ -70,19 +66,20 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author Oliver Burn
  * @author Andrei Selkin
  */
-public class ParameterNameCheck
-    extends AbstractNameCheck {
+public class ParameterNameCheck extends AbstractNameCheck {
 
     /**
      * Allows to skip methods with Override annotation from validation.
      */
     private boolean ignoreOverridden;
 
-    /** The visibility scope where methods are checked. */
-    private Scope scope = Scope.ANONINNER;
-
-    /** The visibility scope where methods shouldn't be checked. */
-    private Scope excludeScope;
+    /** Access modifiers of methods which should be checked. */
+    private AccessModifier[] accessModifiers = {
+        AccessModifier.PUBLIC,
+        AccessModifier.PROTECTED,
+        AccessModifier.PACKAGE,
+        AccessModifier.PRIVATE,
+    };
 
     /**
      * Creates a new {@code ParameterNameCheck} instance.
@@ -93,7 +90,6 @@ public class ParameterNameCheck
 
     /**
      * Sets whether to skip methods with Override annotation from validation.
-     *
      * @param ignoreOverridden Flag for skipping methods with Override annotation.
      */
     public void setIgnoreOverridden(boolean ignoreOverridden) {
@@ -101,86 +97,75 @@ public class ParameterNameCheck
     }
 
     /**
-     * Set the scope.
-     * @param from a scope.
+     * Sets access modifiers of methods which should be checked.
+     * @param accessModifiers access modifiers of methods which should be checked.
      */
-    public void setScope(Scope from) {
-        scope = from;
-    }
-
-    /**
-     * Set the excludeScope.
-     * @param excludeScope a scope.
-     */
-    public void setExcludeScope(Scope excludeScope) {
-        this.excludeScope = excludeScope;
+    public void setAccessModifiers(AccessModifier... accessModifiers) {
+        this.accessModifiers =
+            Arrays.copyOf(accessModifiers, accessModifiers.length);
     }
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.PARAMETER_DEF};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.PARAMETER_DEF};
     }
 
     @Override
     protected boolean mustCheckName(DetailAST ast) {
         boolean checkName = true;
-        final boolean isDefault = scope == Scope.ANONINNER && excludeScope == null;
-
         if (ignoreOverridden && isOverriddenMethod(ast)
                 || ast.getParent().getType() == TokenTypes.LITERAL_CATCH
                 || CheckUtils.isReceiverParameter(ast)
-                || !isDefault && !matchScope(calculateScope(ast))) {
+                || !matchAccessModifiers(getAccessModifier(ast))) {
             checkName = false;
         }
         return checkName;
     }
 
     /**
-     * Returns the scope for the method/constructor at the specified AST. If
-     * the method is in an interface or annotation block, the scope is assumed
+     * Returns the access modifier of the method/constructor at the specified AST. If
+     * the method is in an interface or annotation block, the access modifier is assumed
      * to be public.
      *
-     * @param ast the token of the method/constructor
-     * @return the scope of the method/constructor
+     * @param ast the token of the method/constructor.
+     * @return the access modifier of the method/constructor.
      */
-    private static Scope calculateScope(final DetailAST ast) {
+    private static AccessModifier getAccessModifier(final DetailAST ast) {
         final DetailAST params = ast.getParent();
         final DetailAST meth = params.getParent();
-        Scope scope = Scope.PRIVATE;
+        AccessModifier accessModifier = AccessModifier.PRIVATE;
 
         if (meth.getType() == TokenTypes.METHOD_DEF
-            || meth.getType() == TokenTypes.CTOR_DEF) {
+                || meth.getType() == TokenTypes.CTOR_DEF) {
             if (ScopeUtils.isInInterfaceOrAnnotationBlock(ast)) {
-                scope = Scope.PUBLIC;
+                accessModifier = AccessModifier.PUBLIC;
             }
             else {
-                final DetailAST mods = meth.findFirstToken(TokenTypes.MODIFIERS);
-                scope = ScopeUtils.getScopeFromMods(mods);
+                final DetailAST modsToken = meth.findFirstToken(TokenTypes.MODIFIERS);
+                accessModifier = CheckUtils.getAccessModifierFromModifiersToken(modsToken);
             }
         }
 
-        return scope;
+        return accessModifier;
     }
 
     /**
-     * Checks whether a method has the correct scope to be checked.
-     * @param nodeScope the scope of the method
-     * @return whether the method matches the expected scope
+     * Checks whether a method has the correct access modifier to be checked.
+     * @param accessModifier the access modifier of the method.
+     * @return whether the method matches the expected access modifier.
      */
-    private boolean matchScope(final Scope nodeScope) {
-        return nodeScope.isIn(scope)
-            && (excludeScope == null
-                || !nodeScope.isIn(excludeScope));
+    private boolean matchAccessModifiers(final AccessModifier accessModifier) {
+        return Arrays.stream(accessModifiers).anyMatch(el -> el == accessModifier);
     }
 
     /**
@@ -195,7 +180,8 @@ public class ParameterNameCheck
         final Optional<DetailAST> annotation =
             Optional.ofNullable(parent.getFirstChild().getFirstChild());
 
-        if (annotation.isPresent() && annotation.get().getType() == TokenTypes.ANNOTATION) {
+        if (annotation.isPresent()
+                && annotation.get().getType() == TokenTypes.ANNOTATION) {
             final Optional<DetailAST> overrideToken =
                 Optional.ofNullable(annotation.get().findFirstToken(TokenTypes.IDENT));
             if (overrideToken.isPresent() && "Override".equals(overrideToken.get().getText())) {
@@ -204,4 +190,5 @@ public class ParameterNameCheck
         }
         return overridden;
     }
+
 }

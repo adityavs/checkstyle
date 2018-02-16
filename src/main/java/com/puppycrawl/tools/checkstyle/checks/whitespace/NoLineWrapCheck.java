@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.whitespace;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -62,6 +63,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author maxvetrenko
  */
+@StatelessCheck
 public class NoLineWrapCheck extends AbstractCheck {
 
     /**
@@ -72,13 +74,14 @@ public class NoLineWrapCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return new int[] {TokenTypes.PACKAGE_DEF, TokenTypes.IMPORT};
+        return new int[] {TokenTypes.PACKAGE_DEF, TokenTypes.IMPORT, TokenTypes.STATIC_IMPORT};
     }
 
     @Override
     public int[] getAcceptableTokens() {
         return new int[] {
             TokenTypes.IMPORT,
+            TokenTypes.STATIC_IMPORT,
             TokenTypes.PACKAGE_DEF,
             TokenTypes.CLASS_DEF,
             TokenTypes.METHOD_DEF,
@@ -99,4 +102,5 @@ public class NoLineWrapCheck extends AbstractCheck {
             log(ast.getLineNo(), MSG_KEY, ast.getText());
         }
     }
+
 }

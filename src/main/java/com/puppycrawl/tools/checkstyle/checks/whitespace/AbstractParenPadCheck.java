@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,8 +21,7 @@ package com.puppycrawl.tools.checkstyle.checks.whitespace;
 
 import java.util.Locale;
 
-import org.apache.commons.beanutils.ConversionException;
-
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
@@ -34,6 +33,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * </p>
  * @author Oliver Burn
  */
+@StatelessCheck
 public abstract class AbstractParenPadCheck
     extends AbstractCheck {
 
@@ -73,14 +73,14 @@ public abstract class AbstractParenPadCheck
     /**
      * Set the option to enforce.
      * @param optionStr string to decode option from
-     * @throws ConversionException if unable to decode
+     * @throws IllegalArgumentException if unable to decode
      */
     public void setOption(String optionStr) {
         try {
             option = PadOption.valueOf(optionStr.trim().toUpperCase(Locale.ENGLISH));
         }
         catch (IllegalArgumentException iae) {
-            throw new ConversionException("unable to parse " + optionStr, iae);
+            throw new IllegalArgumentException("unable to parse " + optionStr, iae);
         }
     }
 
@@ -109,9 +109,9 @@ public abstract class AbstractParenPadCheck
      * @param ast the token representing a right parentheses
      */
     protected void processRight(DetailAST ast) {
-        final String line = getLines()[ast.getLineNo() - 1];
         final int before = ast.getColumnNo() - 1;
         if (before >= 0) {
+            final String line = getLines()[ast.getLineNo() - 1];
             if (option == PadOption.NOSPACE
                 && Character.isWhitespace(line.charAt(before))
                 && !CommonUtils.hasWhitespaceBefore(before, line)) {
@@ -125,4 +125,5 @@ public abstract class AbstractParenPadCheck
             }
         }
     }
+
 }

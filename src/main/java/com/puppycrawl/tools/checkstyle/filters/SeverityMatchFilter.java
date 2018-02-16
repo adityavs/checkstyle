@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ package com.puppycrawl.tools.checkstyle.filters;
 
 import com.puppycrawl.tools.checkstyle.api.AuditEvent;
 import com.puppycrawl.tools.checkstyle.api.AutomaticBean;
+import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Filter;
 import com.puppycrawl.tools.checkstyle.api.SeverityLevel;
 
@@ -33,6 +34,7 @@ import com.puppycrawl.tools.checkstyle.api.SeverityLevel;
 public class SeverityMatchFilter
     extends AutomaticBean
     implements Filter {
+
     /** The severity level to accept. */
     private SeverityLevel severity = SeverityLevel.ERROR;
 
@@ -59,11 +61,14 @@ public class SeverityMatchFilter
     }
 
     @Override
-    public boolean accept(AuditEvent event) {
-        final boolean result = severity == event.getSeverityLevel();
-        if (acceptOnMatch) {
-            return result;
-        }
-        return !result;
+    protected void finishLocalSetup() throws CheckstyleException {
+        // No code by default
     }
+
+    @Override
+    public boolean accept(AuditEvent event) {
+        final boolean severityMatches = severity == event.getSeverityLevel();
+        return acceptOnMatch == severityMatches;
+    }
+
 }

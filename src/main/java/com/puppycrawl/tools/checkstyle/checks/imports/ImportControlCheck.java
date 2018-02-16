@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,9 +22,9 @@ package com.puppycrawl.tools.checkstyle.checks.imports;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Set;
+import java.util.regex.Pattern;
 
-import org.apache.commons.beanutils.ConversionException;
-
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
@@ -45,6 +45,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *
  * @author Oliver Burn
  */
+@FileStatefulCheck
 public class ImportControlCheck extends AbstractCheck implements ExternalResourceHolder {
 
     /**
@@ -71,7 +72,12 @@ public class ImportControlCheck extends AbstractCheck implements ExternalResourc
     private static final String UNABLE_TO_LOAD = "Unable to load ";
 
     /** Location of import control file. */
-    private String fileLocation;
+    private URI file;
+
+    /** The filepath pattern this check applies to. */
+    private Pattern path = Pattern.compile(".*");
+    /** Whether to process the current file. */
+    private boolean processCurrentFile;
 
     /** The root package controller. */
     private ImportControl root;
@@ -86,51 +92,54 @@ public class ImportControlCheck extends AbstractCheck implements ExternalResourc
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.PACKAGE_DEF, TokenTypes.IMPORT,
-                          TokenTypes.STATIC_IMPORT, };
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.PACKAGE_DEF, TokenTypes.IMPORT, TokenTypes.STATIC_IMPORT, };
     }
 
     @Override
-    public void beginTree(final DetailAST rootAST) {
+    public void beginTree(DetailAST rootAST) {
         currentImportControl = null;
+        processCurrentFile = path.matcher(getFileContents().getFileName()).find();
     }
 
     @Override
-    public void visitToken(final DetailAST ast) {
-        if (ast.getType() == TokenTypes.PACKAGE_DEF) {
-            if (root == null) {
-                log(ast, MSG_MISSING_FILE);
-            }
-            else {
-                packageName = getPackageText(ast);
-                currentImportControl = root.locateFinest(packageName);
-                if (currentImportControl == null) {
-                    log(ast, MSG_UNKNOWN_PKG);
+    public void visitToken(DetailAST ast) {
+        if (processCurrentFile) {
+            if (ast.getType() == TokenTypes.PACKAGE_DEF) {
+                if (root == null) {
+                    log(ast, MSG_MISSING_FILE);
+                }
+                else {
+                    packageName = getPackageText(ast);
+                    currentImportControl = root.locateFinest(packageName);
+                    if (currentImportControl == null) {
+                        log(ast, MSG_UNKNOWN_PKG);
+                    }
                 }
             }
-        }
-        else if (currentImportControl != null) {
-            final String importText = getImportText(ast);
-            final AccessResult access = currentImportControl.checkAccess(packageName, importText);
-            if (access != AccessResult.ALLOWED) {
-                log(ast, MSG_DISALLOWED, importText);
+            else if (currentImportControl != null) {
+                final String importText = getImportText(ast);
+                final AccessResult access =
+                        currentImportControl.checkAccess(packageName, importText);
+                if (access != AccessResult.ALLOWED) {
+                    log(ast, MSG_DISALLOWED, importText);
+                }
             }
         }
     }
 
     @Override
     public Set<String> getExternalResourceLocations() {
-        return Collections.singleton(fileLocation);
+        return Collections.singleton(file.toString());
     }
 
     /**
@@ -166,30 +175,27 @@ public class ImportControlCheck extends AbstractCheck implements ExternalResourc
      * configuration. It can also be a URL or resource in the classpath.
      * It will cause the file to be loaded.
      * @param uri the uri of the file to load.
-     * @throws ConversionException on error loading the file.
+     * @throws IllegalArgumentException on error loading the file.
      */
     public void setFile(URI uri) {
         // Handle empty param
         if (uri != null) {
             try {
                 root = ImportControlLoader.load(uri);
-                fileLocation = uri.toString();
+                file = uri;
             }
-            catch (final CheckstyleException ex) {
-                throw new ConversionException(UNABLE_TO_LOAD + uri, ex);
+            catch (CheckstyleException ex) {
+                throw new IllegalArgumentException(UNABLE_TO_LOAD + uri, ex);
             }
         }
     }
 
     /**
-     * Set the parameter for the url containing the import control
-     * configuration. It will cause the url to be loaded.
-     * @param uri the uri of the file to load.
-     * @throws ConversionException on error loading the file.
-     * @deprecated use {@link #setFile(URI uri)} to load URLs instead
+     * Set the file path pattern that this check applies to.
+     * @param pattern the file path regex this check should apply to.
      */
-    @Deprecated
-    public void setUrl(URI uri) {
-        setFile(uri);
+    public void setPath(Pattern pattern) {
+        path = pattern;
     }
+
 }

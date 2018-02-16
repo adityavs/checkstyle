@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -58,7 +58,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * </pre>
  * <p>
  * An example of how to configure the check to allow one char variable name in
- * <a href="http://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html">
+ * <a href="https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html">
  * initialization expressions</a> in FOR loop:
  * </p>
  * <pre>
@@ -72,6 +72,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  */
 public class LocalVariableNameCheck
     extends AbstractNameCheck {
+
     /** Regexp for one-char loop variables. */
     private static final Pattern SINGLE_CHAR = Pattern.compile("^[a-z]$");
 
@@ -96,32 +97,34 @@ public class LocalVariableNameCheck
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
+        return getRequiredTokens();
+    }
+
+    @Override
+    public int[] getRequiredTokens() {
         return new int[] {
             TokenTypes.VARIABLE_DEF,
         };
     }
 
     @Override
-    public int[] getRequiredTokens() {
-        return getAcceptableTokens();
-    }
-
-    @Override
     protected final boolean mustCheckName(DetailAST ast) {
+        final boolean result;
         if (allowOneCharVarInForLoop && isForLoopVariable(ast)) {
-            final String variableName =
-                    ast.findFirstToken(TokenTypes.IDENT).getText();
-            return !SINGLE_CHAR.matcher(variableName).find();
+            final String variableName = ast.findFirstToken(TokenTypes.IDENT).getText();
+            result = !SINGLE_CHAR.matcher(variableName).find();
         }
-        final DetailAST modifiersAST =
-            ast.findFirstToken(TokenTypes.MODIFIERS);
-        final boolean isFinal = modifiersAST.branchContains(TokenTypes.FINAL);
-        return !isFinal && ScopeUtils.isLocalVariableDef(ast);
+        else {
+            final DetailAST modifiersAST = ast.findFirstToken(TokenTypes.MODIFIERS);
+            final boolean isFinal = modifiersAST.findFirstToken(TokenTypes.FINAL) != null;
+            result = !isFinal && ScopeUtils.isLocalVariableDef(ast);
+        }
+        return result;
     }
 
     /**
@@ -134,4 +137,5 @@ public class LocalVariableNameCheck
         return parentType == TokenTypes.FOR_INIT
                 || parentType == TokenTypes.FOR_EACH_CLAUSE;
     }
+
 }

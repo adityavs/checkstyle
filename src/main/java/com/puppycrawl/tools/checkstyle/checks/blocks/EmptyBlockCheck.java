@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,16 +21,16 @@ package com.puppycrawl.tools.checkstyle.checks.blocks;
 
 import java.util.Locale;
 
-import org.apache.commons.beanutils.ConversionException;
-
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
- * Checks for empty blocks. The policy to verify is specified using the {@link
- * BlockOption} class and defaults to {@link BlockOption#STMT}.
+ * Checks for empty blocks. This check does not validate sequential blocks.
+ * The policy to verify is specified using the {@link
+ * BlockOption} class and defaults to {@link BlockOption#STATEMENT}.
  *
  * <p> By default the check will check the following blocks:
  *  {@link TokenTypes#LITERAL_WHILE LITERAL_WHILE},
@@ -64,13 +64,15 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author Lars Kühne
  */
+@StatelessCheck
 public class EmptyBlockCheck
     extends AbstractCheck {
+
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
      */
-    public static final String MSG_KEY_BLOCK_NO_STMT = "block.noStmt";
+    public static final String MSG_KEY_BLOCK_NO_STATEMENT = "block.noStatement";
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -79,19 +81,19 @@ public class EmptyBlockCheck
     public static final String MSG_KEY_BLOCK_EMPTY = "block.empty";
 
     /** The policy to enforce. */
-    private BlockOption option = BlockOption.STMT;
+    private BlockOption option = BlockOption.STATEMENT;
 
     /**
      * Set the option to enforce.
      * @param optionStr string to decode option from
-     * @throws ConversionException if unable to decode
+     * @throws IllegalArgumentException if unable to decode
      */
     public void setOption(String optionStr) {
         try {
             option = BlockOption.valueOf(optionStr.trim().toUpperCase(Locale.ENGLISH));
         }
         catch (IllegalArgumentException iae) {
-            throw new ConversionException("unable to parse " + optionStr, iae);
+            throw new IllegalArgumentException("unable to parse " + optionStr, iae);
         }
     }
 
@@ -140,18 +142,9 @@ public class EmptyBlockCheck
 
     @Override
     public void visitToken(DetailAST ast) {
-        final DetailAST slistToken = ast.findFirstToken(TokenTypes.SLIST);
-        final DetailAST leftCurly;
-
-        if (slistToken == null) {
-            leftCurly = ast.findFirstToken(TokenTypes.LCURLY);
-        }
-        else {
-            leftCurly = slistToken;
-        }
-
+        final DetailAST leftCurly = findLeftCurly(ast);
         if (leftCurly != null) {
-            if (option == BlockOption.STMT) {
+            if (option == BlockOption.STATEMENT) {
                 final boolean emptyBlock;
                 if (leftCurly.getType() == TokenTypes.LCURLY) {
                     emptyBlock = leftCurly.getNextSibling().getType() != TokenTypes.CASE_GROUP;
@@ -162,7 +155,7 @@ public class EmptyBlockCheck
                 if (emptyBlock) {
                     log(leftCurly.getLineNo(),
                         leftCurly.getColumnNo(),
-                        MSG_KEY_BLOCK_NO_STMT,
+                        MSG_KEY_BLOCK_NO_STATEMENT,
                         ast.getText());
                 }
             }
@@ -176,10 +169,11 @@ public class EmptyBlockCheck
     }
 
     /**
+     * Checks if SLIST token contains any text.
      * @param slistAST a {@code DetailAST} value
      * @return whether the SLIST token contains any text.
      */
-    protected boolean hasText(final DetailAST slistAST) {
+    private boolean hasText(final DetailAST slistAST) {
         final DetailAST rightCurly = slistAST.findFirstToken(TokenTypes.RCURLY);
         final DetailAST rcurlyAST;
 
@@ -204,15 +198,11 @@ public class EmptyBlockCheck
             }
         }
         else {
-            // check only whitespace of first & last lines
-            if (lines[slistLineNo - 1].substring(slistColNo + 1).trim().isEmpty()
-                    && lines[rcurlyLineNo - 1].substring(0, rcurlyColNo).trim().isEmpty()) {
-                // check if all lines are also only whitespace
-                returnValue = !checkIsAllLinesAreWhitespace(lines, slistLineNo, rcurlyLineNo);
-            }
-            else {
-                returnValue = true;
-            }
+            final String firstLine = lines[slistLineNo - 1].substring(slistColNo + 1);
+            final String lastLine = lines[rcurlyLineNo - 1].substring(0, rcurlyColNo);
+            // check if all lines are also only whitespace
+            returnValue = !(CommonUtils.isBlank(firstLine) && CommonUtils.isBlank(lastLine))
+                    || !checkIsAllLinesAreWhitespace(lines, slistLineNo, rcurlyLineNo);
         }
         return returnValue;
     }
@@ -231,11 +221,37 @@ public class EmptyBlockCheck
     private static boolean checkIsAllLinesAreWhitespace(String[] lines, int lineFrom, int lineTo) {
         boolean result = true;
         for (int i = lineFrom; i < lineTo - 1; i++) {
-            if (!lines[i].trim().isEmpty()) {
+            if (!CommonUtils.isBlank(lines[i])) {
                 result = false;
                 break;
             }
         }
         return result;
     }
+
+    /**
+     * Calculates the left curly corresponding to the block to be checked.
+     *
+     * @param ast a {@code DetailAST} value
+     * @return the left curly corresponding to the block to be checked
+     */
+    private static DetailAST findLeftCurly(DetailAST ast) {
+        final DetailAST leftCurly;
+        final DetailAST slistAST = ast.findFirstToken(TokenTypes.SLIST);
+        if ((ast.getType() == TokenTypes.LITERAL_CASE
+                || ast.getType() == TokenTypes.LITERAL_DEFAULT)
+                && ast.getNextSibling() != null
+                && ast.getNextSibling().getFirstChild() != null
+                && ast.getNextSibling().getFirstChild().getType() == TokenTypes.SLIST) {
+            leftCurly = ast.getNextSibling().getFirstChild();
+        }
+        else if (slistAST == null) {
+            leftCurly = ast.findFirstToken(TokenTypes.LCURLY);
+        }
+        else {
+            leftCurly = slistAST;
+        }
+        return leftCurly;
+    }
+
 }

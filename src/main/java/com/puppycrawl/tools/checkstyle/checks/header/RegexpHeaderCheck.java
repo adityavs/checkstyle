@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import org.apache.commons.beanutils.ConversionException;
-
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
+import com.puppycrawl.tools.checkstyle.api.FileText;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
@@ -40,6 +40,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author Lars Kühne
  * @author o_sukhodolsky
  */
+@StatelessCheck
 public class RegexpHeaderCheck extends AbstractHeaderCheck {
 
     /**
@@ -79,9 +80,9 @@ public class RegexpHeaderCheck extends AbstractHeaderCheck {
     }
 
     @Override
-    protected void processFiltered(File file, List<String> lines) {
+    protected void processFiltered(File file, FileText fileText) {
         final int headerSize = getHeaderLines().size();
-        final int fileSize = lines.size();
+        final int fileSize = fileText.size();
 
         if (headerSize - multiLines.length > fileSize) {
             log(1, MSG_HEADER_MISSING);
@@ -90,7 +91,7 @@ public class RegexpHeaderCheck extends AbstractHeaderCheck {
             int headerLineNo = 0;
             int index;
             for (index = 0; headerLineNo < headerSize && index < fileSize; index++) {
-                final String line = lines.get(index);
+                final String line = fileText.get(index);
                 boolean isMatch = isMatch(line, headerLineNo);
                 while (!isMatch && isMultiLine(headerLineNo)) {
                     headerLineNo++;
@@ -139,6 +140,7 @@ public class RegexpHeaderCheck extends AbstractHeaderCheck {
     }
 
     /**
+     * Returns true if line is multiline header lines or false.
      * @param lineNo a line number
      * @return if {@code lineNo} is one of the repeat header lines.
      */
@@ -149,13 +151,12 @@ public class RegexpHeaderCheck extends AbstractHeaderCheck {
     @Override
     protected void postProcessHeaderLines() {
         final List<String> headerLines = getHeaderLines();
-        headerRegexps.clear();
         for (String line : headerLines) {
             try {
                 headerRegexps.add(Pattern.compile(line));
             }
             catch (final PatternSyntaxException ex) {
-                throw new ConversionException("line "
+                throw new IllegalArgumentException("line "
                         + (headerRegexps.size() + 1)
                         + " in header specification"
                         + " is not a regular expression", ex);
@@ -166,14 +167,14 @@ public class RegexpHeaderCheck extends AbstractHeaderCheck {
     /**
      * Validates the {@code header} by compiling it with
      * {@link Pattern#compile(String) } and throws
-     * {@link PatternSyntaxException} if {@code header} isn't a valid pattern.
+     * {@link IllegalArgumentException} if {@code header} isn't a valid pattern.
      * @param header the header value to validate and set (in that order)
      */
     @Override
     public void setHeader(String header) {
         if (!CommonUtils.isBlank(header)) {
             if (!CommonUtils.isPatternValid(header)) {
-                throw new ConversionException("Unable to parse format: " + header);
+                throw new IllegalArgumentException("Unable to parse format: " + header);
             }
             super.setHeader(header);
         }

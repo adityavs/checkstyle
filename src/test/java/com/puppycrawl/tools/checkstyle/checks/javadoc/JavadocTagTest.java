@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -36,7 +36,7 @@ public class JavadocTagTest {
     public void testJavadocTagTypeValueOf() {
         final JavadocUtils.JavadocTagType enumConst =
             JavadocUtils.JavadocTagType.valueOf("ALL");
-        assertEquals(JavadocUtils.JavadocTagType.ALL, enumConst);
+        assertEquals("Invalid enum valueOf result", JavadocUtils.JavadocTagType.ALL, enumConst);
     }
 
     /* Additional test for jacoco, since values()
@@ -52,7 +52,7 @@ public class JavadocTagTest {
             JavadocUtils.JavadocTagType.INLINE,
             JavadocUtils.JavadocTagType.ALL,
         };
-        assertArrayEquals(expected, enumConstants);
+        assertArrayEquals("Invalid enum constants", expected, enumConstants);
     }
 
     @Test
@@ -61,6 +61,8 @@ public class JavadocTagTest {
 
         final String result = javadocTag.toString();
 
-        assertEquals("JavadocTag{tag='author' lineNo=0, columnNo=1, firstArg='firstArg'}", result);
+        assertEquals("Invalid toString result",
+                "JavadocTag[tag='author' lineNo=0, columnNo=1, firstArg='firstArg']", result);
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,11 +19,12 @@
 
 package com.puppycrawl.tools.checkstyle.checks;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -39,7 +40,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * <p>
  * Check has an option <b>ignorePrimitiveTypes</b> which allows ignoring lack of
  * final modifier at
- * <a href="http://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html">
+ * <a href="https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html">
  *  primitive data type</a> parameter. Default value <b>false</b>.
  * </p>
  * E.g.:
@@ -54,6 +55,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author Michael Studman
  * @author <a href="mailto:nesterenko-aleksey@list.ru">Aleksey Nesterenko</a>
  */
+@StatelessCheck
 public class FinalParametersCheck extends AbstractCheck {
 
     /**
@@ -64,11 +66,11 @@ public class FinalParametersCheck extends AbstractCheck {
 
     /**
      * Contains
-     * <a href="http://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html">
+     * <a href="https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html">
      * primitive datatypes</a>.
      */
     private final Set<Integer> primitiveDataTypes = Collections.unmodifiableSet(
-        Stream.of(
+        Arrays.stream(new Integer[] {
             TokenTypes.LITERAL_BYTE,
             TokenTypes.LITERAL_SHORT,
             TokenTypes.LITERAL_INT,
@@ -76,7 +78,7 @@ public class FinalParametersCheck extends AbstractCheck {
             TokenTypes.LITERAL_FLOAT,
             TokenTypes.LITERAL_DOUBLE,
             TokenTypes.LITERAL_BOOLEAN,
-            TokenTypes.LITERAL_CHAR)
+            TokenTypes.LITERAL_CHAR, })
         .collect(Collectors.toSet()));
 
     /**
@@ -141,10 +143,11 @@ public class FinalParametersCheck extends AbstractCheck {
             method.findFirstToken(TokenTypes.MODIFIERS);
         // exit on fast lane if there is nothing to check here
 
-        if (method.branchContains(TokenTypes.PARAMETER_DEF)
+        if (method.findFirstToken(TokenTypes.PARAMETERS)
+                .findFirstToken(TokenTypes.PARAMETER_DEF) != null
                 // ignore abstract and native methods
-                && !modifiers.branchContains(TokenTypes.ABSTRACT)
-                && !modifiers.branchContains(TokenTypes.LITERAL_NATIVE)) {
+                && modifiers.findFirstToken(TokenTypes.ABSTRACT) == null
+                && modifiers.findFirstToken(TokenTypes.LITERAL_NATIVE) == null) {
             // we can now be sure that there is at least one parameter
             final DetailAST parameters =
                 method.findFirstToken(TokenTypes.PARAMETERS);
@@ -180,7 +183,8 @@ public class FinalParametersCheck extends AbstractCheck {
      * @param param parameter to check.
      */
     private void checkParam(final DetailAST param) {
-        if (!param.branchContains(TokenTypes.FINAL) && !isIgnoredParam(param)
+        if (param.findFirstToken(TokenTypes.MODIFIERS).findFirstToken(TokenTypes.FINAL) == null
+                && !isIgnoredParam(param)
                 && !CheckUtils.isReceiverParameter(param)) {
             final DetailAST paramName = param.findFirstToken(TokenTypes.IDENT);
             final DetailAST firstNode = CheckUtils.getFirstNode(param);
@@ -205,4 +209,5 @@ public class FinalParametersCheck extends AbstractCheck {
         }
         return result;
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,39 +19,25 @@
 
 package com.google.checkstyle.test.chapter5naming.rule527localvariablenames;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.checkstyle.test.base.BaseCheckTestSupport;
-import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.google.checkstyle.test.base.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 
-public class LocalVariableNameTest extends BaseCheckTestSupport {
+public class LocalVariableNameTest extends AbstractModuleTestSupport {
 
     private static final String MSG_KEY = "name.invalidPattern";
-    private static Configuration checkConfig;
-    private static String format;
 
     @Override
-    protected String getPath(String fileName) throws IOException {
-        return super.getPath("chapter5naming" + File.separator + "rule527localvariablenames"
-                + File.separator + fileName);
-    }
-
-    @BeforeClass
-    public static void setConfigurationBuilder() throws CheckstyleException {
-        checkConfig = getCheckConfig("LocalVariableName");
-        format = checkConfig.getAttribute("format");
+    protected String getPackageLocation() {
+        return "com/google/checkstyle/test/chapter5naming/rule527localvariablenames";
     }
 
     @Test
-    public void localVariableNameTest() throws Exception {
-
+    public void testLocalVariableName() throws Exception {
+        final Configuration checkConfig = getModuleConfig("LocalVariableName");
+        final String format = checkConfig.getAttribute("format");
         final String[] expected = {
-            "26:13: " + getCheckMessage(checkConfig.getMessages(), MSG_KEY, "a", format),
             "27:13: " + getCheckMessage(checkConfig.getMessages(), MSG_KEY, "aA", format),
             "28:13: " + getCheckMessage(checkConfig.getMessages(), MSG_KEY, "a1_a", format),
             "29:13: " + getCheckMessage(checkConfig.getMessages(), MSG_KEY, "A_A", format),
@@ -71,10 +57,10 @@ public class LocalVariableNameTest extends BaseCheckTestSupport {
     }
 
     @Test
-    public void oneCharTest() throws Exception {
-
+    public void testOneChar() throws Exception {
+        final Configuration checkConfig = getModuleConfig("LocalVariableName");
+        final String format = checkConfig.getAttribute("format");
         final String[] expected = {
-            "15:13: " + getCheckMessage(checkConfig.getMessages(), MSG_KEY, "i", format),
             "21:17: " + getCheckMessage(checkConfig.getMessages(), MSG_KEY, "I_ndex", format),
             "45:17: " + getCheckMessage(checkConfig.getMessages(), MSG_KEY, "i_ndex", format),
             "49:17: " + getCheckMessage(checkConfig.getMessages(), MSG_KEY, "ii_i1", format),
@@ -88,4 +74,5 @@ public class LocalVariableNameTest extends BaseCheckTestSupport {
         final Integer[] warnList = getLinesWithWarn(filePath);
         verify(checkConfig, filePath, expected, warnList);
     }
+
 }

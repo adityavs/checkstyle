@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,11 +21,12 @@ package com.puppycrawl.tools.checkstyle.checks.regexp;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.puppycrawl.tools.checkstyle.api.FileText;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
@@ -40,7 +41,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * When customizing the check, the properties are applied in a specific order.
  * The fileExtensions property first picks only files that match any of the
  * specific extensions supplied. Once files are matched against the
- * fileExtensions, the match property is then used in conjuction with the
+ * fileExtensions, the match property is then used in conjunction with the
  * patterns to determine if the check is looking for a match or mis-match on
  * those files. If the fileNamePattern is supplied, the matching is only applied
  * to the fileNamePattern and not the folderPattern. If no fileNamePattern is
@@ -183,7 +184,9 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author Richard Veach
  */
+@StatelessCheck
 public class RegexpOnFilenameCheck extends AbstractFileSetCheck {
+
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -248,7 +251,7 @@ public class RegexpOnFilenameCheck extends AbstractFileSetCheck {
     }
 
     @Override
-    protected void processFiltered(File file, List<String> lines) throws CheckstyleException {
+    protected void processFiltered(File file, FileText fileText) throws CheckstyleException {
         final String fileName = getFileName(file);
         final String folderPath = getFolderPath(file);
 
@@ -283,7 +286,7 @@ public class RegexpOnFilenameCheck extends AbstractFileSetCheck {
      */
     private static String getFolderPath(File file) throws CheckstyleException {
         try {
-            return file.getParentFile().getCanonicalPath();
+            return file.getCanonicalFile().getParent();
         }
         catch (IOException ex) {
             throw new CheckstyleException("unable to create canonical path names for "
@@ -306,16 +309,8 @@ public class RegexpOnFilenameCheck extends AbstractFileSetCheck {
             result = true;
         }
         else {
-            final boolean useMatch;
-
             // null pattern means 'match' applies to the folderPattern matching
-            if (fileNamePattern == null) {
-                useMatch = match;
-            }
-            else {
-                useMatch = true;
-            }
-
+            final boolean useMatch = fileNamePattern != null || match;
             result = folderPattern.matcher(folderPath).find() == useMatch;
         }
 
@@ -330,17 +325,8 @@ public class RegexpOnFilenameCheck extends AbstractFileSetCheck {
      * @return true if they do match.
      */
     private boolean isMatchFile(String fileName) {
-        final boolean result;
-
         // null pattern always matches, regardless of value of 'match'
-        if (fileNamePattern == null) {
-            result = true;
-        }
-        else {
-            result = fileNamePattern.matcher(fileName).find() == match;
-        }
-
-        return result;
+        return fileNamePattern == null || fileNamePattern.matcher(fileName).find() == match;
     }
 
     /** Logs the errors for the check. */
@@ -376,4 +362,5 @@ public class RegexpOnFilenameCheck extends AbstractFileSetCheck {
 
         return result;
     }
+
 }

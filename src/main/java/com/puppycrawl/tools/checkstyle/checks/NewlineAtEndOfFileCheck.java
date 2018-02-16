@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,13 +22,12 @@ package com.puppycrawl.tools.checkstyle.checks;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.List;
 import java.util.Locale;
 
-import org.apache.commons.beanutils.ConversionException;
-
 import com.google.common.io.Closeables;
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
+import com.puppycrawl.tools.checkstyle.api.FileText;
 
 /**
  * <p>
@@ -58,6 +57,7 @@ import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
  * @author Christopher Lenz
  * @author lkuehne
  */
+@StatelessCheck
 public class NewlineAtEndOfFileCheck
     extends AbstractFileSetCheck {
 
@@ -77,20 +77,9 @@ public class NewlineAtEndOfFileCheck
     private LineSeparatorOption lineSeparator = LineSeparatorOption.SYSTEM;
 
     @Override
-    protected void processFiltered(File file, List<String> lines) {
-        // Cannot use lines as the line separators have been removed!
+    protected void processFiltered(File file, FileText fileText) {
         try {
-            final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-            boolean threw = true;
-            try {
-                if (!endsWithNewline(randomAccessFile)) {
-                    log(0, MSG_KEY_NO_NEWLINE_EOF, file.getPath());
-                }
-                threw = false;
-            }
-            finally {
-                Closeables.close(randomAccessFile, threw);
-            }
+            readAndCheckFile(file);
         }
         catch (final IOException ignored) {
             log(0, MSG_KEY_UNABLE_OPEN, file.getPath());
@@ -111,8 +100,28 @@ public class NewlineAtEndOfFileCheck
                     .toUpperCase(Locale.ENGLISH));
         }
         catch (IllegalArgumentException iae) {
-            throw new ConversionException("unable to parse " + lineSeparatorParam,
-                iae);
+            throw new IllegalArgumentException("unable to parse " + lineSeparatorParam, iae);
+        }
+    }
+
+    /**
+     * Reads the file provided and checks line separators.
+     * @param file the file to be processed
+     * @throws IOException When an IO error occurred while reading from the
+     *         file provided
+     */
+    private void readAndCheckFile(File file) throws IOException {
+        // Cannot use lines as the line separators have been removed!
+        final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+        boolean threw = true;
+        try {
+            if (!endsWithNewline(randomAccessFile)) {
+                log(0, MSG_KEY_NO_NEWLINE_EOF, file.getPath());
+            }
+            threw = false;
+        }
+        finally {
+            Closeables.close(randomAccessFile, threw);
         }
     }
 
@@ -126,17 +135,22 @@ public class NewlineAtEndOfFileCheck
      */
     private boolean endsWithNewline(RandomAccessFile randomAccessFile)
             throws IOException {
+        final boolean result;
         final int len = lineSeparator.length();
         if (randomAccessFile.length() < len) {
-            return false;
+            result = false;
         }
-        randomAccessFile.seek(randomAccessFile.length() - len);
-        final byte[] lastBytes = new byte[len];
-        final int readBytes = randomAccessFile.read(lastBytes);
-        if (readBytes != len) {
-            throw new IOException("Unable to read " + len + " bytes, got "
-                    + readBytes);
+        else {
+            randomAccessFile.seek(randomAccessFile.length() - len);
+            final byte[] lastBytes = new byte[len];
+            final int readBytes = randomAccessFile.read(lastBytes);
+            if (readBytes != len) {
+                throw new IOException("Unable to read " + len + " bytes, got "
+                        + readBytes);
+            }
+            result = lineSeparator.matches(lastBytes);
         }
-        return lineSeparator.matches(lastBytes);
+        return result;
     }
+
 }

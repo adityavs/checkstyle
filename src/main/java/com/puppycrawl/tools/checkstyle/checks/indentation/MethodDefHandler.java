@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author Maikel Steneker
  */
 public class MethodDefHandler extends BlockParentHandler {
+
     /**
      * Construct an instance of this handler with the given indentation check,
      * abstract syntax tree, and parent handler.
@@ -79,7 +80,7 @@ public class MethodDefHandler extends BlockParentHandler {
      *            The method definition ast.
      * @return The start column position of the method.
      */
-    private int getMethodDefLineStart(DetailAST mainAst) {
+    private static int getMethodDefLineStart(DetailAST mainAst) {
         // get first type position
         int lineStart = mainAst.findFirstToken(TokenTypes.IDENT).getLineNo();
 
@@ -113,7 +114,7 @@ public class MethodDefHandler extends BlockParentHandler {
 
         checkWrappingIndentation(getMainAst(), getMethodDefParamRightParen(getMainAst()));
         // abstract method def -- no body
-        if (getLCurly() != null) {
+        if (getLeftCurly() != null) {
             super.checkIndentation();
         }
     }
@@ -140,9 +141,13 @@ public class MethodDefHandler extends BlockParentHandler {
         if (ast.getType() == TokenTypes.CTOR_DEF) {
             name = "ctor def";
         }
+        else if (ast.getType() == TokenTypes.ANNOTATION_FIELD_DEF) {
+            name = "annotation field def";
+        }
         else {
             name = "method def";
         }
         return name;
     }
+
 }

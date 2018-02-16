@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,14 +20,13 @@
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import static com.puppycrawl.tools.checkstyle.checks.coding.NoFinalizerCheck.MSG_KEY;
-
-import java.io.File;
-import java.io.IOException;
+import static org.junit.Assert.assertArrayEquals;
 
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
@@ -36,30 +35,41 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author smckay@google.com (Steve McKay)
  */
 public class NoFinalizerCheckTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "coding" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/coding/nofinalizer";
+    }
+
+    @Test
+    public void testGetAcceptableTokens() {
+        final NoFinalizerCheck noFinalizerCheck =
+                new NoFinalizerCheck();
+        final int[] expected = {TokenTypes.METHOD_DEF};
+
+        assertArrayEquals("Default acceptable tokens are invalid",
+                expected, noFinalizerCheck.getAcceptableTokens());
     }
 
     @Test
     public void testHasFinalizer()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(NoFinalizerCheck.class);
+            createModuleConfig(NoFinalizerCheck.class);
         final String[] expected = {
             "5: " + getCheckMessage(MSG_KEY),
         };
-        verify(checkConfig, getPath("InputHasFinalizer.java"), expected);
+        verify(checkConfig, getPath("InputNoFinalizerHasFinalizer.java"), expected);
     }
 
     @Test
     public void testHasNoFinalizer()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(NoFinalizerCheck.class);
+            createModuleConfig(NoFinalizerCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getPath("InputFallThrough.java"), expected);
+        verify(checkConfig, getPath("InputNoFinalizerFallThrough.java"), expected);
     }
+
 }

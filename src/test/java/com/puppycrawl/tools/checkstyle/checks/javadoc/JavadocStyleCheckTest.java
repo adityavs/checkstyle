@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,23 +26,23 @@ import static com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocStyleCheck.M
 import static com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocStyleCheck.MSG_NO_PERIOD;
 import static com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocStyleCheck.MSG_UNCLOSED_HTML;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class JavadocStyleCheckTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "javadoc" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/javadoc/javadocstyle";
     }
 
     @Test
@@ -63,14 +63,14 @@ public class JavadocStyleCheckTest
             TokenTypes.VARIABLE_DEF,
         };
 
-        assertArrayEquals(expected, actual);
+        assertArrayEquals("Default acceptable tokens are invalid", expected, actual);
     }
 
     @Test
     public void testDefaultSettings()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         final String[] expected = {
             "20: " + getCheckMessage(MSG_NO_PERIOD),
             "53: " + getCheckMessage(MSG_NO_PERIOD),
@@ -107,7 +107,7 @@ public class JavadocStyleCheckTest
     @Test
     public void testFirstSentence() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "true");
         checkConfig.addAttribute("checkHtml", "false");
         final String[] expected = {
@@ -132,7 +132,7 @@ public class JavadocStyleCheckTest
     @Test
     public void testFirstSentenceFormat() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "true");
         checkConfig.addAttribute("checkHtml", "false");
         checkConfig.addAttribute("endOfSentenceFormat",
@@ -160,7 +160,7 @@ public class JavadocStyleCheckTest
 
     @Test
     public void testHtml() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(JavadocStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "false");
         checkConfig.addAttribute("checkHtml", "true");
         final String[] expected = {
@@ -185,7 +185,7 @@ public class JavadocStyleCheckTest
 
     @Test
     public void testHtmlComment() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(JavadocStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "false");
         checkConfig.addAttribute("checkHtml", "true");
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
@@ -195,17 +195,17 @@ public class JavadocStyleCheckTest
 
     @Test
     public void testOnInputWithNoJavadoc() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(JavadocStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(JavadocStyleCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        verify(checkConfig, getPath("InputNoJavadoc.java"), expected);
+        verify(checkConfig, getPath("InputJavadocStyleNoJavadoc.java"), expected);
     }
 
     @Test
     public void testScopePublic()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "true");
         checkConfig.addAttribute("checkHtml", "true");
         checkConfig.addAttribute("checkEmptyJavadoc", "true");
@@ -230,7 +230,7 @@ public class JavadocStyleCheckTest
     public void testScopeProtected()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "true");
         checkConfig.addAttribute("checkHtml", "true");
         checkConfig.addAttribute("checkEmptyJavadoc", "true");
@@ -258,7 +258,7 @@ public class JavadocStyleCheckTest
     public void testScopePackage()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "true");
         checkConfig.addAttribute("checkHtml", "true");
         checkConfig.addAttribute("checkEmptyJavadoc", "true");
@@ -289,7 +289,7 @@ public class JavadocStyleCheckTest
 
     @Test
     public void testEmptyJavadoc() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(JavadocStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "false");
         checkConfig.addAttribute("checkHtml", "false");
         checkConfig.addAttribute("checkEmptyJavadoc", "true");
@@ -308,7 +308,7 @@ public class JavadocStyleCheckTest
     public void testExcludeScope()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("scope", "private");
         checkConfig.addAttribute("excludeScope", "protected");
         final String[] expected = {
@@ -337,7 +337,7 @@ public class JavadocStyleCheckTest
     @Test
     public void packageInfoInheritDoc() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         final String[] expected = {
             "1: " + getCheckMessage(MSG_NO_PERIOD),
         };
@@ -351,7 +351,7 @@ public class JavadocStyleCheckTest
     @Test
     public void packageInfoInvalid() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         final String[] expected = {
             "1: " + getCheckMessage(MSG_NO_PERIOD),
         };
@@ -365,7 +365,7 @@ public class JavadocStyleCheckTest
     @Test
     public void packageInfoAnnotation() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(createChecker(checkConfig),
@@ -377,7 +377,7 @@ public class JavadocStyleCheckTest
     @Test
     public void packageInfoMissing() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         final String[] expected = {
             "1: " + getCheckMessage(MSG_JAVADOC_MISSING),
         };
@@ -390,7 +390,7 @@ public class JavadocStyleCheckTest
     @Test
     public void packageInfoValid() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(JavadocStyleCheck.class);
+            createModuleConfig(JavadocStyleCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(createChecker(checkConfig),
@@ -401,7 +401,7 @@ public class JavadocStyleCheckTest
     @Test
     public void testRestrictedTokenSet()
             throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(JavadocStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("tokens", "METHOD_DEF");
         checkConfig.addAttribute("scope", "public");
         checkConfig.addAttribute("checkFirstSentence", "true");
@@ -414,4 +414,13 @@ public class JavadocStyleCheckTest
         };
         verify(checkConfig, getPath("InputJavadocStyle.java"), expected);
     }
+
+    @Test
+    public void testHtmlTagToString() {
+        final HtmlTag tag = new HtmlTag("id", 3, 5, true, false, "<a href=\"URL\"/>");
+        assertEquals("Invalid toString result",
+                "HtmlTag[id='id', lineNo=3, position=5, text='<a href=\"URL\"/>', "
+                + "closedTag=true, incompleteTag=false]", tag.toString());
+    }
+
 }

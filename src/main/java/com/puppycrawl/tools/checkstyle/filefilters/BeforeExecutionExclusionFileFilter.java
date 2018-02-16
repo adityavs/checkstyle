@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,7 @@ import com.puppycrawl.tools.checkstyle.api.BeforeExecutionFileFilter;
 
 /**
  * <p>
- * File filter <code>BeforeExecutionExclusionFileFilter</code> decides which files should be
+ * File filter {@code BeforeExecutionExclusionFileFilter} decides which files should be
  * excluded from being processed by the utility.
  * </p>
  *
@@ -35,8 +35,8 @@ import com.puppycrawl.tools.checkstyle.api.BeforeExecutionFileFilter;
  * checked for violations. Users could have files that are in these sub-directories that shouldn't
  * be processed with their checkstyle configuration for various reasons, one of which is a valid
  * Java file that won't pass Checkstyle's parser. When Checkstyle tries to parse a Java file and
- * fails, it will throw an <code>Exception</code> and halt parsing any more files for violations.
- * An example of a valid Java file Checkstyle can't parse is JDK 9's <code>module-info.java</code>.
+ * fails, it will throw an {@code Exception} and halt parsing any more files for violations.
+ * An example of a valid Java file Checkstyle can't parse is JDK 9's {@code module-info.java}.
  * This file filter will exclude these problem files from being parsed, allowing the rest of the
  * files to run normal and be validated.
  * </p>
@@ -83,7 +83,13 @@ public final class BeforeExecutionExclusionFileFilter extends AutomaticBean
     }
 
     @Override
+    protected void finishLocalSetup() {
+        // No code by default
+    }
+
+    @Override
     public boolean accept(String uri) {
         return fileNamePattern == null || !fileNamePattern.matcher(uri).find();
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,27 +22,25 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 import static com.puppycrawl.tools.checkstyle.checks.coding.VariableDeclarationUsageDistanceCheck.MSG_KEY;
 import static com.puppycrawl.tools.checkstyle.checks.coding.VariableDeclarationUsageDistanceCheck.MSG_KEY_EXT;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class VariableDeclarationUsageDistanceCheckTest extends
-        BaseCheckTestSupport {
+        AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "coding" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/coding/variabledeclarationusagedistance";
     }
 
     @Test
     public void testGeneralLogic() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(VariableDeclarationUsageDistanceCheck.class);
+            createModuleConfig(VariableDeclarationUsageDistanceCheck.class);
         checkConfig.addAttribute("allowedDistance", "1");
         checkConfig.addAttribute("ignoreVariablePattern", "");
         checkConfig.addAttribute("validateBetweenScopes", "true");
@@ -80,6 +78,7 @@ public class VariableDeclarationUsageDistanceCheckTest extends
             "891: " + getCheckMessage(MSG_KEY, "a", 4, 1),
             "901: " + getCheckMessage(MSG_KEY, "a", 4, 1),
             "967: " + getCheckMessage(MSG_KEY, "a", 4, 1),
+            "978: " + getCheckMessage(MSG_KEY, "a", 2, 1),
         };
         verify(checkConfig, getPath("InputVariableDeclarationUsageDistance.java"), expected);
     }
@@ -87,7 +86,7 @@ public class VariableDeclarationUsageDistanceCheckTest extends
     @Test
     public void testDistance() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(VariableDeclarationUsageDistanceCheck.class);
+            createModuleConfig(VariableDeclarationUsageDistanceCheck.class);
         checkConfig.addAttribute("allowedDistance", "3");
         checkConfig.addAttribute("ignoreVariablePattern", "");
         checkConfig.addAttribute("validateBetweenScopes", "true");
@@ -108,7 +107,7 @@ public class VariableDeclarationUsageDistanceCheckTest extends
     @Test
     public void testVariableRegExp() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(VariableDeclarationUsageDistanceCheck.class);
+            createModuleConfig(VariableDeclarationUsageDistanceCheck.class);
         checkConfig.addAttribute("allowedDistance", "1");
         checkConfig.addAttribute("ignoreVariablePattern",
                 "a|b|c|d|block|dist|t|m");
@@ -147,7 +146,7 @@ public class VariableDeclarationUsageDistanceCheckTest extends
     @Test
     public void testValidateBetweenScopesOption() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(VariableDeclarationUsageDistanceCheck.class);
+            createModuleConfig(VariableDeclarationUsageDistanceCheck.class);
         checkConfig.addAttribute("allowedDistance", "1");
         checkConfig.addAttribute("ignoreVariablePattern", "");
         checkConfig.addAttribute("validateBetweenScopes", "false");
@@ -174,6 +173,7 @@ public class VariableDeclarationUsageDistanceCheckTest extends
             "505: " + getCheckMessage(MSG_KEY, "files", 2, 1),
             "540: " + getCheckMessage(MSG_KEY, "id", 2, 1),
             "542: " + getCheckMessage(MSG_KEY, "parentId", 4, 1),
+            "978: " + getCheckMessage(MSG_KEY, "a", 2, 1),
         };
         verify(checkConfig, getPath("InputVariableDeclarationUsageDistance.java"), expected);
     }
@@ -181,7 +181,7 @@ public class VariableDeclarationUsageDistanceCheckTest extends
     @Test
     public void testIgnoreFinalOption() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(VariableDeclarationUsageDistanceCheck.class);
+            createModuleConfig(VariableDeclarationUsageDistanceCheck.class);
         checkConfig.addAttribute("allowedDistance", "1");
         checkConfig.addAttribute("ignoreVariablePattern", "");
         checkConfig.addAttribute("validateBetweenScopes", "true");
@@ -226,15 +226,15 @@ public class VariableDeclarationUsageDistanceCheckTest extends
     public void testTokensNotNull() {
         final VariableDeclarationUsageDistanceCheck check =
             new VariableDeclarationUsageDistanceCheck();
-        Assert.assertNotNull(check.getAcceptableTokens());
-        Assert.assertNotNull(check.getDefaultTokens());
-        Assert.assertNotNull(check.getRequiredTokens());
+        Assert.assertNotNull("Acceptable tokens should not be null", check.getAcceptableTokens());
+        Assert.assertNotNull("Default tokens should not be null", check.getDefaultTokens());
+        Assert.assertNotNull("Required tokens should not be null", check.getRequiredTokens());
     }
 
     @Test
     public void testDefaultConfiguration() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(VariableDeclarationUsageDistanceCheck.class);
+            createModuleConfig(VariableDeclarationUsageDistanceCheck.class);
         final String[] expected = {
             "71: " + getCheckMessage(MSG_KEY_EXT, "count", 4, 3),
             "219: " + getCheckMessage(MSG_KEY_EXT, "t", 5, 3),
@@ -243,7 +243,28 @@ public class VariableDeclarationUsageDistanceCheckTest extends
             "542: " + getCheckMessage(MSG_KEY_EXT, "parentId", 4, 3),
         };
 
-        createChecker(checkConfig);
         verify(checkConfig, getPath("InputVariableDeclarationUsageDistance.java"), expected);
     }
+
+    @Test
+    public void testAnonymousClass() throws Exception {
+        final DefaultConfiguration checkConfig =
+            createModuleConfig(VariableDeclarationUsageDistanceCheck.class);
+        final String[] expected = {
+            "9: " + getCheckMessage(MSG_KEY_EXT, "prefs", 4, 3),
+        };
+
+        verify(checkConfig, getPath("InputVariableDeclarationUsageDistanceAnonymous.java"),
+                expected);
+    }
+
+    @Test
+    public void testLabels() throws Exception {
+        final DefaultConfiguration checkConfig =
+            createModuleConfig(VariableDeclarationUsageDistanceCheck.class);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+        verify(checkConfig, getPath("InputVariableDeclarationUsageDistanceLabels.java"), expected);
+    }
+
 }

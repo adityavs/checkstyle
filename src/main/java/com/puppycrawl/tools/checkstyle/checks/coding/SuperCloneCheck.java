@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,8 @@
 
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
+
 /**
  * <p>
  * Checks that an overriding clone() method invokes super.clone().
@@ -26,7 +28,7 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
  * </p>
  * <p>
  * Reference:<a
- * href="http://docs.oracle.com/javase/8/docs/api/java/lang/Object.html#clone--">
+ * href="https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html#clone--">
  * Object.clone</a>.
  * </p>
  * <p>
@@ -37,9 +39,12 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
  * </pre>
  * @author Rick Giles
  */
+@StatelessCheck
 public class SuperCloneCheck extends AbstractSuperCheck {
+
     @Override
     protected String getMethodName() {
         return "clone";
     }
+
 }

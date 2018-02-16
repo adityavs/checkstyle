@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -31,28 +31,24 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.io.Closeables;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * Represents the text contents of a file of arbitrary plain text type.
  * <p>
  * This class will be passed to instances of class FileSetCheck by
- * Checker. It implements a string list to ensure backwards
- * compatibility, but can be extended in the future to allow more
- * flexible, more powerful or more efficient handling of certain
- * situations.
+ * Checker.
  * </p>
  *
  * @author Martin von Gagern
  */
-public final class FileText extends AbstractList<String> {
+public final class FileText {
 
     /**
      * The number of characters to read in one go.
@@ -130,17 +126,21 @@ public final class FileText extends AbstractList<String> {
         // Use the BufferedReader to break down the lines as this
         // is about 30% faster than using the
         // LINE_TERMINATOR.split(fullText, -1) method
-        final ArrayList<String> textLines = new ArrayList<>();
-        final BufferedReader reader =
-            new BufferedReader(new StringReader(fullText));
-        while (true) {
-            final String line = reader.readLine();
-            if (line == null) {
-                break;
+        final BufferedReader reader = new BufferedReader(new StringReader(fullText));
+        try {
+            final ArrayList<String> textLines = new ArrayList<>();
+            while (true) {
+                final String line = reader.readLine();
+                if (line == null) {
+                    break;
+                }
+                textLines.add(line);
             }
-            textLines.add(line);
+            lines = textLines.toArray(new String[textLines.size()]);
         }
-        lines = textLines.toArray(new String[textLines.size()]);
+        finally {
+            CommonUtils.close(reader);
+        }
     }
 
     /**
@@ -171,12 +171,11 @@ public final class FileText extends AbstractList<String> {
      * @param lines the lines of the text, without terminators
      * @throws NullPointerException if the lines array is null
      */
-    private FileText(File file, List<String> lines) {
-        final StringBuilder buf = new StringBuilder();
+    public FileText(File file, List<String> lines) {
+        final StringBuilder buf = new StringBuilder(1024);
         for (final String line : lines) {
             buf.append(line).append('\n');
         }
-        buf.trimToSize();
 
         this.file = file;
         charset = null;
@@ -196,45 +195,23 @@ public final class FileText extends AbstractList<String> {
         if (!inputFile.exists()) {
             throw new FileNotFoundException(inputFile.getPath() + " (No such file or directory)");
         }
-        final StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder(1024);
         final FileInputStream stream = new FileInputStream(inputFile);
         final Reader reader = new InputStreamReader(stream, decoder);
         try {
             final char[] chars = new char[READ_BUFFER_SIZE];
             while (true) {
                 final int len = reader.read(chars);
-                if (len < 0) {
+                if (len == -1) {
                     break;
                 }
                 buf.append(chars, 0, len);
             }
         }
         finally {
-            Closeables.closeQuietly(reader);
+            CommonUtils.close(reader);
         }
         return buf.toString();
-    }
-
-    /**
-     * Compatibility conversion.
-     *
-     * <p>This method can be used to convert the arguments passed to
-     * {@link FileSetCheck#process(File,List)} to a FileText
-     * object. If the list of lines already is a FileText, it is
-     * returned as is. Otherwise, a new FileText is constructed by
-     * joining the lines using line feed characters.
-     *
-     * @param file the name of the file
-     * @param lines the lines of the text, without terminators
-     * @return an object representing the denoted text file
-     */
-    public static FileText fromLines(File file, List<String> lines) {
-        if (lines instanceof FileText) {
-            return (FileText) lines;
-        }
-        else {
-            return new FileText(file, lines);
-        }
     }
 
     /**
@@ -319,7 +296,6 @@ public final class FileText extends AbstractList<String> {
      * @param lineNo the number of the line to get, starting at zero
      * @return the line with the given number
      */
-    @Override
     public String get(final int lineNo) {
         return lines[lineNo];
     }
@@ -328,7 +304,6 @@ public final class FileText extends AbstractList<String> {
      * Counts the lines of the text.
      * @return the number of lines in the text
      */
-    @Override
     public int size() {
         return lines.length;
     }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -62,12 +62,14 @@ public class LineColumn implements Comparable<LineColumn> {
 
     @Override
     public int compareTo(LineColumn lineColumn) {
+        final int result;
         if (line == lineColumn.line) {
-            return Integer.compare(column, lineColumn.column);
+            result = Integer.compare(column, lineColumn.column);
         }
         else {
-            return Integer.compare(line, lineColumn.line);
+            result = Integer.compare(line, lineColumn.line);
         }
+        return result;
     }
 
     @Override
@@ -87,4 +89,5 @@ public class LineColumn implements Comparable<LineColumn> {
     public int hashCode() {
         return Objects.hash(line, column);
     }
+
 }

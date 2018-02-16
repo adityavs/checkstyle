@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -37,9 +37,11 @@ import java.util.EventObject;
  *
  * @author <a href="mailto:stephane.bailliez@wanadoo.fr">Stephane Bailliez</a>
  * @see AuditListener
+ * @noinspection SerializableHasSerializationMethods
  */
 public final class AuditEvent
     extends EventObject {
+
     /** Record a version. */
     private static final long serialVersionUID = -3774725606973812736L;
     /** Filename event associated with. **/
@@ -78,6 +80,7 @@ public final class AuditEvent
     }
 
     /**
+     * Returns name of file being audited.
      * @return the file name currently being audited or null if there is
      *     no relation to a file.
      */
@@ -115,15 +118,15 @@ public final class AuditEvent
      * @return the audit event severity level
      */
     public SeverityLevel getSeverityLevel() {
-        if (localizedMessage == null) {
-            return SeverityLevel.INFO;
+        SeverityLevel severityLevel = SeverityLevel.INFO;
+        if (localizedMessage != null) {
+            severityLevel = localizedMessage.getSeverityLevel();
         }
-        else {
-            return localizedMessage.getSeverityLevel();
-        }
+        return severityLevel;
     }
 
     /**
+     * Returns id of module.
      * @return the identifier of the module that generated the event. Can return
      *         null.
      */
@@ -146,4 +149,5 @@ public final class AuditEvent
     public LocalizedMessage getLocalizedMessage() {
         return localizedMessage;
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -34,8 +34,9 @@ import com.puppycrawl.tools.checkstyle.gui.MainFrameModel.ParseMode;
  * @author Lars Kühne
  */
 public class ParseTreeTableModel implements TreeModel {
+
     /** Presentation model. */
-    private final ParseTreeTablePModel pModel;
+    private final ParseTreeTablePresentation pModel;
 
     /**
      * A list of event listeners for the tree model.
@@ -43,10 +44,11 @@ public class ParseTreeTableModel implements TreeModel {
     private final EventListenerList listenerList = new EventListenerList();
 
     /**
+     * Initialise pModel.
      * @param parseTree DetailAST parse tree.
      */
     public ParseTreeTableModel(DetailAST parseTree) {
-        pModel = new ParseTreeTablePModel(parseTree);
+        pModel = new ParseTreeTablePresentation(parseTree);
         setParseTree(parseTree);
     }
 
@@ -71,6 +73,7 @@ public class ParseTreeTableModel implements TreeModel {
     }
 
     /**
+     * Returns number of available column.
      * @return the number of available column.
      */
     public int getColumnCount() {
@@ -78,6 +81,7 @@ public class ParseTreeTableModel implements TreeModel {
     }
 
     /**
+     * Returns column name of specified column number.
      * @param column the column number
      * @return the name for column number {@code column}.
      */
@@ -86,6 +90,7 @@ public class ParseTreeTableModel implements TreeModel {
     }
 
     /**
+     * Returns type of specified column number.
      * @param column the column number
      * @return the type for column number {@code column}.
      */
@@ -96,6 +101,7 @@ public class ParseTreeTableModel implements TreeModel {
     }
 
     /**
+     * Returns the value to be displayed for node at column number.
      * @param node the node
      * @param column the column number
      * @return the value to be displayed for node {@code node},
@@ -187,4 +193,5 @@ public class ParseTreeTableModel implements TreeModel {
     public boolean isCellEditable(int column) {
         return pModel.isCellEditable(column);
     }
+
 }

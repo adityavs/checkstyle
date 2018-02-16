@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,8 +27,8 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
 /**
  * <p>
  * Checks that local final variable names conform to a format specified
- * by the format property. A catch parameter is considered to be
- * a local variable.The format is a
+ * by the format property. A catch parameter and resources in try statements
+ * are considered to be a local variables.The format is a
  * {@link java.util.regex.Pattern regular expression} and defaults to
  * <strong>^[a-z][a-zA-Z0-9]*$</strong>.
  * </p>
@@ -52,6 +52,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  */
 public class LocalFinalVariableNameCheck
     extends AbstractNameCheck {
+
     /** Creates a new {@code LocalFinalVariableNameCheck} instance. */
     public LocalFinalVariableNameCheck() {
         super("^[a-z][a-zA-Z0-9]*$");
@@ -67,6 +68,7 @@ public class LocalFinalVariableNameCheck
         return new int[] {
             TokenTypes.VARIABLE_DEF,
             TokenTypes.PARAMETER_DEF,
+            TokenTypes.RESOURCE,
         };
     }
 
@@ -79,7 +81,9 @@ public class LocalFinalVariableNameCheck
     protected final boolean mustCheckName(DetailAST ast) {
         final DetailAST modifiersAST =
             ast.findFirstToken(TokenTypes.MODIFIERS);
-        final boolean isFinal = modifiersAST.branchContains(TokenTypes.FINAL);
+        final boolean isFinal = ast.getType() == TokenTypes.RESOURCE
+            || modifiersAST.findFirstToken(TokenTypes.FINAL) != null;
         return isFinal && ScopeUtils.isLocalVariableDef(ast);
     }
+
 }

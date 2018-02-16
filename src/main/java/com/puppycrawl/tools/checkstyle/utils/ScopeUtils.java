@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,6 +30,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author Oliver Burn
  */
 public final class ScopeUtils {
+
     /** Prevent instantiation. */
     private ScopeUtils() {
     }
@@ -98,27 +99,7 @@ public final class ScopeUtils {
      * @return a {@code boolean} value
      */
     public static boolean isInInterfaceBlock(DetailAST node) {
-        boolean returnValue = false;
-
-        // Loop up looking for a containing interface block
-        for (DetailAST token = node.getParent();
-             token != null && !returnValue;
-             token = token.getParent()) {
-
-            final int type = token.getType();
-
-            if (type == TokenTypes.INTERFACE_DEF) {
-                returnValue = true;
-            }
-            else if (type == TokenTypes.CLASS_DEF
-                || type == TokenTypes.ENUM_DEF
-                || type == TokenTypes.ANNOTATION_DEF
-                || type == TokenTypes.LITERAL_NEW) {
-                break;
-            }
-        }
-
-        return returnValue;
+        return isInBlockOf(node, TokenTypes.INTERFACE_DEF);
     }
 
     /**
@@ -128,6 +109,17 @@ public final class ScopeUtils {
      * @return a {@code boolean} value
      */
     public static boolean isInAnnotationBlock(DetailAST node) {
+        return isInBlockOf(node, TokenTypes.ANNOTATION_DEF);
+    }
+
+    /**
+     * Returns whether a node is directly contained within a specified block.
+     *
+     * @param node the node to check if directly contained within a specified block.
+     * @param tokenType type of token.
+     * @return a {@code boolean} value
+     */
+    private static boolean isInBlockOf(DetailAST node, int tokenType) {
         boolean returnValue = false;
 
         // Loop up looking for a containing interface block
@@ -135,16 +127,16 @@ public final class ScopeUtils {
              token != null && !returnValue;
              token = token.getParent()) {
             final int type = token.getType();
-            if (type == TokenTypes.ANNOTATION_DEF) {
+            if (type == tokenType) {
                 returnValue = true;
             }
             else if (type == TokenTypes.CLASS_DEF
                 || type == TokenTypes.ENUM_DEF
                 || type == TokenTypes.INTERFACE_DEF
+                || type == TokenTypes.ANNOTATION_DEF
                 || type == TokenTypes.LITERAL_NEW) {
                 break;
             }
-
         }
 
         return returnValue;
@@ -263,6 +255,10 @@ public final class ScopeUtils {
             final DetailAST parent = node.getParent();
             localVariableDef = parent.getType() == TokenTypes.LITERAL_CATCH;
         }
+
+        if (node.getType() == TokenTypes.RESOURCE) {
+            localVariableDef = true;
+        }
         return localVariableDef;
     }
 
@@ -287,4 +283,5 @@ public final class ScopeUtils {
         final Scope surroundingScopeOfAstToken = getSurroundingScope(ast);
         return surroundingScopeOfAstToken == scope;
     }
+
 }

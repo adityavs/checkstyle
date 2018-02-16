@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -37,6 +38,7 @@ import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
  *
  * @author Daniel Grenner
  */
+@FileStatefulCheck
 public class MultipleStringLiteralsCheck extends AbstractCheck {
 
     /**
@@ -88,6 +90,7 @@ public class MultipleStringLiteralsCheck extends AbstractCheck {
      * Sets regular expression pattern for ignored strings.
      * @param ignoreStringsRegexp
      *        regular expression pattern for ignored strings
+     * @noinspection WeakerAccess
      */
     public final void setIgnoreStringsRegexp(Pattern ignoreStringsRegexp) {
         if (ignoreStringsRegexp == null || ignoreStringsRegexp.pattern().isEmpty()) {
@@ -112,17 +115,17 @@ public class MultipleStringLiteralsCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.STRING_LITERAL};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.STRING_LITERAL};
     }
 
     @Override
@@ -151,20 +154,21 @@ public class MultipleStringLiteralsCheck extends AbstractCheck {
      *     token type in {@link #ignoreOccurrenceContext}.
      */
     private boolean isInIgnoreOccurrenceContext(DetailAST ast) {
+        boolean isInIgnoreOccurrenceContext = false;
         for (DetailAST token = ast;
              token.getParent() != null;
              token = token.getParent()) {
             final int type = token.getType();
             if (ignoreOccurrenceContext.get(type)) {
-                return true;
+                isInIgnoreOccurrenceContext = true;
+                break;
             }
         }
-        return false;
+        return isInIgnoreOccurrenceContext;
     }
 
     @Override
     public void beginTree(DetailAST rootAST) {
-        super.beginTree(rootAST);
         stringMap.clear();
     }
 
@@ -185,6 +189,7 @@ public class MultipleStringLiteralsCheck extends AbstractCheck {
      * This class contains information about where a string was found.
      */
     private static final class StringInfo {
+
         /**
          * Line of finding.
          */
@@ -219,6 +224,7 @@ public class MultipleStringLiteralsCheck extends AbstractCheck {
         private int getCol() {
             return col;
         }
+
     }
 
 }

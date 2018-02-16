@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,34 +21,25 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import static com.puppycrawl.tools.checkstyle.checks.coding.InnerAssignmentCheck.MSG_KEY;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class InnerAssignmentCheckTest
-    extends BaseCheckTestSupport {
-    @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "coding" + File.separator + filename);
-    }
+    extends AbstractModuleTestSupport {
 
     @Override
-    protected String getNonCompilablePath(String filename) throws IOException {
-        return super.getNonCompilablePath("checks" + File.separator
-                + "coding" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/coding/innerassignment";
     }
 
     @Test
     public void testIt() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(InnerAssignmentCheck.class);
+            createModuleConfig(InnerAssignmentCheck.class);
         final String[] expected = {
             "16:15: " + getCheckMessage(MSG_KEY),
             "16:19: " + getCheckMessage(MSG_KEY),
@@ -74,7 +65,7 @@ public class InnerAssignmentCheckTest
     @Test
     public void testLambdaExpression() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(InnerAssignmentCheck.class);
+            createModuleConfig(InnerAssignmentCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputInnerAssignmentLambdaExpressions.java"),
             expected);
@@ -83,8 +74,9 @@ public class InnerAssignmentCheckTest
     @Test
     public void testTokensNotNull() {
         final InnerAssignmentCheck check = new InnerAssignmentCheck();
-        Assert.assertNotNull(check.getAcceptableTokens());
-        Assert.assertNotNull(check.getDefaultTokens());
-        Assert.assertNotNull(check.getRequiredTokens());
+        Assert.assertNotNull("Unexpected acceptable tokenks", check.getAcceptableTokens());
+        Assert.assertNotNull("Unexpected default tokens", check.getDefaultTokens());
+        Assert.assertNotNull("Unexpected required tokens", check.getRequiredTokens());
     }
+
 }

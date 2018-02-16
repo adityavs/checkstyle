@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,7 +24,7 @@ import java.util.List;
 
 import com.puppycrawl.tools.checkstyle.api.DetailNode;
 import com.puppycrawl.tools.checkstyle.api.JavadocTokenTypes;
-import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 import com.puppycrawl.tools.checkstyle.utils.JavadocUtils;
 
 /**
@@ -78,16 +78,6 @@ public class JavadocTagContinuationIndentationCheck extends AbstractJavadocCheck
     }
 
     @Override
-    public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.BLOCK_COMMENT_BEGIN };
-    }
-
-    @Override
-    public int[] getRequiredTokens() {
-        return getAcceptableTokens();
-    }
-
-    @Override
     public void visitJavadocToken(DetailNode ast) {
         if (!isInlineDescription(ast)) {
             final List<DetailNode> textNodes = getAllNewlineNodes(ast);
@@ -96,7 +86,7 @@ public class JavadocTagContinuationIndentationCheck extends AbstractJavadocCheck
                         .getNextSibling(newlineNode));
                 if (textNode != null && textNode.getType() == JavadocTokenTypes.TEXT) {
                     final String text = textNode.getText();
-                    if (!text.trim().isEmpty()
+                    if (!CommonUtils.isBlank(text.trim())
                             && (text.length() <= offset
                                     || !text.substring(1, offset + 1).trim().isEmpty())) {
                         log(textNode.getLineNumber(), MSG_KEY, offset);
@@ -129,13 +119,16 @@ public class JavadocTagContinuationIndentationCheck extends AbstractJavadocCheck
      * @return true, if description node is a description of in-line tag.
      */
     private static boolean isInlineDescription(DetailNode description) {
+        boolean isInline = false;
         DetailNode inlineTag = description.getParent();
         while (inlineTag != null) {
             if (inlineTag.getType() == JavadocTokenTypes.JAVADOC_INLINE_TAG) {
-                return true;
+                isInline = true;
+                break;
             }
             inlineTag = inlineTag.getParent();
         }
-        return false;
+        return isInline;
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ package com.puppycrawl.tools.checkstyle.checks.annotation;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TextBlock;
@@ -75,7 +76,9 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author Travis Schneeberger
  */
+@StatelessCheck
 public final class MissingOverrideCheck extends AbstractCheck {
+
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -158,8 +161,8 @@ public final class MissingOverrideCheck extends AbstractCheck {
             if (javaFiveCompatibility) {
                 final DetailAST defOrNew = ast.getParent().getParent();
 
-                if (defOrNew.branchContains(TokenTypes.EXTENDS_CLAUSE)
-                    || defOrNew.branchContains(TokenTypes.IMPLEMENTS_CLAUSE)
+                if (defOrNew.findFirstToken(TokenTypes.EXTENDS_CLAUSE) != null
+                    || defOrNew.findFirstToken(TokenTypes.IMPLEMENTS_CLAUSE) != null
                     || defOrNew.getType() == TokenTypes.LITERAL_NEW) {
                     check = false;
                 }
@@ -198,4 +201,5 @@ public final class MissingOverrideCheck extends AbstractCheck {
         }
         return javadocTag;
     }
+
 }

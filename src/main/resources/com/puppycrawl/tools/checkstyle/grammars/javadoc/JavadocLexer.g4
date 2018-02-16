@@ -37,8 +37,9 @@ import java.util.*;
 
 }
 
-LEADING_ASTERISK : ( (' '|'\t') {_tokenStartCharPositionInLine == 0}? ) (' '|'\t')* '*'
-      | '*' {_tokenStartCharPositionInLine == 0}?
+LEADING_ASTERISK : ( (' '|'\t') {_tokenStartCharPositionInLine == 0
+                                    || previousTokenType == NEWLINE}? ) (' '|'\t')* '*'
+      | '*' {_tokenStartCharPositionInLine == 0 || previousTokenType == NEWLINE}?
       ;
 
 HTML_COMMENT_START : '<!--' {recognizeXmlTags}?
@@ -48,18 +49,18 @@ CDATA       :   '<![CDATA[' .*? ']]>' {recognizeXmlTags}?;
 
 WS      :   (' '|'\t')+ ;
 
-OPEN: '<' {recognizeXmlTags && (Character.isLetter(_input.LA(1)) || _input.LA(1) == '/')}?
+START: '<' {recognizeXmlTags && (Character.isLetter(_input.LA(1)) || _input.LA(1) == '/')}?
       -> pushMode(xmlTagDefinition)
       ;
 
-//PRE_TAG_OPEN: ('<pre>' | '<PRE>') {!insidePreTag}?
+//PRE_TAG_START: ('<pre>' | '<PRE>') {!insidePreTag}?
 //     {insidePreTag=true; recognizeXmlTags=false;}
 //      ;
-//PRE_TAG_CLOSE: ('</pre>' | '</PRE>') {insidePreTag}?
+//PRE_TAG_END: ('</pre>' | '</PRE>') {insidePreTag}?
 //      {insidePreTag=false; recognizeXmlTags=true;}
 //      ;
 
-NEWLINE: '\n' | '\r\n';
+NEWLINE: '\n' | '\r\n' | '\r';
 
 AUTHOR_LITERAL : '@author' {isJavadocTagAvailable}?;
 DEPRECATED_LITERAL : '@deprecated' {isJavadocTagAvailable}?;
@@ -117,9 +118,9 @@ Newline5: NEWLINE
       }
       -> type(NEWLINE);
 Leading_asterisk3: LEADING_ASTERISK -> type(LEADING_ASTERISK);
-XmlTagOpen1: '<' -> type(OPEN), pushMode(xmlTagDefinition);
+XmlTagOpen1: '<' -> type(START), pushMode(xmlTagDefinition);
 STRING: '"' .*? '"' {referenceCatched = false;} -> mode(DEFAULT_MODE);
-PACKAGE: [a-z$] ([a-z_$] | '.')+ [a-z_$] {referenceCatched = true;};
+PACKAGE_CLASS: Identifier ('.' Identifier)* {referenceCatched = true;};
 DOT: '.';
 HASH: '#' {referenceCatched = true;} -> mode(classMemeber);
 CLASS: [A-Z] [a-zA-Z0-9_$]* {referenceCatched = true;};
@@ -224,7 +225,8 @@ LINK_LITERAL : '@link' -> pushMode(seeLink);
 LINKPLAIN_LITERAL : '@linkplain' -> pushMode(seeLink);
 LITERAL_LITERAL : '@literal' {recognizeXmlTags=false;} -> mode(code);
 VALUE_LITERAL : '@value' -> pushMode(value);
-CustomName1: '@' [a-zA-Z0-9:._-]+ -> type(CUSTOM_NAME), mode(DEFAULT_MODE);
+CustomName1: '@' [a-zA-Z0-9:._-]+ {recognizeXmlTags=false;}
+                                      -> type(CUSTOM_NAME), mode(DEFAULT_MODE);
 Char6: . -> type(CHAR), mode(DEFAULT_MODE);
 //////////////////////////////////////////////////////////////////////////////////////
 mode code;
@@ -239,7 +241,7 @@ Char7: .
 //////////////////////////////////////////////////////////////////////////////////////
 mode codeText;
 Leading_asterisk5: LEADING_ASTERISK -> type(LEADING_ASTERISK);
-Skobki: '{' (~[}] | Skobki)* '}' -> type(CHAR);
+Brackets: '{' (~[}] | Brackets)* '}' -> type(CHAR);
 Text: ~[}] -> type(CHAR);
 Char8: .
       {
@@ -248,11 +250,10 @@ Char8: .
 
 //////////////////////////////////////////////////////////////////////////////////////
 mode value;
+Leading_asterisk2: LEADING_ASTERISK -> type(LEADING_ASTERISK);
 Space6: WS -> type(WS);
 Newline4: NEWLINE -> type(NEWLINE);
-Package2: PACKAGE -> type(PACKAGE);
-Dot2: DOT -> type(DOT);
-Class2: CLASS -> type(CLASS);
+Package_Class2: PACKAGE_CLASS -> type(PACKAGE_CLASS);
 Hash2: HASH -> type(HASH), mode(classMemeber);
 End1: JAVADOC_INLINE_TAG_END
       {insideJavadocInlineTag--; recognizeXmlTags=true;}
@@ -263,6 +264,10 @@ Char10: .
             skipCurrentTokenConsuming();
       } -> skip, mode(DEFAULT_MODE);
 
+fragment JavaLetter: [A-Za-z_$];
+fragment JavaLetterOrDigit: [0-9A-Za-z_$];
+fragment Identifier: JavaLetter (JavaLetterOrDigit)*;
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -270,8 +275,8 @@ Char10: .
 //////////////////////////////////////////////////////////////////////////////////////
 mode xmlTagDefinition;
 
-CLOSE       :   '>' {htmlTagNameCatched = false;} -> mode(DEFAULT_MODE) ;
-SLASH_CLOSE :   '/>' {htmlTagNameCatched = false;} -> mode(DEFAULT_MODE) ;
+END       :   '>' {htmlTagNameCatched = false;} -> mode(DEFAULT_MODE) ;
+SLASH_END :   '/>' {htmlTagNameCatched = false;} -> mode(DEFAULT_MODE) ;
 SLASH       :   '/' ;
 EQUALS      :   '=' -> mode(htmlAttr);
 
@@ -306,20 +311,8 @@ ISINDEX_HTML_TAG_NAME: I S I N D E X {!htmlTagNameCatched}? {htmlTagNameCatched=
 LINK_HTML_TAG_NAME: L I N K {!htmlTagNameCatched}? {htmlTagNameCatched=true;};
 META_HTML_TAG_NAME: M E T A {!htmlTagNameCatched}? {htmlTagNameCatched=true;};
 PARAM_HTML_TAG_NAME: P A R A M {!htmlTagNameCatched}? {htmlTagNameCatched=true;};
-
-// other tag names and attribute names
-HTML_TAG_NAME: NAME_START_CHAR NAME_CHAR* {htmlTagNameCatched=true;};
-
-LeadingLEADING_ASTERISK1: LEADING_ASTERISK -> type(LEADING_ASTERISK);
-Newline1: NEWLINE -> type(NEWLINE);
-WhiteSpace3: WS -> type(WS);
-
-Char11: .
-      {
-            skipCurrentTokenConsuming();
-            htmlTagNameCatched = false;
-      } -> skip, mode(DEFAULT_MODE);
-
+EMBED_HTML_TAG_NAME: E M B E D {!htmlTagNameCatched}? {htmlTagNameCatched=true;};
+KEYGEN_HTML_TAG_NAME: K E Y G E N {!htmlTagNameCatched}? {htmlTagNameCatched=true;};
 
 fragment
 HEXDIGIT    :   [a-fA-F0-9] ;
@@ -402,3 +395,21 @@ LeadingAst: LEADING_ASTERISK -> type(LEADING_ASTERISK);
 Newline6: NEWLINE -> type(NEWLINE);
 WhiteSpace: WS -> type(WS);
 CommentChar: . -> type(CHAR);
+
+mode xmlTagDefinition;
+SOURCE_HTML_TAG_NAME: S O U R C E {!htmlTagNameCatched}? {htmlTagNameCatched=true;};
+TRACK_HTML_TAG_NAME: T R A C K {!htmlTagNameCatched}? {htmlTagNameCatched=true;};
+WBR_HTML_TAG_NAME: W B R {!htmlTagNameCatched}? {htmlTagNameCatched=true;};
+
+// other tag names and attribute names
+HTML_TAG_NAME: NAME_START_CHAR NAME_CHAR* {htmlTagNameCatched=true;};
+
+LeadingLEADING_ASTERISK1: LEADING_ASTERISK -> type(LEADING_ASTERISK);
+Newline1: NEWLINE -> type(NEWLINE);
+WhiteSpace3: WS -> type(WS);
+
+Char11: .
+      {
+            skipCurrentTokenConsuming();
+            htmlTagNameCatched = false;
+      } -> skip, mode(DEFAULT_MODE);

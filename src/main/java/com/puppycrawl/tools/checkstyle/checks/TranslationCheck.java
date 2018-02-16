@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
@@ -46,6 +45,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.io.Closeables;
 import com.puppycrawl.tools.checkstyle.Definitions;
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
+import com.puppycrawl.tools.checkstyle.api.FileText;
 import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
 import com.puppycrawl.tools.checkstyle.api.MessageDispatcher;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
@@ -126,29 +126,26 @@ public class TranslationCheck extends AbstractFileSetCheck {
      */
     private static final String WRONG_LANGUAGE_CODE_KEY = "translation.wrongLanguageCode";
 
-    /** Logger for TranslationCheck. */
-    private static final Log LOG = LogFactory.getLog(TranslationCheck.class);
-
     /**
-     * Regexp string for default tranlsation files.
+     * Regexp string for default translation files.
      * For example, messages.properties.
      */
     private static final String DEFAULT_TRANSLATION_REGEXP = "^.+\\..+$";
 
     /**
-     * Regexp pattern for bundles names wich end with language code, followed by country code and
+     * Regexp pattern for bundles names which end with language code, followed by country code and
      * variant suffix. For example, messages_es_ES_UNIX.properties.
      */
     private static final Pattern LANGUAGE_COUNTRY_VARIANT_PATTERN =
         CommonUtils.createPattern("^.+\\_[a-z]{2}\\_[A-Z]{2}\\_[A-Za-z]+\\..+$");
     /**
-     * Regexp pattern for bundles names wich end with language code, followed by country code
+     * Regexp pattern for bundles names which end with language code, followed by country code
      * suffix. For example, messages_es_ES.properties.
      */
     private static final Pattern LANGUAGE_COUNTRY_PATTERN =
         CommonUtils.createPattern("^.+\\_[a-z]{2}\\_[A-Z]{2}\\..+$");
     /**
-     * Regexp pattern for bundles names wich end with language code suffix.
+     * Regexp pattern for bundles names which end with language code suffix.
      * For example, messages_es.properties.
      */
     private static final Pattern LANGUAGE_PATTERN =
@@ -159,11 +156,14 @@ public class TranslationCheck extends AbstractFileSetCheck {
     /** File name format with language code. */
     private static final String FILE_NAME_WITH_LANGUAGE_CODE_FORMATTER = "%s_%s.%s";
 
-    /** Formatting string to form regexp to validate required tranlsations file names. */
+    /** Formatting string to form regexp to validate required translations file names. */
     private static final String REGEXP_FORMAT_TO_CHECK_REQUIRED_TRANSLATIONS =
         "^%1$s\\_%2$s(\\_[A-Z]{2})?\\.%3$s$|^%1$s\\_%2$s\\_[A-Z]{2}\\_[A-Za-z]+\\.%3$s$";
-    /** Formatting string to form regexp to validate default tranlsations file names. */
+    /** Formatting string to form regexp to validate default translations file names. */
     private static final String REGEXP_FORMAT_TO_CHECK_DEFAULT_TRANSLATIONS = "^%s\\.%s$";
+
+    /** Logger for TranslationCheck. */
+    private final Log log;
 
     /** The files to process. */
     private final Set<File> filesToProcess = new HashSet<>();
@@ -182,6 +182,7 @@ public class TranslationCheck extends AbstractFileSetCheck {
     public TranslationCheck() {
         setFileExtensions("properties");
         baseName = CommonUtils.createPattern("^messages.*$");
+        log = LogFactory.getLog(TranslationCheck.class);
     }
 
     /**
@@ -202,7 +203,7 @@ public class TranslationCheck extends AbstractFileSetCheck {
     }
 
     /**
-     * Validates the correctness of user specififed language codes for the check.
+     * Validates the correctness of user specified language codes for the check.
      * @param languageCodes user specified language codes for the check.
      */
     private void validateUserSpecifiedLanguageCodes(Set<String> languageCodes) {
@@ -236,20 +237,17 @@ public class TranslationCheck extends AbstractFileSetCheck {
 
     @Override
     public void beginProcessing(String charset) {
-        super.beginProcessing(charset);
         filesToProcess.clear();
     }
 
     @Override
-    protected void processFiltered(File file, List<String> lines) {
+    protected void processFiltered(File file, FileText fileText) {
         // We just collecting files for processing at finishProcessing()
         filesToProcess.add(file);
     }
 
     @Override
     public void finishProcessing() {
-        super.finishProcessing();
-
         final Set<ResourceBundle> bundles = groupFilesIntoBundles(filesToProcess, baseName);
         for (ResourceBundle currentBundle : bundles) {
             checkExistenceOfDefaultTranslation(currentBundle);
@@ -411,7 +409,7 @@ public class TranslationCheck extends AbstractFileSetCheck {
         else {
             regexp = DEFAULT_TRANSLATION_REGEXP;
         }
-        // We use substring(...) insead of replace(...), so that the regular expression does
+        // We use substring(...) instead of replace(...), so that the regular expression does
         // not have to be compiled each time it is used inside 'replace' method.
         final String removePattern = regexp.substring("^.+".length(), regexp.length());
         return fileName.replaceAll(removePattern, "");
@@ -437,7 +435,7 @@ public class TranslationCheck extends AbstractFileSetCheck {
      */
     private void checkTranslationKeys(ResourceBundle bundle) {
         final Set<File> filesInBundle = bundle.getFiles();
-        if (filesInBundle.size() > 1) {
+        if (filesInBundle.size() >= 2) {
             // build a map from files to the keys they contain
             final Set<String> allTranslationKeys = new HashSet<>();
             final SetMultimap<File, String> filesAssociatedWithKeys = HashMultimap.create();
@@ -521,11 +519,12 @@ public class TranslationCheck extends AbstractFileSetCheck {
         final SortedSet<LocalizedMessage> messages = new TreeSet<>();
         messages.add(message);
         getMessageDispatcher().fireErrors(file.getPath(), messages);
-        LOG.debug("IOException occurred.", exception);
+        log.debug("IOException occurred.", exception);
     }
 
     /** Class which represents a resource bundle. */
     private static class ResourceBundle {
+
         /** Bundle base name. */
         private final String baseName;
         /** Common extension of files which are included in the resource bundle. */
@@ -587,5 +586,7 @@ public class TranslationCheck extends AbstractFileSetCheck {
             }
             return containsFile;
         }
+
     }
+
 }

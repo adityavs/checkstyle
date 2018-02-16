@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,7 @@
 package com.puppycrawl.tools.checkstyle.checks.javadoc;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
@@ -28,8 +29,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import com.puppycrawl.tools.checkstyle.JavadocDetailNodeParser;
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
@@ -47,6 +49,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author Daniel Grenner
  * @author Travis Schneeberger
  */
+@StatelessCheck
 public class JavadocStyleCheck
     extends AbstractCheck {
 
@@ -63,28 +66,29 @@ public class JavadocStyleCheck
     public static final String MSG_INCOMPLETE_TAG = "javadoc.incompleteTag";
 
     /** Message property key for the Unclosed HTML message. */
-    public static final String MSG_UNCLOSED_HTML = "javadoc.unclosedHtml";
+    public static final String MSG_UNCLOSED_HTML = JavadocDetailNodeParser.MSG_UNCLOSED_HTML_TAG;
 
     /** Message property key for the Extra HTML message. */
     public static final String MSG_EXTRA_HTML = "javadoc.extraHtml";
 
     /** HTML tags that do not require a close tag. */
-    private static final Set<String> SINGLE_TAGS = Collections.unmodifiableSortedSet(Stream.of(
-        "br", "li", "dt", "dd", "hr", "img", "p", "td", "tr", "th")
-        .collect(Collectors.toCollection(TreeSet::new)));
+    private static final Set<String> SINGLE_TAGS = Collections.unmodifiableSortedSet(
+        Arrays.stream(new String[] {"br", "li", "dt", "dd", "hr", "img", "p", "td", "tr", "th", })
+            .collect(Collectors.toCollection(TreeSet::new)));
 
     /** HTML tags that are allowed in java docs.
-     * From http://www.w3schools.com/tags/default.asp
+     * From https://www.w3schools.com/tags/default.asp
      * The forms and structure tags are not allowed
      */
-    private static final Set<String> ALLOWED_TAGS = Collections.unmodifiableSortedSet(Stream.of(
-        "a", "abbr", "acronym", "address", "area", "b", "bdo", "big",
-        "blockquote", "br", "caption", "cite", "code", "colgroup", "dd",
-        "del", "div", "dfn", "dl", "dt", "em", "fieldset", "font", "h1",
-        "h2", "h3", "h4", "h5", "h6", "hr", "i", "img", "ins", "kbd",
-        "li", "ol", "p", "pre", "q", "samp", "small", "span", "strong",
-        "style", "sub", "sup", "table", "tbody", "td", "tfoot", "th",
-        "thead", "tr", "tt", "u", "ul", "var")
+    private static final Set<String> ALLOWED_TAGS = Collections.unmodifiableSortedSet(
+        Arrays.stream(new String[] {
+            "a", "abbr", "acronym", "address", "area", "b", "bdo", "big",
+            "blockquote", "br", "caption", "cite", "code", "colgroup", "dd",
+            "del", "div", "dfn", "dl", "dt", "em", "fieldset", "font", "h1",
+            "h2", "h3", "h4", "h5", "h6", "hr", "i", "img", "ins", "kbd",
+            "li", "ol", "p", "pre", "q", "samp", "small", "span", "strong",
+            "style", "sub", "sup", "table", "tbody", "td", "tfoot", "th",
+            "thead", "tr", "tt", "u", "ul", "var", })
         .collect(Collectors.toCollection(TreeSet::new)));
 
     /** The scope to check. */
@@ -259,7 +263,7 @@ public class JavadocStyleCheck
      * @return a comment text String.
      */
     private static String getCommentText(String... comments) {
-        final StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder(1024);
         for (final String line : comments) {
             final int textStart = findTextStart(line);
 
@@ -287,20 +291,21 @@ public class JavadocStyleCheck
      */
     private static int findTextStart(String line) {
         int textStart = -1;
-        for (int i = 0; i < line.length();) {
-            if (!Character.isWhitespace(line.charAt(i))) {
-                if (line.regionMatches(i, "/**", 0, "/**".length())) {
-                    i += 2;
+        int index = 0;
+        while (index < line.length()) {
+            if (!Character.isWhitespace(line.charAt(index))) {
+                if (line.regionMatches(index, "/**", 0, "/**".length())) {
+                    index += 2;
                 }
-                else if (line.regionMatches(i, "*/", 0, 2)) {
-                    i++;
+                else if (line.regionMatches(index, "*/", 0, 2)) {
+                    index++;
                 }
-                else if (line.charAt(i) != '*') {
-                    textStart = i;
+                else if (line.charAt(index) != '*') {
+                    textStart = index;
                     break;
                 }
             }
-            i++;
+            index++;
         }
         return textStart;
     }
@@ -340,6 +345,7 @@ public class JavadocStyleCheck
      * @param ast the node with the Javadoc
      * @param comment the {@code TextBlock} which represents
      *                 the Javadoc comment.
+     * @noinspection MethodWithMultipleReturnPoints
      */
     // -@cs[ReturnCount] Too complex to break apart.
     private void checkHtmlTags(final DetailAST ast, final TextBlock comment) {
@@ -368,7 +374,7 @@ public class JavadocStyleCheck
                     log(tag.getLineNo(),
                         tag.getPosition(),
                         MSG_EXTRA_HTML,
-                        tag);
+                        tag.getText());
                 }
                 else {
                     // See if there are any unclosed tags that were opened
@@ -392,7 +398,8 @@ public class JavadocStyleCheck
             if (!isSingleTag(htmlTag)
                 && !htmlTag.getId().equals(lastFound)
                 && !typeParameters.contains(htmlTag.getId())) {
-                log(htmlTag.getLineNo(), htmlTag.getPosition(), MSG_UNCLOSED_HTML, htmlTag);
+                log(htmlTag.getLineNo(), htmlTag.getPosition(),
+                        MSG_UNCLOSED_HTML, htmlTag.getText());
                 lastFound = htmlTag.getId();
             }
         }
@@ -434,7 +441,7 @@ public class JavadocStyleCheck
             log(lastOpenTag.getLineNo(),
                 lastOpenTag.getPosition(),
                 MSG_UNCLOSED_HTML,
-                lastOpenTag);
+                lastOpenTag.getText());
         }
     }
 
@@ -535,4 +542,5 @@ public class JavadocStyleCheck
     public void setCheckEmptyJavadoc(boolean flag) {
         checkEmptyJavadoc = flag;
     }
+
 }

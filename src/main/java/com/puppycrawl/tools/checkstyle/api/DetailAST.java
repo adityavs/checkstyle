@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -32,8 +32,10 @@ import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
  * @author Oliver Burn
  * @author lkuehne
  * @see <a href="http://www.antlr.org/">ANTLR Website</a>
+ * @noinspection FieldNotUsedInToString, SerializableHasSerializationMethods
  */
 public final class DetailAST extends CommonASTWithHiddenTokens {
+
     private static final long serialVersionUID = -2580884815577559874L;
 
     /** Constant to indicate if not calculated the child count. */
@@ -110,7 +112,7 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
         clearBranchTokenTypes();
         clearChildCountCache(parent);
         if (ast != null) {
-            ast.setParent(parent);
+            //parent is set in setNextSibling or parent.setFirstChild
             final DetailAST previousSiblingNode = previousSibling;
 
             if (previousSiblingNode != null) {
@@ -135,7 +137,7 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
         clearBranchTokenTypes();
         clearChildCountCache(parent);
         if (ast != null) {
-            ast.setParent(parent);
+            //parent is set in setNextSibling
             final DetailAST nextSibling = getNextSibling();
 
             if (nextSibling != null) {
@@ -152,11 +154,11 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
     public void addChild(AST ast) {
         clearBranchTokenTypes();
         clearChildCountCache(this);
-        super.addChild(ast);
         if (ast != null) {
             ((DetailAST) ast).setParent(this);
-            getFirstChild().setParent(this);
+            ((DetailAST) ast).previousSibling = getLastChild();
         }
+        super.addChild(ast);
     }
 
     /**
@@ -198,13 +200,17 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
      * @param parent the parent token
      */
     private void setParent(DetailAST parent) {
-        clearBranchTokenTypes();
-        this.parent = parent;
-        final DetailAST nextSibling = getNextSibling();
-        if (nextSibling != null) {
-            nextSibling.setParent(parent);
-            nextSibling.previousSibling = this;
-        }
+        DetailAST instance = this;
+        do {
+            instance.clearBranchTokenTypes();
+            instance.parent = parent;
+            final DetailAST nextSibling = instance.getNextSibling();
+            if (nextSibling != null) {
+                nextSibling.previousSibling = instance;
+            }
+
+            instance = nextSibling;
+        } while (instance != null);
     }
 
     /**
@@ -227,11 +233,11 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
             // with initialize(String text)
             resultNo = findLineNo(getFirstChild());
 
-            if (resultNo < 0) {
+            if (resultNo == -1) {
                 resultNo = findLineNo(getNextSibling());
             }
         }
-        if (resultNo < 0) {
+        if (resultNo == -1) {
             resultNo = lineNo;
         }
         return resultNo;
@@ -258,11 +264,11 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
             // with initialize(String text)
             resultNo = findColumnNo(getFirstChild());
 
-            if (resultNo < 0) {
+            if (resultNo == -1) {
                 resultNo = findColumnNo(getNextSibling());
             }
         }
-        if (resultNo < 0) {
+        if (resultNo == -1) {
             resultNo = columnNo;
         }
         return resultNo;
@@ -334,12 +340,12 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
     }
 
     /**
+     * Returns token type with branch.
      * @return the token types that occur in the branch as a sorted set.
      */
     private BitSet getBranchTokenTypes() {
         // lazy init
         if (branchTokenTypes == null) {
-
             branchTokenTypes = new BitSet();
             branchTokenTypes.set(getType());
 
@@ -420,10 +426,11 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
      * child count for the current DetailAST instance.
      */
     private void clearBranchTokenTypes() {
-        DetailAST prevParent = getParent();
+        DetailAST prevParent = parent;
         while (prevParent != null) {
             prevParent.branchTokenTypes = null;
-            prevParent = prevParent.getParent();
+            prevParent = prevParent.parent;
         }
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,10 @@
 package com.puppycrawl.tools.checkstyle.checks.sizes;
 
 import java.io.File;
-import java.util.List;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
+import com.puppycrawl.tools.checkstyle.api.FileText;
 
 /**
  * <p>
@@ -54,6 +55,7 @@ import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
  * </pre>
  * @author Lars Kühne
  */
+@StatelessCheck
 public class FileLengthCheck extends AbstractFileSetCheck {
 
     /**
@@ -69,9 +71,9 @@ public class FileLengthCheck extends AbstractFileSetCheck {
     private int max = DEFAULT_MAX_LINES;
 
     @Override
-    protected void processFiltered(File file, List<String> lines) {
-        if (lines.size() > max) {
-            log(1, MSG_KEY, lines.size(), max);
+    protected void processFiltered(File file, FileText fileText) {
+        if (fileText.size() > max) {
+            log(1, MSG_KEY, fileText.size(), max);
         }
     }
 

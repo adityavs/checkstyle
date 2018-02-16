@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,14 +21,15 @@ package com.puppycrawl.tools.checkstyle.grammars;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.junit.Test;
@@ -37,19 +38,16 @@ import antlr.NoViableAltForCharException;
 import antlr.ParserSharedInputState;
 import antlr.SemanticException;
 import antlr.TokenBuffer;
+import com.puppycrawl.tools.checkstyle.AbstractTreeTestSupport;
 import com.puppycrawl.tools.checkstyle.AstTreeStringPrinter;
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.JavaParser;
 import com.puppycrawl.tools.checkstyle.api.FileText;
 
-public class AstRegressionTest extends BaseCheckTestSupport {
-    @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("grammars" + File.separator + filename);
-    }
+public class AstRegressionTest extends AbstractTreeTestSupport {
 
     @Override
-    protected String getNonCompilablePath(String filename) throws IOException {
-        return super.getNonCompilablePath("grammars" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/grammars";
     }
 
     @Test
@@ -111,7 +109,8 @@ public class AstRegressionTest extends BaseCheckTestSupport {
         final Class<?> clss = GeneratedJavaLexer.class;
         final Constructor<?> constructor = clss.getDeclaredConstructor(InputStream.class);
 
-        constructor.newInstance((InputStream) null);
+        assertNotNull("InputStream should not be null",
+                constructor.newInstance((InputStream) null));
     }
 
     @Test
@@ -120,7 +119,8 @@ public class AstRegressionTest extends BaseCheckTestSupport {
         final Constructor<?> constructor = clss
                 .getDeclaredConstructor(ParserSharedInputState.class);
 
-        constructor.newInstance((ParserSharedInputState) null);
+        assertNotNull("ParserSharedInputState should not be null",
+                constructor.newInstance((ParserSharedInputState) null));
     }
 
     @Test
@@ -128,7 +128,8 @@ public class AstRegressionTest extends BaseCheckTestSupport {
         final Class<?> clss = GeneratedJavaRecognizer.class;
         final Constructor<?> constructor = clss.getDeclaredConstructor(TokenBuffer.class);
 
-        constructor.newInstance((TokenBuffer) null);
+        assertNotNull("TokenBuffer should not be null",
+                constructor.newInstance((TokenBuffer) null));
     }
 
     @Test
@@ -139,19 +140,25 @@ public class AstRegressionTest extends BaseCheckTestSupport {
         verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "\r\r");
         verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "\r");
         verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "\u000c\f");
-        verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "// \n", true);
-        verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "// \r", true);
-        verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "// \r\n", true);
-        verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "/* \n */", true);
-        verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "/* \r\n */", true);
+        verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "// \n",
+                JavaParser.Options.WITH_COMMENTS);
+        verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "// \r",
+                JavaParser.Options.WITH_COMMENTS);
+        verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "// \r\n",
+                JavaParser.Options.WITH_COMMENTS);
+        verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "/* \n */",
+                JavaParser.Options.WITH_COMMENTS);
+        verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "/* \r\n */",
+                JavaParser.Options.WITH_COMMENTS);
         verifyAstRaw(getPath("InputRegressionEmptyAst.txt"), "/* \r" + "\u0000\u0000" + " */",
-            true);
+                JavaParser.Options.WITH_COMMENTS);
     }
 
     @Test
     public void testNewlineCr() throws Exception {
-        verifyAst(super.getPath("/checks/InputNewlineCrAtEndOfFileAst.txt"),
-                super.getPath("/checks/InputNewlineCrAtEndOfFile.java"), true);
+        verifyAst(getPath("InputNewlineCrAtEndOfFileAst.txt"),
+                getPath("InputAstRegressionNewlineCrAtEndOfFile.java"),
+                JavaParser.Options.WITH_COMMENTS);
     }
 
     @Test
@@ -205,16 +212,17 @@ public class AstRegressionTest extends BaseCheckTestSupport {
 
     private static void verifyAstRaw(String expectedTextPrintFileName, String actualJava)
             throws Exception {
-        verifyAstRaw(expectedTextPrintFileName, actualJava, false);
+        verifyAstRaw(expectedTextPrintFileName, actualJava, JavaParser.Options.WITHOUT_COMMENTS);
     }
 
     private static void verifyAstRaw(String expectedTextPrintFileName, String actualJava,
-            boolean withComments) throws Exception {
+            JavaParser.Options withComments) throws Exception {
         final File expectedFile = new File(expectedTextPrintFileName);
         final String expectedContents = new FileText(expectedFile, System.getProperty(
-                "file.encoding", "UTF-8")).getFullText().toString().replace("\r", "");
+                "file.encoding", StandardCharsets.UTF_8.name()))
+                .getFullText().toString().replace("\r", "");
 
-        final FileText actualFileContents = FileText.fromLines(new File(""),
+        final FileText actualFileContents = new FileText(new File(""),
                 Arrays.asList(actualJava.split("\\n|\\r\\n?")));
         final String actualContents = AstTreeStringPrinter.printAst(actualFileContents,
                 withComments);
@@ -224,6 +232,7 @@ public class AstRegressionTest extends BaseCheckTestSupport {
     }
 
     private static final class AssertGeneratedJavaLexer extends GeneratedJavaLexer {
+
         private int laPosition;
         private char[] laResults;
 
@@ -244,7 +253,7 @@ public class AstRegressionTest extends BaseCheckTestSupport {
             verify(methodName, false, 1, laResults);
         }
 
-        public static void verify(String methodName, boolean expectPass, int guessing,
+        private static void verify(String methodName, boolean expectPass, int guessing,
                 char... laResults) throws Exception {
             final AssertGeneratedJavaLexer instance = new AssertGeneratedJavaLexer();
             instance.laPosition = 0;
@@ -296,5 +305,7 @@ public class AstRegressionTest extends BaseCheckTestSupport {
         public int mark() {
             return 1;
         }
+
     }
+
 }

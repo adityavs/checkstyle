@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@ import com.puppycrawl.tools.checkstyle.api.AbstractViolationReporter;
  * @author Oliver Burn
  */
 public final class DetectorOptions {
+
     /**
      * Flags to compile a regular expression with.
      * See {@link Pattern#flags()}.
@@ -117,15 +118,14 @@ public final class DetectorOptions {
      * @return the pattern to use when matching.
      */
     public Pattern getPattern() {
-        if (pattern != null) {
-            return pattern;
-        }
-        int options = compileFlags;
+        if (pattern == null) {
+            int options = compileFlags;
 
-        if (ignoreCase) {
-            options |= Pattern.CASE_INSENSITIVE;
+            if (ignoreCase) {
+                options |= Pattern.CASE_INSENSITIVE;
+            }
+            pattern = Pattern.compile(format, options);
         }
-        pattern = Pattern.compile(format, options);
         return pattern;
     }
 
@@ -203,7 +203,7 @@ public final class DetectorOptions {
          * Specifies whether to ignore case when matching and returns Builder object.
          * @param val whether to ignore case when matching.
          * @return Builder object.
-         * @noinspection ReturnOfInnerClass
+         * @noinspection ReturnOfInnerClass, BooleanParameter
          */
         public Builder ignoreCase(boolean val) {
             ignoreCase = val;
@@ -230,5 +230,7 @@ public final class DetectorOptions {
             suppressor = Optional.ofNullable(suppressor).orElse(NeverSuppress.INSTANCE);
             return DetectorOptions.this;
         }
+
     }
+
 }

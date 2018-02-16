@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -28,7 +29,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * <p>Checks that long constants are defined with an upper ell.
  * That is <span class="code">'L'</span> and not
  * <span class="code">'l'</span>. This is in accordance to the Java Language
- * Specification, <a href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.10.1">
+ * Specification, <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.10.1">
  * Section 3.10.1</a>.
  * </p>
  * <p>
@@ -47,6 +48,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author Oliver Burn
  */
+@StatelessCheck
 public class UpperEllCheck extends AbstractCheck {
 
     /**
@@ -57,17 +59,17 @@ public class UpperEllCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.NUM_LONG};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.NUM_LONG};
     }
 
     @Override
@@ -78,4 +80,5 @@ public class UpperEllCheck extends AbstractCheck {
                 MSG_KEY);
         }
     }
+
 }

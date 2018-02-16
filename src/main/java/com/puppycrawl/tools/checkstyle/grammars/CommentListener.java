@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,8 +24,10 @@ package com.puppycrawl.tools.checkstyle.grammars;
  * in the parsed code.
  *
  * @author o_sukhodolsky
+ * @noinspection ClassOnlyUsedInOnePackage
  */
 public interface CommentListener {
+
     /**
      * Report the location of a single line comment that extends from the
      * given point to the end of the line. The type of comment is identified
@@ -54,4 +56,5 @@ public interface CommentListener {
     void reportBlockComment(String type,
                             int startLineNo, int startColNo,
                             int endLineNo, int endColNo);
+
 }

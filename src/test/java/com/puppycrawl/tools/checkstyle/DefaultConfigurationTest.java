@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,11 @@
 package com.puppycrawl.tools.checkstyle;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
+
+import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 
 public class DefaultConfigurationTest {
 
@@ -29,10 +32,45 @@ public class DefaultConfigurationTest {
     public void testRemoveChild() {
         final DefaultConfiguration config = new DefaultConfiguration("MyConfig");
         final DefaultConfiguration configChild = new DefaultConfiguration("childConfig");
-        assertEquals(0, config.getChildren().length);
+        assertEquals("Invalid children count", 0, config.getChildren().length);
         config.addChild(configChild);
-        assertEquals(1, config.getChildren().length);
+        assertEquals("Invalid children count", 1, config.getChildren().length);
         config.removeChild(configChild);
-        assertEquals(0, config.getChildren().length);
+        assertEquals("Invalid children count", 0, config.getChildren().length);
     }
+
+    @Test
+    public void testExceptionForNonExistentAttribute() {
+        final String name = "MyConfig";
+        final DefaultConfiguration config = new DefaultConfiguration(name);
+        final String attributeName = "NonExistent#$%";
+        try {
+            config.getAttribute(attributeName);
+            fail("Exception is expected");
+        }
+        catch (CheckstyleException expected) {
+            assertEquals("Invalid exception message",
+                    "missing key '" + attributeName + "' in " + name,
+                    expected.getMessage());
+        }
+    }
+
+    @Test
+    public void testDefaultMultiThreadConfiguration() {
+        final String name = "MyConfig";
+        final DefaultConfiguration config = new DefaultConfiguration(name);
+        final ThreadModeSettings singleThreadMode =
+                ThreadModeSettings.SINGLE_THREAD_MODE_INSTANCE;
+        assertEquals("Invalid thread mode", singleThreadMode, config.getThreadModeSettings());
+    }
+
+    @Test
+    public void testMultiThreadConfiguration() {
+        final String name = "MyConfig";
+        final ThreadModeSettings multiThreadMode =
+                new ThreadModeSettings(4, 2);
+        final DefaultConfiguration config = new DefaultConfiguration(name, multiThreadMode);
+        assertEquals("Invalid thread mode", multiThreadMode, config.getThreadModeSettings());
+    }
+
 }

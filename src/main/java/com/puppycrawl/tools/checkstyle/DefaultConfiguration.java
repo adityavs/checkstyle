@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -32,8 +32,10 @@ import com.puppycrawl.tools.checkstyle.api.Configuration;
 /**
  * Default implementation of the Configuration interface.
  * @author lkuehne
+ * @noinspection SerializableHasSerializationMethods
  */
 public final class DefaultConfiguration implements Configuration {
+
     private static final long serialVersionUID = 1157875385356127169L;
 
     /** The name of this configuration. */
@@ -48,12 +50,26 @@ public final class DefaultConfiguration implements Configuration {
     /** The map containing custom messages. */
     private final Map<String, String> messages = new HashMap<>();
 
+    /** The thread mode configuration. */
+    private final ThreadModeSettings threadModeSettings;
+
     /**
      * Instantiates a DefaultConfiguration.
      * @param name the name for this DefaultConfiguration.
      */
     public DefaultConfiguration(String name) {
+        this(name, ThreadModeSettings.SINGLE_THREAD_MODE_INSTANCE);
+    }
+
+    /**
+     * Instantiates a DefaultConfiguration.
+     * @param name the name for this DefaultConfiguration.
+     * @param threadModeSettings the thread mode configuration.
+     */
+    public DefaultConfiguration(String name,
+        ThreadModeSettings threadModeSettings) {
         this.name = name;
+        this.threadModeSettings = threadModeSettings;
     }
 
     @Override
@@ -131,4 +147,13 @@ public final class DefaultConfiguration implements Configuration {
     public ImmutableMap<String, String> getMessages() {
         return ImmutableMap.copyOf(messages);
     }
+
+    /**
+     * Gets the thread mode configuration.
+     * @return the thread mode configuration.
+     */
+    public ThreadModeSettings getThreadModeSettings() {
+        return threadModeSettings;
+    }
+
 }

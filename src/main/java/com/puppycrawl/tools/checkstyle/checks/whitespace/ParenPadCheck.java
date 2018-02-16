@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,9 +28,10 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 /**
  * <p>Checks the padding of parentheses; that is whether a space is required
  * after a left parenthesis and before a right parenthesis, or such spaces are
- * forbidden, with the exception that it does
- * not check for padding of the right parenthesis at an empty for iterator and
- * empty for initializer.
+ * forbidden. No check occurs at the right parenthesis after an empty for
+ * iterator, at the left parenthesis before an empty for initialization, or at
+ * the right parenthesis of a try-with-resources resource specification where
+ * the last resource variable has a trailing semi-colon.
  * Use Check {@link EmptyForIteratorPadCheck EmptyForIteratorPad} to validate
  * empty for iterators and {@link EmptyForInitializerPadCheck EmptyForInitializerPad}
  * to validate empty for initializers. Typecasts are also not checked, as there is
@@ -46,6 +47,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *  {@link TokenTypes#ANNOTATION_FIELD_DEF ANNOTATION_FIELD_DEF},
  *  {@link TokenTypes#CTOR_DEF CTOR_DEF},
  *  {@link TokenTypes#CTOR_CALL CTOR_CALL},
+ *  {@link TokenTypes#DOT DOT},
  *  {@link TokenTypes#ENUM_CONSTANT_DEF ENUM_CONSTANT_DEF},
  *  {@link TokenTypes#EXPR EXPR},
  *  {@link TokenTypes#LITERAL_CATCH LITERAL_CATCH},
@@ -61,6 +63,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *  {@link TokenTypes#RESOURCE_SPECIFICATION RESOURCE_SPECIFICATION},
  *  {@link TokenTypes#SUPER_CTOR_CALL SUPER_CTOR_CALL},
  *  {@link TokenTypes#QUESTION QUESTION},
+ *  {@link TokenTypes#LAMBDA LAMBDA},
  * </p>
  * <p>
  * An example of how to configure the check is:
@@ -118,8 +121,8 @@ public class ParenPadCheck extends AbstractParenPadCheck {
             case TokenTypes.METHOD_CALL:
                 processLeft(ast);
                 processRight(ast.findFirstToken(TokenTypes.RPAREN));
-                processExpression(ast);
                 break;
+            case TokenTypes.DOT:
             case TokenTypes.EXPR:
             case TokenTypes.QUESTION:
                 processExpression(ast);
@@ -131,7 +134,11 @@ public class ParenPadCheck extends AbstractParenPadCheck {
             case TokenTypes.ENUM_CONSTANT_DEF:
             case TokenTypes.LITERAL_NEW:
             case TokenTypes.LITERAL_SYNCHRONIZED:
-                visitNewEnumConstDefAnnotationSync(ast);
+            case TokenTypes.LAMBDA:
+                visitTokenWithOptionalParentheses(ast);
+                break;
+            case TokenTypes.RESOURCE_SPECIFICATION:
+                visitResourceSpecification(ast);
                 break;
             default:
                 processLeft(ast.findFirstToken(TokenTypes.LPAREN));
@@ -140,16 +147,39 @@ public class ParenPadCheck extends AbstractParenPadCheck {
     }
 
     /**
-     * Checks parens in {@link TokenTypes#ENUM_CONSTANT_DEF}, {@link TokenTypes#ANNOTATION}
-     * {@link TokenTypes#LITERAL_SYNCHRONIZED} and {@link TokenTypes#LITERAL_NEW}.
+     * Checks parens in token which may not contain parens, e.g.
+     * {@link TokenTypes#ENUM_CONSTANT_DEF}, {@link TokenTypes#ANNOTATION}
+     * {@link TokenTypes#LITERAL_SYNCHRONIZED}, {@link TokenTypes#LITERAL_NEW} and
+     * {@link TokenTypes#LAMBDA}.
      * @param ast the token to check.
      */
-    private void visitNewEnumConstDefAnnotationSync(DetailAST ast) {
+    private void visitTokenWithOptionalParentheses(DetailAST ast) {
         final DetailAST parenAst = ast.findFirstToken(TokenTypes.LPAREN);
         if (parenAst != null) {
             processLeft(parenAst);
             processRight(ast.findFirstToken(TokenTypes.RPAREN));
         }
+    }
+
+    /**
+     * Checks parens in {@link TokenTypes#RESOURCE_SPECIFICATION}.
+     * @param ast the token to check.
+     */
+    private void visitResourceSpecification(DetailAST ast) {
+        processLeft(ast.findFirstToken(TokenTypes.LPAREN));
+        final DetailAST rparen = ast.findFirstToken(TokenTypes.RPAREN);
+        if (!hasPrecedingSemiColon(rparen)) {
+            processRight(rparen);
+        }
+    }
+
+    /**
+     * Checks that a token is preceded by a semi-colon.
+     * @param ast the token to check
+     * @return whether a token is preceded by a semi-colon
+     */
+    private static boolean hasPrecedingSemiColon(DetailAST ast) {
+        return ast.getPreviousSibling().getType() == TokenTypes.SEMI;
     }
 
     /**
@@ -178,7 +208,6 @@ public class ParenPadCheck extends AbstractParenPadCheck {
             while (childAst != null) {
                 if (childAst.getType() == TokenTypes.LPAREN) {
                     processLeft(childAst);
-                    processExpression(childAst);
                 }
                 else if (childAst.getType() == TokenTypes.RPAREN && !isInTypecast(childAst)) {
                     processRight(childAst);
@@ -207,6 +236,7 @@ public class ParenPadCheck extends AbstractParenPadCheck {
     }
 
     /**
+     * Returns array of acceptable tokens.
      * @return acceptableTokens.
      */
     private static int[] makeAcceptableTokens() {
@@ -214,6 +244,7 @@ public class ParenPadCheck extends AbstractParenPadCheck {
             TokenTypes.ANNOTATION_FIELD_DEF,
             TokenTypes.CTOR_CALL,
             TokenTypes.CTOR_DEF,
+            TokenTypes.DOT,
             TokenTypes.ENUM_CONSTANT_DEF,
             TokenTypes.EXPR,
             TokenTypes.LITERAL_CATCH,
@@ -229,6 +260,7 @@ public class ParenPadCheck extends AbstractParenPadCheck {
             TokenTypes.QUESTION,
             TokenTypes.RESOURCE_SPECIFICATION,
             TokenTypes.SUPER_CTOR_CALL,
+            TokenTypes.LAMBDA,
         };
     }
 
@@ -283,4 +315,5 @@ public class ParenPadCheck extends AbstractParenPadCheck {
         }
         return result;
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.sizes;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
@@ -55,6 +56,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * </pre>
  * @author Lars Kühne
  */
+@StatelessCheck
 public class MethodLengthCheck extends AbstractCheck {
 
     /**
@@ -113,7 +115,10 @@ public class MethodLengthCheck extends AbstractCheck {
         if (!countEmpty) {
             final FileContents contents = getFileContents();
             final int lastLine = closingBrace.getLineNo();
-            for (int i = openingBrace.getLineNo() - 1; i < lastLine; i++) {
+            // lastLine - 1 is actual last line index. Last line is line with curly brace,
+            // which is always not empty. So, we make it lastLine - 2 to cover last line that
+            // actually may be empty.
+            for (int i = openingBrace.getLineNo() - 1; i <= lastLine - 2; i++) {
                 if (contents.lineIsBlank(i) || contents.lineIsComment(i)) {
                     length--;
                 }
@@ -123,6 +128,7 @@ public class MethodLengthCheck extends AbstractCheck {
     }
 
     /**
+     * Sets maximum length of a method.
      * @param length the maximum length of a method.
      */
     public void setMax(int length) {
@@ -130,10 +136,12 @@ public class MethodLengthCheck extends AbstractCheck {
     }
 
     /**
+     * Sets countEmpty.
      * @param countEmpty whether to count empty and single line comments
      *     of the form //.
      */
     public void setCountEmpty(boolean countEmpty) {
         this.countEmpty = countEmpty;
     }
+
 }

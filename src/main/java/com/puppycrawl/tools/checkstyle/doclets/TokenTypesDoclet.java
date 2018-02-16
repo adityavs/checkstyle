@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,11 +25,16 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.FieldDoc;
 import com.sun.javadoc.RootDoc;
+import com.sun.javadoc.Tag;
 
 /**
  * Doclet which is used to write property file with short descriptions
@@ -41,6 +46,7 @@ import com.sun.javadoc.RootDoc;
  * @author o_sukhodolsky
  */
 public final class TokenTypesDoclet {
+
     /** Command line option to specify file to write output of the doclet. */
     private static final String DEST_FILE_OPT = "-destfile";
 
@@ -67,13 +73,34 @@ public final class TokenTypesDoclet {
             final FieldDoc[] fields = classes[0].fields();
             for (final FieldDoc field : fields) {
                 if (field.isStatic() && field.isPublic() && field.isFinal()
-                    && "int".equals(field.type().qualifiedTypeName())) {
-                    if (field.firstSentenceTags().length != 1) {
-                        final String message = "Should be only one tag.";
+                        && "int".equals(field.type().qualifiedTypeName())) {
+                    final String firstSentence;
+
+                    if (field.firstSentenceTags().length == 1) {
+                        firstSentence = field.firstSentenceTags()[0].text();
+                    }
+                    else if (Arrays.stream(field.firstSentenceTags())
+                            .filter(tag -> !"Text".equals(tag.name())).count() == 1) {
+                        // We have to filter "Text" tags because of jdk parsing bug
+                        // till JDK-8186270
+                        firstSentence = field.firstSentenceTags()[0].text()
+                                + "<code>"
+                                + field.firstSentenceTags()[1].text()
+                                + "</code>"
+                                + field.firstSentenceTags()[2].text();
+                    }
+                    else {
+                        final List<Tag> tags = Arrays.asList(field.firstSentenceTags());
+                        final String joinedTags = tags
+                            .stream()
+                            .map(Tag::toString)
+                            .collect(Collectors.joining("\", \"", "[\"", "\"]"));
+                        final String message = String.format(Locale.ROOT,
+                                "Should be only one tag for %s. Tags %s.",
+                                field.toString(), joinedTags);
                         throw new IllegalArgumentException(message);
                     }
-                    writer.println(field.name() + "="
-                            + field.firstSentenceTags()[0].text());
+                    writer.println(field.name() + "=" + firstSentence);
                 }
             }
         }
@@ -90,10 +117,11 @@ public final class TokenTypesDoclet {
      * @return option length (how many parts are in option).
      */
     public static int optionLength(String option) {
+        int length = 0;
         if (DEST_FILE_OPT.equals(option)) {
-            return 2;
+            length = 2;
         }
-        return 0;
+        return length;
     }
 
     /**
@@ -104,21 +132,21 @@ public final class TokenTypesDoclet {
      */
     public static boolean checkOptions(String[][] options, DocErrorReporter reporter) {
         boolean foundDestFileOption = false;
+        boolean onlyOneDestFileOption = true;
         for (final String[] opt : options) {
             if (DEST_FILE_OPT.equals(opt[0])) {
                 if (foundDestFileOption) {
                     reporter.printError("Only one -destfile option allowed.");
-                    return false;
+                    onlyOneDestFileOption = false;
+                    break;
                 }
                 foundDestFileOption = true;
             }
         }
         if (!foundDestFileOption) {
-            final String message =
-                "Usage: javadoc -destfile file -doclet TokenTypesDoclet ...";
-            reporter.printError(message);
+            reporter.printError("Usage: javadoc -destfile file -doclet TokenTypesDoclet ...");
         }
-        return foundDestFileOption;
+        return onlyOneDestFileOption && foundDestFileOption;
     }
 
     /**
@@ -135,4 +163,5 @@ public final class TokenTypesDoclet {
         }
         return fileName;
     }
+
 }

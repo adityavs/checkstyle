@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -55,6 +55,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  */
 public class ConstantNameCheck
     extends AbstractAccessControlNameCheck {
+
     /** Creates a new {@code ConstantNameCheck} instance. */
     public ConstantNameCheck() {
         super("^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$");
@@ -62,17 +63,17 @@ public class ConstantNameCheck
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.VARIABLE_DEF};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.VARIABLE_DEF};
     }
 
     @Override
@@ -81,8 +82,8 @@ public class ConstantNameCheck
 
         final DetailAST modifiersAST =
             ast.findFirstToken(TokenTypes.MODIFIERS);
-        final boolean isStatic = modifiersAST.branchContains(TokenTypes.LITERAL_STATIC);
-        final boolean isFinal = modifiersAST.branchContains(TokenTypes.FINAL);
+        final boolean isStatic = modifiersAST.findFirstToken(TokenTypes.LITERAL_STATIC) != null;
+        final boolean isFinal = modifiersAST.findFirstToken(TokenTypes.FINAL) != null;
 
         if (isStatic && isFinal && shouldCheckInScope(modifiersAST)
                 || ScopeUtils.isInAnnotationBlock(ast)
@@ -99,4 +100,5 @@ public class ConstantNameCheck
 
         return returnValue;
     }
+
 }

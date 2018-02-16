@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,35 +22,33 @@ package com.puppycrawl.tools.checkstyle.checks.naming;
 import static com.puppycrawl.tools.checkstyle.checks.naming.AbstractNameCheck.MSG_INVALID_PATTERN;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
 public class MemberNameCheckTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "naming" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/naming/membername";
     }
 
     @Test
     public void testGetRequiredTokens() {
         final MemberNameCheck checkObj = new MemberNameCheck();
         final int[] expected = {TokenTypes.VARIABLE_DEF};
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testSpecified()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
         checkConfig.addAttribute("format", "^m[A-Z][a-zA-Z0-9]*$");
 
         final String pattern = "^m[A-Z][a-zA-Z0-9]*$";
@@ -59,27 +57,27 @@ public class MemberNameCheckTest
             "35:17: " + getCheckMessage(MSG_INVALID_PATTERN, "badMember", pattern),
             "224:17: " + getCheckMessage(MSG_INVALID_PATTERN, "someMember", pattern),
         };
-        verify(checkConfig, getPath("InputSimple.java"), expected);
+        verify(checkConfig, getPath("InputMemberNameSimple.java"), expected);
     }
 
     @Test
     public void testInnerClass()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
 
         final String pattern = "^[a-z][a-zA-Z0-9]*$";
 
         final String[] expected = {
             "56:25: " + getCheckMessage(MSG_INVALID_PATTERN, "ABC", pattern),
         };
-        verify(checkConfig, getPath("InputInner.java"), expected);
+        verify(checkConfig, getPath("InputMemberNameInner.java"), expected);
     }
 
     @Test
     public void testDefaults() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
 
         final String pattern = "^[a-z][a-zA-Z0-9]*$";
 
@@ -95,7 +93,7 @@ public class MemberNameCheckTest
     @Test
     public void testUnderlined() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
         checkConfig.addAttribute("format", "^_[a-z]*$");
 
         final String pattern = "^_[a-z]*$";
@@ -112,7 +110,7 @@ public class MemberNameCheckTest
     @Test
     public void testPublicOnly() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
         checkConfig.addAttribute("format", "^_[a-z]*$");
         checkConfig.addAttribute("applyToProtected", "false");
         checkConfig.addAttribute("applyToPackage", "false");
@@ -129,7 +127,7 @@ public class MemberNameCheckTest
     @Test
     public void testProtectedOnly() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
         checkConfig.addAttribute("format", "^_[a-z]*$");
         checkConfig.addAttribute("applyToPublic", "false");
         checkConfig.addAttribute("applyToPackage", "false");
@@ -146,7 +144,7 @@ public class MemberNameCheckTest
     @Test
     public void testPackageOnly() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
         checkConfig.addAttribute("format", "^_[a-z]*$");
         checkConfig.addAttribute("applyToPublic", "false");
         checkConfig.addAttribute("applyToProtected", "false");
@@ -163,7 +161,7 @@ public class MemberNameCheckTest
     @Test
     public void testPrivateOnly() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
         checkConfig.addAttribute("format", "^_[a-z]*$");
         checkConfig.addAttribute("applyToPublic", "false");
         checkConfig.addAttribute("applyToProtected", "false");
@@ -180,7 +178,7 @@ public class MemberNameCheckTest
     @Test
     public void testNotPrivate() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
         checkConfig.addAttribute("applyToPrivate", "false");
 
         final String pattern = "^[a-z][a-zA-Z0-9]*$";
@@ -196,7 +194,7 @@ public class MemberNameCheckTest
     @Test
     public void memberNameExtended() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(MemberNameCheck.class);
+            createModuleConfig(MemberNameCheck.class);
         checkConfig.addAttribute("format", "^[a-z][a-z0-9][a-zA-Z0-9]*$");
 
         final String pattern = "^[a-z][a-z0-9][a-zA-Z0-9]*$";
@@ -245,6 +243,7 @@ public class MemberNameCheckTest
         final int[] expected = {
             TokenTypes.VARIABLE_DEF,
         };
-        assertArrayEquals(expected, actual);
+        assertArrayEquals("Default acceptable tokens are invalid", expected, actual);
     }
+
 }

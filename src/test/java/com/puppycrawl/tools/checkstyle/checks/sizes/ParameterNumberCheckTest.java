@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,28 +22,27 @@ package com.puppycrawl.tools.checkstyle.checks.sizes;
 import static com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck.MSG_KEY;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class ParameterNumberCheckTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "sizes" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/sizes/parameternumber";
     }
 
     @Test
     public void testGetRequiredTokens() {
         final ParameterNumberCheck checkObj = new ParameterNumberCheck();
-        assertArrayEquals(CommonUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
+        assertArrayEquals(
+            "ParameterNumberCheck#getRequiredTokens should return empty array by default",
+            CommonUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
     }
 
     @Test
@@ -56,50 +55,60 @@ public class ParameterNumberCheckTest
             TokenTypes.CTOR_DEF,
         };
 
-        assertArrayEquals(expected, actual);
+        assertArrayEquals("Default acceptable tokens are invalid", expected, actual);
     }
 
     @Test
     public void testDefault()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ParameterNumberCheck.class);
+            createModuleConfig(ParameterNumberCheck.class);
         final String[] expected = {
             "194:10: " + getCheckMessage(MSG_KEY, 7, 9),
         };
-        verify(checkConfig, getPath("InputSimple.java"), expected);
+        verify(checkConfig, getPath("InputParameterNumberSimple.java"), expected);
     }
 
     @Test
     public void testNum()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ParameterNumberCheck.class);
+            createModuleConfig(ParameterNumberCheck.class);
         checkConfig.addAttribute("max", "2");
         final String[] expected = {
             "71:9: " + getCheckMessage(MSG_KEY, 2, 3),
             "194:10: " + getCheckMessage(MSG_KEY, 2, 9),
         };
-        verify(checkConfig, getPath("InputSimple.java"), expected);
+        verify(checkConfig, getPath("InputParameterNumberSimple.java"), expected);
+    }
+
+    @Test
+    public void testMaxParam()
+            throws Exception {
+        final DefaultConfiguration checkConfig =
+                createModuleConfig(ParameterNumberCheck.class);
+        checkConfig.addAttribute("max", "9");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputParameterNumberSimple.java"), expected);
     }
 
     @Test
     public void shouldLogActualParameterNumber()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ParameterNumberCheck.class);
+            createModuleConfig(ParameterNumberCheck.class);
         checkConfig.addMessage("maxParam", "{0},{1}");
         final String[] expected = {
             "194:10: 7,9",
         };
-        verify(checkConfig, getPath("InputSimple.java"), expected);
+        verify(checkConfig, getPath("InputParameterNumberSimple.java"), expected);
     }
 
     @Test
     public void shouldIgnoreMethodsWithOverrideAnnotation()
             throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(ParameterNumberCheck.class);
+                createModuleConfig(ParameterNumberCheck.class);
         checkConfig.addAttribute("ignoreOverriddenMethods", "true");
         final String[] expected = {
             "6:10: " + getCheckMessage(MSG_KEY, 7, 8),
@@ -107,4 +116,5 @@ public class ParameterNumberCheckTest
         };
         verify(checkConfig, getPath("InputParameterNumber.java"), expected);
     }
+
 }

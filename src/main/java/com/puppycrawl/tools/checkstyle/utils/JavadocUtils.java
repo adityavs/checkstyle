@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,7 +23,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.collect.ImmutableMap;
@@ -31,10 +30,14 @@ import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.DetailNode;
 import com.puppycrawl.tools.checkstyle.api.JavadocTokenTypes;
 import com.puppycrawl.tools.checkstyle.api.TextBlock;
+import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.checks.javadoc.InvalidJavadocTag;
 import com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocTag;
 import com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocTagInfo;
 import com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocTags;
+import com.puppycrawl.tools.checkstyle.checks.javadoc.utils.BlockTagUtils;
+import com.puppycrawl.tools.checkstyle.checks.javadoc.utils.InlineTagUtils;
+import com.puppycrawl.tools.checkstyle.checks.javadoc.utils.TagInfo;
 
 /**
  * Contains utility methods for working with Javadoc.
@@ -46,12 +49,14 @@ public final class JavadocUtils {
      * The type of Javadoc tag we want returned.
      */
     public enum JavadocTagType {
+
         /** Block type. */
         BLOCK,
         /** Inline type. */
         INLINE,
         /** All validTags. */
         ALL
+
     }
 
     /** Maps from a token name to value. */
@@ -62,22 +67,6 @@ public final class JavadocUtils {
     /** Exception message for unknown JavaDoc token id. */
     private static final String UNKNOWN_JAVADOC_TOKEN_ID_EXCEPTION_MESSAGE = "Unknown javadoc"
             + " token id. Given id: ";
-
-    /** Comment pattern. */
-    private static final Pattern COMMENT_PATTERN = Pattern.compile(
-        "^\\s*(?:/\\*{2,}|\\*+)\\s*(.*)");
-
-    /** Block tag pattern for a first line. */
-    private static final Pattern BLOCK_TAG_PATTERN_FIRST_LINE = Pattern.compile(
-        "/\\*{2,}\\s*@(\\p{Alpha}+)\\s");
-
-    /** Block tag pattern. */
-    private static final Pattern BLOCK_TAG_PATTERN = Pattern.compile(
-        "^\\s*\\**\\s*@(\\p{Alpha}+)\\s");
-
-    /** Inline tag pattern. */
-    private static final Pattern INLINE_TAG_PATTERN = Pattern.compile(
-        ".*?\\{@(\\p{Alpha}+)\\s+(.*?)\\}");
 
     /** Newline pattern. */
     private static final Pattern NEWLINE = Pattern.compile("\n");
@@ -98,7 +87,6 @@ public final class JavadocUtils {
         String[] tempTokenValueToName = CommonUtils.EMPTY_STRING_ARRAY;
 
         for (final Field field : fields) {
-
             // Only process public int fields.
             if (!Modifier.isPublic(field.getModifiers())
                     || field.getType() != Integer.TYPE) {
@@ -140,100 +128,42 @@ public final class JavadocUtils {
      */
     public static JavadocTags getJavadocTags(TextBlock textBlock,
             JavadocTagType tagType) {
-        final String[] text = textBlock.getText();
-        final List<JavadocTag> tags = new ArrayList<>();
+        final boolean getBlockTags = tagType == JavadocTagType.ALL
+                                         || tagType == JavadocTagType.BLOCK;
+        final boolean getInlineTags = tagType == JavadocTagType.ALL
+                                          || tagType == JavadocTagType.INLINE;
+
+        final List<TagInfo> tags = new ArrayList<>();
+
+        if (getBlockTags) {
+            tags.addAll(BlockTagUtils.extractBlockTags(textBlock.getText()));
+        }
+
+        if (getInlineTags) {
+            tags.addAll(InlineTagUtils.extractInlineTags(textBlock.getText()));
+        }
+
+        final List<JavadocTag> validTags = new ArrayList<>();
         final List<InvalidJavadocTag> invalidTags = new ArrayList<>();
-        for (int i = 0; i < text.length; i++) {
-            final String textValue = text[i];
-            final Matcher blockTagMatcher = getBlockTagPattern(i).matcher(textValue);
-            if ((tagType == JavadocTagType.ALL || tagType == JavadocTagType.BLOCK)
-                    && blockTagMatcher.find()) {
-                final String tagName = blockTagMatcher.group(1);
-                String content = textValue.substring(blockTagMatcher.end(1));
-                if (content.endsWith("*/")) {
-                    content = content.substring(0, content.length() - 2);
-                }
-                final int line = textBlock.getStartLineNo() + i;
-                int col = blockTagMatcher.start(1) - 1;
-                if (i == 0) {
-                    col += textBlock.getStartColNo();
-                }
-                if (JavadocTagInfo.isValidName(tagName)) {
-                    tags.add(
-                            new JavadocTag(line, col, tagName, content.trim()));
-                }
-                else {
-                    invalidTags.add(new InvalidJavadocTag(line, col, tagName));
-                }
-            }
-            // No block tag, so look for inline validTags
-            else if (tagType == JavadocTagType.ALL || tagType == JavadocTagType.INLINE) {
-                lookForInlineTags(textBlock, i, tags, invalidTags);
-            }
-        }
-        return new JavadocTags(tags, invalidTags);
-    }
 
-    /**
-     * Get a block tag pattern depending on a line number of a javadoc.
-     * @param lineNumber the line number.
-     * @return a block tag pattern.
-     */
-    private static Pattern getBlockTagPattern(int lineNumber) {
-        final Pattern blockTagPattern;
-        if (lineNumber == 0) {
-            blockTagPattern = BLOCK_TAG_PATTERN_FIRST_LINE;
-        }
-        else {
-            blockTagPattern = BLOCK_TAG_PATTERN;
-        }
-        return blockTagPattern;
-    }
+        for (TagInfo tag : tags) {
+            final int col = tag.getPosition().getColumn();
 
-    /**
-     * Looks for inline tags in comment and adds them to the proper tags collection.
-     * @param comment comment text block
-     * @param lineNumber line number in the comment
-     * @param validTags collection of valid tags
-     * @param invalidTags collection of invalid tags
-     */
-    private static void lookForInlineTags(TextBlock comment, int lineNumber,
-            final List<JavadocTag> validTags, final List<InvalidJavadocTag> invalidTags) {
-        final String text = comment.getText()[lineNumber];
-        // Match Javadoc text after comment characters
-        final Matcher commentMatcher = COMMENT_PATTERN.matcher(text);
-        final String commentContents;
+            // Add the starting line of the comment to the line number to get the actual line number
+            // in the source.
+            // Lines are one-indexed, so need a off-by-one correction.
+            final int line = textBlock.getStartLineNo() + tag.getPosition().getLine() - 1;
 
-        // offset including comment characters
-        final int commentOffset;
-
-        if (commentMatcher.find()) {
-            commentContents = commentMatcher.group(1);
-            commentOffset = commentMatcher.start(1) - 1;
-        }
-        else {
-            // No leading asterisks, still valid
-            commentContents = text;
-            commentOffset = 0;
-        }
-        final Matcher tagMatcher = INLINE_TAG_PATTERN.matcher(commentContents);
-        while (tagMatcher.find()) {
-            final String tagName = tagMatcher.group(1);
-            final String tagValue = tagMatcher.group(2).trim();
-            final int line = comment.getStartLineNo() + lineNumber;
-            int col = commentOffset + tagMatcher.start(1) - 1;
-            if (lineNumber == 0) {
-                col += comment.getStartColNo();
-            }
-            if (JavadocTagInfo.isValidName(tagName)) {
-                validTags.add(new JavadocTag(line, col, tagName,
-                        tagValue));
+            if (JavadocTagInfo.isValidName(tag.getName())) {
+                validTags.add(
+                    new JavadocTag(line, col, tag.getName(), tag.getValue()));
             }
             else {
-                invalidTags.add(new InvalidJavadocTag(line, col,
-                        tagName));
+                invalidTags.add(new InvalidJavadocTag(line, col, tag.getName()));
             }
         }
+
+        return new JavadocTags(validTags, invalidTags);
     }
 
     /**
@@ -247,8 +177,8 @@ public final class JavadocUtils {
         boolean result = false;
 
         if (!commentContent.isEmpty()) {
-            final char docCommentIdentificator = commentContent.charAt(0);
-            result = docCommentIdentificator == '*';
+            final char docCommentIdentifier = commentContent.charAt(0);
+            result = docCommentIdentifier == '*';
         }
 
         return result;
@@ -263,7 +193,7 @@ public final class JavadocUtils {
      */
     public static boolean isJavadocComment(DetailAST blockCommentBegin) {
         final String commentContent = getBlockCommentContent(blockCommentBegin);
-        return isJavadocComment(commentContent);
+        return isJavadocComment(commentContent) && isCorrectJavadocPosition(blockCommentBegin);
     }
 
     /**
@@ -332,13 +262,9 @@ public final class JavadocUtils {
      * @return true if node contains any node of type type among children on any deep level.
      */
     public static boolean containsInBranch(DetailNode node, int type) {
+        boolean result = true;
         DetailNode curNode = node;
-        while (true) {
-
-            if (type == curNode.getType()) {
-                return true;
-            }
-
+        while (type != curNode.getType()) {
             DetailNode toVisit = getFirstChild(curNode);
             while (curNode != null && toVisit == null) {
                 toVisit = getNextSibling(curNode);
@@ -348,13 +274,13 @@ public final class JavadocUtils {
             }
 
             if (curNode == toVisit) {
+                result = false;
                 break;
             }
 
             curNode = toVisit;
         }
-
-        return false;
+        return result;
     }
 
     /**
@@ -364,15 +290,16 @@ public final class JavadocUtils {
      * @return next sibling.
      */
     public static DetailNode getNextSibling(DetailNode node) {
+        DetailNode nextSibling = null;
         final DetailNode parent = node.getParent();
         if (parent != null) {
             final int nextSiblingIndex = node.getIndex() + 1;
             final DetailNode[] children = parent.getChildren();
             if (nextSiblingIndex <= children.length - 1) {
-                return children[nextSiblingIndex];
+                nextSibling = children[nextSiblingIndex];
             }
         }
-        return null;
+        return nextSibling;
     }
 
     /**
@@ -396,13 +323,14 @@ public final class JavadocUtils {
      * @return previous sibling
      */
     public static DetailNode getPreviousSibling(DetailNode node) {
-        final DetailNode parent = node.getParent();
+        DetailNode previousSibling = null;
         final int previousSiblingIndex = node.getIndex() - 1;
-        final DetailNode[] children = parent.getChildren();
         if (previousSiblingIndex >= 0) {
-            return children[previousSiblingIndex];
+            final DetailNode parent = node.getParent();
+            final DetailNode[] children = parent.getChildren();
+            previousSibling = children[previousSiblingIndex];
         }
-        return null;
+        return previousSibling;
     }
 
     /**
@@ -412,15 +340,18 @@ public final class JavadocUtils {
      * @return a token name
      */
     public static String getTokenName(int id) {
+        final String name;
         if (id == JavadocTokenTypes.EOF) {
-            return "EOF";
+            name = "EOF";
         }
-        if (id > TOKEN_VALUE_TO_NAME.length - 1) {
+        else if (id > TOKEN_VALUE_TO_NAME.length - 1) {
             throw new IllegalArgumentException(UNKNOWN_JAVADOC_TOKEN_ID_EXCEPTION_MESSAGE + id);
         }
-        final String name = TOKEN_VALUE_TO_NAME[id];
-        if (name == null) {
-            throw new IllegalArgumentException(UNKNOWN_JAVADOC_TOKEN_ID_EXCEPTION_MESSAGE + id);
+        else {
+            name = TOKEN_VALUE_TO_NAME[id];
+            if (name == null) {
+                throw new IllegalArgumentException(UNKNOWN_JAVADOC_TOKEN_ID_EXCEPTION_MESSAGE + id);
+            }
         }
         return name;
     }
@@ -458,13 +389,53 @@ public final class JavadocUtils {
     }
 
     /**
-     * Replace all control chars with excaped symbols.
+     * Replace all control chars with escaped symbols.
      * @param text the String to process.
-     * @return the processed String with all control chars excaped.
+     * @return the processed String with all control chars escaped.
      */
-    public static String excapeAllControlChars(String text) {
+    public static String escapeAllControlChars(String text) {
         final String textWithoutNewlines = NEWLINE.matcher(text).replaceAll("\\\\n");
         final String textWithoutReturns = RETURN.matcher(textWithoutNewlines).replaceAll("\\\\r");
         return TAB.matcher(textWithoutReturns).replaceAll("\\\\t");
     }
+
+    /**
+     * Checks Javadoc comment it's in right place.
+     * <p>From Javadoc util documentation:
+     * "Placement of comments - Documentation comments are recognized only when placed
+     * immediately before class, interface, constructor, method, field or annotation field
+     * declarations -- see the class example, method example, and field example.
+     * Documentation comments placed in the body of a method are ignored."</p>
+     * <p>If there are many documentation comments per declaration statement,
+     * only the last one will be recognized.</p>
+     *
+     * @param blockComment Block comment AST
+     * @return true if Javadoc is in right place
+     * @see <a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/javadoc.html">
+     *     Javadoc util documentation</a>
+     */
+    private static boolean isCorrectJavadocPosition(DetailAST blockComment) {
+        // We must be sure that after this one there are no other documentation comments.
+        DetailAST sibling = blockComment.getNextSibling();
+        while (sibling != null) {
+            if (sibling.getType() == TokenTypes.BLOCK_COMMENT_BEGIN) {
+                if (isJavadocComment(getBlockCommentContent(sibling))) {
+                    // Found another javadoc comment, so this one should be ignored.
+                    break;
+                }
+                sibling = sibling.getNextSibling();
+            }
+            else if (sibling.getType() == TokenTypes.SINGLE_LINE_COMMENT) {
+                sibling = sibling.getNextSibling();
+            }
+            else {
+                // Annotation, declaration or modifier is here. Do not check further.
+                sibling = null;
+            }
+        }
+        return sibling == null
+            && (BlockCommentPosition.isOnType(blockComment)
+                || BlockCommentPosition.isOnMember(blockComment));
+    }
+
 }

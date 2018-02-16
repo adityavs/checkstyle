@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,27 +24,29 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Test;
 
 import antlr.CommonHiddenStreamToken;
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.google.common.collect.ImmutableMap;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-public class MutableExceptionCheckTest extends BaseCheckTestSupport {
+public class MutableExceptionCheckTest extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "design" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/design/mutableexception";
     }
 
     @Test
     public void testClassExtendsGenericClass() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(MutableExceptionCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(MutableExceptionCheck.class);
 
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
@@ -54,7 +56,7 @@ public class MutableExceptionCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testDefault() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(MutableExceptionCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(MutableExceptionCheck.class);
 
         final String[] expected = {
             "6:9: " + getCheckMessage(MSG_KEY, "errorCode"),
@@ -66,8 +68,28 @@ public class MutableExceptionCheckTest extends BaseCheckTestSupport {
     }
 
     @Test
+    public void testMultipleInputs() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(MutableExceptionCheck.class);
+        final String filePath1 = getPath("InputMutableException.java");
+        final String filePath2 = getPath("InputMutableExceptionMultipleInputs.java");
+
+        final List<String> expected1 = Arrays.asList(
+            "6:9: " + getCheckMessage(MSG_KEY, "errorCode"),
+            "23:9: " + getCheckMessage(MSG_KEY, "errorCode"),
+            "46:9: " + getCheckMessage(MSG_KEY, "errorCode"));
+        final List<String> expected2 = Arrays.asList(
+            "6:9: " + getCheckMessage(MSG_KEY, "errorCode"),
+            "10:9: " + getCheckMessage(MSG_KEY, "errorCode"));
+
+        final File[] inputs = {new File(filePath1), new File(filePath2)};
+
+        verify(createChecker(checkConfig), inputs,
+                ImmutableMap.of(filePath1, expected1, filePath2, expected2));
+    }
+
+    @Test
     public void testFormat() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(MutableExceptionCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(MutableExceptionCheck.class);
         checkConfig.addAttribute("format", "^.*Failure$");
         checkConfig.addAttribute("extendedClassNameFormat", "^.*ThreadDeath$");
         final String[] expected = {
@@ -81,14 +103,16 @@ public class MutableExceptionCheckTest extends BaseCheckTestSupport {
     public void testGetAcceptableTokens() {
         final MutableExceptionCheck obj = new MutableExceptionCheck();
         final int[] expected = {TokenTypes.CLASS_DEF, TokenTypes.VARIABLE_DEF};
-        assertArrayEquals(expected, obj.getAcceptableTokens());
+        assertArrayEquals("Default acceptable tokens are invalid",
+            expected, obj.getAcceptableTokens());
     }
 
     @Test
     public void testGetRequiredTokens() {
         final MutableExceptionCheck obj = new MutableExceptionCheck();
         final int[] expected = {TokenTypes.CLASS_DEF, TokenTypes.VARIABLE_DEF};
-        assertArrayEquals(expected, obj.getRequiredTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, obj.getRequiredTokens());
     }
 
     @Test
@@ -104,4 +128,5 @@ public class MutableExceptionCheckTest extends BaseCheckTestSupport {
             //expected
         }
     }
+
 }

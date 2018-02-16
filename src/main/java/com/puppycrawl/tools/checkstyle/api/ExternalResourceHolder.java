@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,7 @@ import com.puppycrawl.tools.checkstyle.Checker;
  *
  * @author Andrei Selkin
  */
+@FunctionalInterface
 public interface ExternalResourceHolder {
 
     /**
@@ -40,8 +41,8 @@ public interface ExternalResourceHolder {
      * ATTENTION!
      * If 'getExternalResourceLocations()' return null, there will be
      * {@link NullPointerException} in {@link Checker}.
-     * Such behaviour will signal that your module (check or filter) is designed incorrectrly.
-     * It make sence to return an empty set from 'getExternalResourceLocations()'
+     * Such behaviour will signal that your module (check or filter) is designed incorrectly.
+     * It make sense to return an empty set from 'getExternalResourceLocations()'
      * only for composite modules like {@link com.puppycrawl.tools.checkstyle.TreeWalker}.
      * @return a set of external configuration resource locations which are used by the module.
      */

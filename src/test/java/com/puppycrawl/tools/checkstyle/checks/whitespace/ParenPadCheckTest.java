@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,29 +26,31 @@ import static com.puppycrawl.tools.checkstyle.checks.whitespace.AbstractParenPad
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.File;
-import java.io.IOException;
+import java.lang.reflect.Method;
 
 import org.junit.Test;
+import org.powermock.reflect.Whitebox;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
 
 public class ParenPadCheckTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "whitespace" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/whitespace/parenpad";
     }
 
     @Test
     public void testDefault()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ParenPadCheck.class);
+            createModuleConfig(ParenPadCheck.class);
         final String[] expected = {
             "58:12: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
             "58:36: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
@@ -60,14 +62,14 @@ public class ParenPadCheckTest
             "277:18: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
             "277:23: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
         };
-        verify(checkConfig, getPath("InputWhitespace.java"), expected);
+        verify(checkConfig, getPath("InputParenPadWhitespace.java"), expected);
     }
 
     @Test
     public void testSpace()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ParenPadCheck.class);
+            createModuleConfig(ParenPadCheck.class);
         checkConfig.addAttribute("option", PadOption.SPACE.toString());
         final String[] expected = {
             "29:20: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
@@ -103,15 +105,17 @@ public class ParenPadCheckTest
             "275:42: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
             "276:18: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
             "276:33: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+            "287:55: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "287:70: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
         };
-        verify(checkConfig, getPath("InputWhitespace.java"), expected);
+        verify(checkConfig, getPath("InputParenPadWhitespace.java"), expected);
     }
 
     @Test
     public void testDefaultForIterator()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ParenPadCheck.class);
+            createModuleConfig(ParenPadCheck.class);
         final String[] expected = {
             "17:34: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
             "20:35: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
@@ -121,14 +125,14 @@ public class ParenPadCheckTest
             "48:27: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
             "51:26: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
         };
-        verify(checkConfig, getPath("InputForWhitespace.java"), expected);
+        verify(checkConfig, getPath("InputParenPadForWhitespace.java"), expected);
     }
 
     @Test
     public void testSpaceEmptyForIterator()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ParenPadCheck.class);
+            createModuleConfig(ParenPadCheck.class);
         checkConfig.addAttribute("option", PadOption.SPACE.toString());
         final String[] expected = {
             "11:14: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
@@ -141,13 +145,13 @@ public class ParenPadCheckTest
             "27:14: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
             "32:14: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
         };
-        verify(checkConfig, getPath("InputForWhitespace.java"), expected);
+        verify(checkConfig, getPath("InputParenPadForWhitespace.java"), expected);
     }
 
     @Test
     public void test1322879() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ParenPadCheck.class);
+            createModuleConfig(ParenPadCheck.class);
         checkConfig.addAttribute("option", PadOption.SPACE.toString());
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputParenPadWithSpace.java"),
@@ -157,7 +161,7 @@ public class ParenPadCheckTest
     @Test
     public void testNospaceWithComplexInput() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ParenPadCheck.class);
+            createModuleConfig(ParenPadCheck.class);
         checkConfig.addAttribute("option", PadOption.NOSPACE.toString());
         final String[] expected = {
             "44:27: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
@@ -224,40 +228,262 @@ public class ParenPadCheckTest
             "126:22: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
             "130:19: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
             "130:19: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "139:10: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "139:20: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "145:33: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "145:46: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "153:34: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "154:48: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "155:36: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "155:46: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "159:26: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "159:35: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "160:13: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "160:29: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "160:48: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "160:50: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "163:32: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "163:35: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "163:48: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "163:60: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "166:39: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "167:25: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "167:50: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "173:38: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "174:48: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "175:21: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "175:48: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "185:17: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "185:35: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "186:20: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "186:38: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "190:30: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "190:44: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "191:13: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "191:38: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "192:23: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "192:39: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "200:81: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "200:83: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "201:21: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "202:23: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "203:21: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "203:24: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "206:14: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "206:22: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "206:32: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "207:18: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "207:46: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "210:37: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "210:74: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "210:80: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "210:82: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "211:37: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "212:49: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "212:51: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "212:53: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
         };
-        verify(checkConfig, getPath("InputParenPad.java"), expected);
+        verify(checkConfig, getPath("InputParenPadLeftRightAndNoSpace.java"), expected);
     }
 
     @Test
     public void testConfigureTokens() throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(ParenPadCheck.class);
+                createModuleConfig(ParenPadCheck.class);
         checkConfig.addAttribute("tokens", "METHOD_CALL");
         final String[] expected = {
             "90:38: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
-            "112:17: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
             "113:23: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
             "115:53: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
-            "115:55: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "145:33: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "145:46: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "153:34: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "154:48: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "155:36: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "155:46: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "163:32: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "163:35: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "163:48: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "163:60: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "201:21: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "202:23: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "203:21: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "203:24: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "206:32: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "210:37: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "210:74: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "210:80: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "210:82: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "211:37: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "212:49: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "212:51: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "212:53: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
         };
-        verify(checkConfig, getPath("InputParenPad.java"), expected);
+        verify(checkConfig, getPath("InputParenPadLeftRightAndNoSpace.java"), expected);
     }
 
     @Test
     public void testInvalidOption() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(ParenPadCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(ParenPadCheck.class);
         checkConfig.addAttribute("option", "invalid_option");
 
         try {
             final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-            verify(checkConfig, getPath("InputParenPad.java"), expected);
+            verify(checkConfig, getPath("InputParenPadLeftRightAndNoSpace.java"), expected);
             fail("exception expected");
         }
         catch (CheckstyleException ex) {
-            assertTrue(ex.getMessage().startsWith(
-                    "cannot initialize module com.puppycrawl.tools.checkstyle.TreeWalker - "
-                            + "Cannot set property 'option' to 'invalid_option' in module"));
+            final String messageStart = "cannot initialize module "
+                + "com.puppycrawl.tools.checkstyle.TreeWalker - Cannot set property 'option' to "
+                + "'invalid_option' in module";
+            assertTrue("Invalid exception message, should start with: " + messageStart,
+                ex.getMessage().startsWith(messageStart));
         }
     }
+
+    @Test
+    public void testLambdaAssignment() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(ParenPadCheck.class);
+        final String[] expected = {
+            "9:42: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "9:44: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "11:43: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "13:42: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "15:47: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "15:49: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "17:47: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "17:56: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "19:62: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "19:62: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "22:21: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "22:34: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+        };
+        verify(checkConfig, getPath("InputParenPadLambda.java"), expected);
+    }
+
+    @Test
+    public void testLambdaAssignmentWithSpace() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(ParenPadCheck.class);
+        checkConfig.addAttribute("option", PadOption.SPACE.toString());
+        final String[] expected = {
+            "9:42: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "9:43: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+            "11:42: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "13:44: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+            "15:48: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "15:49: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+            "17:48: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "17:56: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+            "22:21: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "22:33: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+        };
+        verify(checkConfig, getPath("InputParenPadLambdaWithSpace.java"), expected);
+    }
+
+    @Test
+    public void testLambdaCheckDisabled() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(ParenPadCheck.class);
+        checkConfig.addAttribute("tokens", "EXPR, METHOD_CALL, METHOD_DEF");
+        final String[] expected = {
+            "19:62: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "19:62: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "22:21: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "22:34: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+        };
+        verify(checkConfig, getPath("InputParenPadWithDisabledLambda.java"), expected);
+    }
+
+    @Test
+    public void testLambdaCheckDisabledWithSpace() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(ParenPadCheck.class);
+        checkConfig.addAttribute("option", PadOption.SPACE.toString());
+        checkConfig.addAttribute("tokens", "EXPR, METHOD_CALL, METHOD_DEF");
+        final String[] expected = {
+            "22:21: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "22:33: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+        };
+        verify(checkConfig, getPath("InputParenPadWithSpaceAndDisabledLambda.java"), expected);
+    }
+
+    @Test
+    public void testLambdaCheckOnly() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(ParenPadCheck.class);
+        checkConfig.addAttribute("tokens", "LAMBDA");
+        final String[] expected = {
+            "9:42: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "9:44: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "11:43: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "13:42: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "15:47: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "15:49: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "17:47: " + getCheckMessage(MSG_WS_FOLLOWED, "("),
+            "17:56: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+        };
+        verify(checkConfig, getPath("InputParenPadLambdaOnly.java"), expected);
+    }
+
+    @Test
+    public void testLambdaCheckOnlyWithSpace() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(ParenPadCheck.class);
+        checkConfig.addAttribute("option", PadOption.SPACE.toString());
+        checkConfig.addAttribute("tokens", "LAMBDA");
+        final String[] expected = {
+            "9:42: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "9:43: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+            "11:42: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "13:44: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+            "15:48: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "15:49: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+            "17:48: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "17:56: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+        };
+        verify(checkConfig, getPath("InputParenPadLambdaOnlyWithSpace.java"), expected);
+    }
+
+    @Test
+    public void testLambdaCheckOnlyWithSpace1() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(ParenPadCheck.class);
+        checkConfig.addAttribute("option", PadOption.SPACE.toString());
+        final String[] expected = {
+            "5:2: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+        };
+        verify(checkConfig, getPath("InputParenPadStartOfTheLine.java"), expected);
+    }
+
+    @Test
+    public void testTryWithResources() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(ParenPadCheck.class);
+        final String[] expected = {
+            "9:36: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+            "10:60: " + getCheckMessage(MSG_WS_PRECEDED, ")"),
+        };
+        verify(checkConfig, getPath("InputParenPadTryWithResources.java"), expected);
+    }
+
+    /**
+     * Pitest requires us to specify more concrete lower bound for condition for
+     * ParenPadCheck#isAcceptableToken as nodes of first several types like CTOR_DEF,
+     * METHOD_DEF will never reach this method. It is hard to recreate conditions for
+     * all tokens to go through this method. We do not want to change main code to have
+     * this set ok tokens more exact, because it will not be ease to understand.
+     * So we have to use reflection to be sure all
+     * acceptable tokens pass that check.
+     */
+    @Test
+    public void testIsAcceptableToken() throws Exception {
+        final ParenPadCheck check = new ParenPadCheck();
+        final Method method = Whitebox.getMethod(ParenPadCheck.class,
+            "isAcceptableToken", DetailAST.class);
+        final DetailAST ast = new DetailAST();
+        final String message = "Expected that all acceptable tokens will pass isAcceptableToken "
+            + "method, but some token don't: ";
+
+        for (int token : check.getAcceptableTokens()) {
+            ast.setType(token);
+            assertTrue(message + TokenUtils.getTokenName(token),
+                    (boolean) method.invoke(check, ast));
+        }
+    }
+
 }

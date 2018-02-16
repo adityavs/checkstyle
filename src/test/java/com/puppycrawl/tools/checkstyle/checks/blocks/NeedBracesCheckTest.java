@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,32 +21,23 @@ package com.puppycrawl.tools.checkstyle.checks.blocks;
 
 import static com.puppycrawl.tools.checkstyle.checks.blocks.NeedBracesCheck.MSG_KEY_NEED_BRACES;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-public class NeedBracesCheckTest extends BaseCheckTestSupport {
-    @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "blocks" + File.separator + filename);
-    }
+public class NeedBracesCheckTest extends AbstractModuleTestSupport {
 
     @Override
-    protected String getNonCompilablePath(String filename) throws IOException {
-        return super.getNonCompilablePath("checks" + File.separator
-                + "blocks" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/blocks/needbraces";
     }
 
     @Test
     public void testIt() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(NeedBracesCheck.class);
+            createModuleConfig(NeedBracesCheck.class);
         final String[] expected = {
             "29: " + getCheckMessage(MSG_KEY_NEED_BRACES, "do"),
             "41: " + getCheckMessage(MSG_KEY_NEED_BRACES, "while"),
@@ -66,13 +57,13 @@ public class NeedBracesCheckTest extends BaseCheckTestSupport {
             "99: " + getCheckMessage(MSG_KEY_NEED_BRACES, "if"),
             "100: " + getCheckMessage(MSG_KEY_NEED_BRACES, "if"),
         };
-        verify(checkConfig, getPath("InputBraces.java"), expected);
+        verify(checkConfig, getPath("InputNeedBraces.java"), expected);
     }
 
     @Test
     public void testSingleLineStatements() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(NeedBracesCheck.class);
+            createModuleConfig(NeedBracesCheck.class);
         checkConfig.addAttribute("allowSingleLineStatement", "true");
         final String[] expected = {
             "23: " + getCheckMessage(MSG_KEY_NEED_BRACES, "if"),
@@ -87,46 +78,56 @@ public class NeedBracesCheckTest extends BaseCheckTestSupport {
             "107: " + getCheckMessage(MSG_KEY_NEED_BRACES, "if"),
             "114: " + getCheckMessage(MSG_KEY_NEED_BRACES, "for"),
         };
-        verify(checkConfig, getPath("InputBracesSingleLineStatements.java"), expected);
+        verify(checkConfig, getPath("InputNeedBracesSingleLineStatements.java"), expected);
     }
 
     @Test
     public void testSingleLineLambda() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(NeedBracesCheck.class);
+            createModuleConfig(NeedBracesCheck.class);
         checkConfig.addAttribute("tokens", "LAMBDA");
         checkConfig.addAttribute("allowSingleLineStatement", "true");
         final String[] expected = {
             "7: " + getCheckMessage(MSG_KEY_NEED_BRACES, "->"),
         };
-        verify(checkConfig, getPath("InputSingleLineLambda.java"), expected);
+        verify(checkConfig, getPath("InputNeedBracesSingleLineLambda.java"), expected);
     }
 
     @Test
     public void testSingleLineCaseDefault() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(NeedBracesCheck.class);
+            createModuleConfig(NeedBracesCheck.class);
         checkConfig.addAttribute("tokens", "LITERAL_CASE, LITERAL_DEFAULT");
         checkConfig.addAttribute("allowSingleLineStatement", "true");
         final String[] expected = {
             "72: " + getCheckMessage(MSG_KEY_NEED_BRACES, "case"),
             "75: " + getCheckMessage(MSG_KEY_NEED_BRACES, "case"),
         };
-        verify(checkConfig, getPath("InputBracesSingleLineStatements.java"), expected);
+        verify(checkConfig, getPath("InputNeedBracesSingleLineStatements.java"), expected);
+    }
+
+    @Test
+    public void testSingleLineCaseDefault2() throws Exception {
+        final DefaultConfiguration checkConfig =
+                createModuleConfig(NeedBracesCheck.class);
+        checkConfig.addAttribute("tokens", "LITERAL_CASE, LITERAL_DEFAULT");
+        checkConfig.addAttribute("allowSingleLineStatement", "true");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputNeedBracesEmptyDefault.java"), expected);
     }
 
     @Test
     public void testCycles() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(NeedBracesCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(NeedBracesCheck.class);
         checkConfig.addAttribute("tokens", "LITERAL_WHILE, LITERAL_DO, LITERAL_FOR");
         checkConfig.addAttribute("allowSingleLineStatement", "true");
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getPath("InputNeedBraces.java"), expected);
+        verify(checkConfig, getPath("InputNeedBracesConditional.java"), expected);
     }
 
     @Test
     public void testConditions() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(NeedBracesCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(NeedBracesCheck.class);
         checkConfig.addAttribute("tokens", "LITERAL_ELSE, LITERAL_CASE, LITERAL_DEFAULT");
         checkConfig.addAttribute("allowSingleLineStatement", "true");
         final String[] expected = {
@@ -139,13 +140,13 @@ public class NeedBracesCheckTest extends BaseCheckTestSupport {
             "49: " + getCheckMessage(MSG_KEY_NEED_BRACES, "default"),
             "56: " + getCheckMessage(MSG_KEY_NEED_BRACES, "default"),
         };
-        verify(checkConfig, getPath("InputNeedBraces.java"), expected);
+        verify(checkConfig, getPath("InputNeedBracesConditional.java"), expected);
     }
 
     @Test
     public void testAllowEmptyLoopBodyTrue() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(NeedBracesCheck.class);
+            createModuleConfig(NeedBracesCheck.class);
         checkConfig.addAttribute("allowEmptyLoopBody", "true");
         final String[] expected = {
             "97: " + getCheckMessage(MSG_KEY_NEED_BRACES, "if"),
@@ -156,7 +157,7 @@ public class NeedBracesCheckTest extends BaseCheckTestSupport {
     @Test
     public void testAllowEmptyLoopBodyFalse() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(NeedBracesCheck.class);
+            createModuleConfig(NeedBracesCheck.class);
         final String[] expected = {
             "10: " + getCheckMessage(MSG_KEY_NEED_BRACES, "while"),
             "14: " + getCheckMessage(MSG_KEY_NEED_BRACES, "while"),
@@ -178,4 +179,14 @@ public class NeedBracesCheckTest extends BaseCheckTestSupport {
         };
         verify(checkConfig, getPath("InputNeedBracesNoBodyLoops.java"), expected);
     }
+
+    @Test
+    public void testEmptySingleLineDefaultStmt() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(NeedBracesCheck.class);
+        checkConfig.addAttribute("tokens", "LITERAL_DEFAULT");
+        checkConfig.addAttribute("allowSingleLineStatement", "true");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputNeedBracesEmptyDefault.java"), expected);
+    }
+
 }

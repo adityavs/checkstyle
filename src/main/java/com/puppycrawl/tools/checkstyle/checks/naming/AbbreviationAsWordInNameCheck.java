@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -36,8 +37,19 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * <p>
  * The Check validate abbreviations(consecutive capital letters) length in
  * identifier name, it also allows to enforce camel case naming. Please read more at
- * <a href="http://checkstyle.sourceforge.net/reports/google-java-style.html#s5.3-camel-case">
+ * <a href=
+ *  "http://checkstyle.sourceforge.net/reports/google-java-style-20170228.html#s5.3-camel-case">
  * Google Style Guide</a> to get to know how to avoid long abbreviations in names.
+ * </p>
+ * <p>
+ * {@code allowedAbbreviationLength} specifies how many consecutive capital letters are
+ * allowed in the identifier.
+ * A value of <i>3</i> indicates that up to 4 consecutive capital letters are allowed,
+ * one after the other, before a violation is printed. The identifier 'MyTEST' would be
+ * allowed, but 'MyTESTS' would not be.
+ * A value of <i>0</i> indicates that only 1 consecutive capital letter is allowed. This
+ * is what should be used to enforce strict camel casing. The identifier 'MyTest' would
+ * be allowed, but 'MyTEst' would not be.
  * </p>
  * <p>
  * Option {@code allowedAbbreviationLength} indicates on the allowed amount of capital
@@ -82,6 +94,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author Roman Ivanov, Daniil Yaroslvtsev, Baratali Izmailov
  */
+@StatelessCheck
 public class AbbreviationAsWordInNameCheck extends AbstractCheck {
 
     /**
@@ -201,15 +214,13 @@ public class AbbreviationAsWordInNameCheck extends AbstractCheck {
 
     @Override
     public void visitToken(DetailAST ast) {
-
         if (!isIgnoreSituation(ast)) {
-
             final DetailAST nameAst = ast.findFirstToken(TokenTypes.IDENT);
             final String typeName = nameAst.getText();
 
             final String abbr = getDisallowedAbbreviation(typeName);
             if (abbr != null) {
-                log(nameAst.getLineNo(), MSG_KEY, typeName, allowedAbbreviationLength);
+                log(nameAst.getLineNo(), MSG_KEY, typeName, allowedAbbreviationLength + 1);
             }
         }
     }
@@ -219,6 +230,7 @@ public class AbbreviationAsWordInNameCheck extends AbstractCheck {
      * @param ast input DetailAST node.
      * @return true if it is an ignore situation found for given input DetailAST
      *         node.
+     * @noinspection SimplifiableIfStatement
      */
     private boolean isIgnoreSituation(DetailAST ast) {
         final DetailAST modifiers = ast.getFirstChild();
@@ -232,14 +244,13 @@ public class AbbreviationAsWordInNameCheck extends AbstractCheck {
             }
             else {
                 result = ignoreFinal
-                          && modifiers.branchContains(TokenTypes.FINAL)
+                          && modifiers.findFirstToken(TokenTypes.FINAL) != null
                     || ignoreStatic
-                        && modifiers.branchContains(TokenTypes.LITERAL_STATIC);
+                        && modifiers.findFirstToken(TokenTypes.LITERAL_STATIC) != null;
             }
         }
         else if (ast.getType() == TokenTypes.METHOD_DEF) {
-            result = ignoreOverriddenMethods
-                    && hasOverrideAnnotation(modifiers);
+            result = ignoreOverriddenMethods && hasOverrideAnnotation(modifiers);
         }
         else {
             result = CheckUtils.isReceiverParameter(ast);

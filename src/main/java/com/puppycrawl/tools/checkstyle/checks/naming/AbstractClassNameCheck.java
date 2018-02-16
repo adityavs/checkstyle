@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ package com.puppycrawl.tools.checkstyle.checks.naming;
 
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -41,6 +42,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author <a href="mailto:simon@redhillconsulting.com.au">Simon Harris</a>
  * @author <a href="mailto:solid.danil@gmail.com">Danil Lopatin</a>
  */
+@StatelessCheck
 public final class AbstractClassNameCheck extends AbstractCheck {
 
     /**
@@ -90,7 +92,7 @@ public final class AbstractClassNameCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return new int[] {TokenTypes.CLASS_DEF};
+        return getRequiredTokens();
     }
 
     @Override
@@ -100,7 +102,7 @@ public final class AbstractClassNameCheck extends AbstractCheck {
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.CLASS_DEF};
+        return getRequiredTokens();
     }
 
     @Override
@@ -129,6 +131,7 @@ public final class AbstractClassNameCheck extends AbstractCheck {
     }
 
     /**
+     * Checks if declared class is abstract or not.
      * @param ast class definition for check.
      * @return true if a given class declared as abstract.
      */
@@ -140,10 +143,12 @@ public final class AbstractClassNameCheck extends AbstractCheck {
     }
 
     /**
+     * Returns true if class name matches format of abstract class names.
      * @param className class name for check.
      * @return true if class name matches format of abstract class names.
      */
     private boolean isMatchingClassName(String className) {
         return format.matcher(className).find();
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,23 +27,19 @@ import static com.puppycrawl.tools.checkstyle.checks.annotation.AnnotationUseSty
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.apache.commons.beanutils.ConversionException;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
+public class AnnotationUseStyleCheckTest extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "annotation" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/annotation/annotationusestyle";
     }
 
     /* Additional test for jacoco, since valueOf()
@@ -54,7 +50,8 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
     public void testElementStyleValueOf() {
         final AnnotationUseStyleCheck.ElementStyle option =
             AnnotationUseStyleCheck.ElementStyle.valueOf("COMPACT");
-        assertEquals(AnnotationUseStyleCheck.ElementStyle.COMPACT, option);
+        assertEquals("Invalid valueOf result",
+            AnnotationUseStyleCheck.ElementStyle.COMPACT, option);
     }
 
     /* Additional test for jacoco, since valueOf()
@@ -65,7 +62,8 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
     public void testTrailingArrayCommaValueOf() {
         final AnnotationUseStyleCheck.TrailingArrayComma option =
             AnnotationUseStyleCheck.TrailingArrayComma.valueOf("ALWAYS");
-        assertEquals(AnnotationUseStyleCheck.TrailingArrayComma.ALWAYS, option);
+        assertEquals("Invalid valueOf result",
+            AnnotationUseStyleCheck.TrailingArrayComma.ALWAYS, option);
     }
 
     /* Additional test for jacoco, since valueOf()
@@ -76,7 +74,8 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
     public void testClosingParensValueOf() {
         final AnnotationUseStyleCheck.ClosingParens option =
             AnnotationUseStyleCheck.ClosingParens.valueOf("ALWAYS");
-        assertEquals(AnnotationUseStyleCheck.ClosingParens.ALWAYS, option);
+        assertEquals("Invalid valueOf result",
+            AnnotationUseStyleCheck.ClosingParens.ALWAYS, option);
     }
 
     /**
@@ -84,7 +83,7 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
      */
     @Test
     public void testParensAlways() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "ALWAYS");
         checkConfig.addAttribute("elementStyle", "ignore");
         checkConfig.addAttribute("trailingArrayComma", "ignore");
@@ -94,7 +93,7 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
             "23: " + getCheckMessage(MSG_KEY_ANNOTATION_PARENS_MISSING),
         };
 
-        verify(checkConfig, getPath("InputDifferentUseStyles.java"), expected);
+        verify(checkConfig, getPath("InputAnnotationUseStyleDifferentStyles.java"), expected);
     }
 
     /**
@@ -102,7 +101,7 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
      */
     @Test
     public void testParensNever() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "NEVER");
         checkConfig.addAttribute("elementStyle", "ignore");
         checkConfig.addAttribute("trailingArrayComma", "ignore");
@@ -112,12 +111,12 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
             "33: " + getCheckMessage(MSG_KEY_ANNOTATION_PARENS_PRESENT),
         };
 
-        verify(checkConfig, getPath("InputDifferentUseStyles.java"), expected);
+        verify(checkConfig, getPath("InputAnnotationUseStyleDifferentStyles.java"), expected);
     }
 
     @Test
     public void testStyleExpanded() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "ignore");
         checkConfig.addAttribute("elementStyle", "EXPANDED");
         checkConfig.addAttribute("trailingArrayComma", "ignore");
@@ -131,12 +130,12 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
             "58: " + getCheckMessage(MSG_KEY_ANNOTATION_INCORRECT_STYLE, "EXPANDED"),
         };
 
-        verify(checkConfig, getPath("InputDifferentUseStyles.java"), expected);
+        verify(checkConfig, getPath("InputAnnotationUseStyleDifferentStyles.java"), expected);
     }
 
     @Test
     public void testStyleCompact() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "ignore");
         checkConfig.addAttribute("elementStyle", "COMPACT");
         checkConfig.addAttribute("trailingArrayComma", "ignore");
@@ -145,12 +144,12 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
             "47: " + getCheckMessage(MSG_KEY_ANNOTATION_INCORRECT_STYLE, "COMPACT"),
         };
 
-        verify(checkConfig, getPath("InputDifferentUseStyles.java"), expected);
+        verify(checkConfig, getPath("InputAnnotationUseStyleDifferentStyles.java"), expected);
     }
 
     @Test
     public void testStyleCompactNoArray() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "ignore");
         checkConfig.addAttribute("elementStyle", "COMPACT_NO_ARRAY");
         checkConfig.addAttribute("trailingArrayComma", "ignore");
@@ -162,12 +161,12 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
             "47: " + getCheckMessage(MSG_KEY_ANNOTATION_INCORRECT_STYLE, "COMPACT_NO_ARRAY"),
         };
 
-        verify(checkConfig, getPath("InputDifferentUseStyles.java"), expected);
+        verify(checkConfig, getPath("InputAnnotationUseStyleDifferentStyles.java"), expected);
     }
 
     @Test
     public void testCommaAlwaysViolations() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "ignore");
         checkConfig.addAttribute("elementStyle", "ignore");
         checkConfig.addAttribute("trailingArrayComma", "ALWAYS");
@@ -187,23 +186,23 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
             "32:56: " + getCheckMessage(MSG_KEY_ANNOTATION_TRAILING_COMMA_MISSING),
         };
 
-        verify(checkConfig, getPath("InputAnnotationUseNoTrailingComma.java"), expected);
+        verify(checkConfig, getPath("InputAnnotationUseStyleNoTrailingComma.java"), expected);
     }
 
     @Test
     public void testCommaAlwaysNoViolations() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "ignore");
         checkConfig.addAttribute("elementStyle", "ignore");
         checkConfig.addAttribute("trailingArrayComma", "ALWAYS");
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        verify(checkConfig, getPath("InputAnnotationUseWithTrailingComma.java"), expected);
+        verify(checkConfig, getPath("InputAnnotationUseStyleWithTrailingComma.java"), expected);
     }
 
     @Test
     public void testCommaNeverViolations() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "ignore");
         checkConfig.addAttribute("elementStyle", "ignore");
         checkConfig.addAttribute("trailingArrayComma", "NEVER");
@@ -218,38 +217,38 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
             "33:50: " + getCheckMessage(MSG_KEY_ANNOTATION_TRAILING_COMMA_PRESENT),
         };
 
-        verify(checkConfig, getPath("InputAnnotationUseWithTrailingComma.java"), expected);
+        verify(checkConfig, getPath("InputAnnotationUseStyleWithTrailingComma.java"), expected);
     }
 
     @Test
     public void testCommaNeverNoViolations() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "ignore");
         checkConfig.addAttribute("elementStyle", "ignore");
         checkConfig.addAttribute("trailingArrayComma", "NEVER");
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        verify(checkConfig, getPath("InputAnnotationUseNoTrailingComma.java"), expected);
+        verify(checkConfig, getPath("InputAnnotationUseStyleNoTrailingComma.java"), expected);
     }
 
     @Test
     public void testEverythingMixed() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "ignore");
         checkConfig.addAttribute("elementStyle", "ignore");
         checkConfig.addAttribute("trailingArrayComma", "ignore");
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        verify(checkConfig, getPath("InputDifferentUseStyles.java"), expected);
+        verify(checkConfig, getPath("InputAnnotationUseStyleDifferentStyles.java"), expected);
     }
 
     @Test
     public void testAnnotationsWithoutDefaultValues() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "NEVER");
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        verify(checkConfig, getPath("InputAnnotationsUseStyleParams.java"), expected);
+        verify(checkConfig, getPath("InputAnnotationUseStyleParams.java"), expected);
     }
 
     @Test
@@ -257,7 +256,7 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
         final AnnotationUseStyleCheck constantNameCheckObj = new AnnotationUseStyleCheck();
         final int[] actual = constantNameCheckObj.getAcceptableTokens();
         final int[] expected = {TokenTypes.ANNOTATION };
-        Assert.assertArrayEquals(expected, actual);
+        Assert.assertArrayEquals("Invalid acceptable tokens", expected, actual);
     }
 
     @Test
@@ -267,21 +266,23 @@ public class AnnotationUseStyleCheckTest extends BaseCheckTestSupport {
             check.setElementStyle("SHOULD_PRODUCE_ERROR");
             Assert.fail("ConversionException is expected");
         }
-        catch (ConversionException ex) {
-            assertTrue(ex.getMessage().startsWith("unable to parse"));
+        catch (IllegalArgumentException ex) {
+            final String messageStart = "unable to parse";
+
+            assertTrue("Invalid exception message, should start with: " + messageStart,
+                ex.getMessage().startsWith(messageStart));
         }
     }
 
     @Test
     public void testStyleNotInList() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationUseStyleCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AnnotationUseStyleCheck.class);
         checkConfig.addAttribute("closingParens", "ignore");
         checkConfig.addAttribute("elementStyle", "COMPACT_NO_ARRAY");
         checkConfig.addAttribute("trailingArrayComma", "ignore");
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputAnnotationUseStyle.java"), expected);
-
     }
 
 }

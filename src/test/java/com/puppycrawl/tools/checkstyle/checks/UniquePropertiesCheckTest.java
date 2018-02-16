@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,11 +22,15 @@ package com.puppycrawl.tools.checkstyle.checks;
 import static com.puppycrawl.tools.checkstyle.checks.UniquePropertiesCheck.MSG_IO_EXCEPTION_KEY;
 import static com.puppycrawl.tools.checkstyle.checks.UniquePropertiesCheck.MSG_KEY;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.powermock.api.mockito.PowerMockito.doNothing;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -37,28 +41,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
-import org.junit.Before;
+import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
-import com.puppycrawl.tools.checkstyle.BaseFileSetCheckTestSupport;
+import com.google.common.io.Closeables;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.api.FileText;
 import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-/**
- * JUnit tests for Unique Properties check.
- */
-public class UniquePropertiesCheckTest extends BaseFileSetCheckTestSupport {
-
-    private DefaultConfiguration checkConfig;
-
-    @Before
-    public void setUp() {
-        checkConfig = createCheckConfig(UniquePropertiesCheck.class);
-    }
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(Closeables.class)
+public class UniquePropertiesCheckTest extends AbstractModuleTestSupport {
 
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/uniqueproperties";
     }
 
     /* Additional test for jacoco, since valueOf()
@@ -68,7 +70,7 @@ public class UniquePropertiesCheckTest extends BaseFileSetCheckTestSupport {
     @Test
     public void testLineSeparatorOptionValueOf() {
         final LineSeparatorOption option = LineSeparatorOption.valueOf("CR");
-        assertEquals(LineSeparatorOption.CR, option);
+        assertEquals("Invalid valueOf result", LineSeparatorOption.CR, option);
     }
 
     /**
@@ -76,6 +78,7 @@ public class UniquePropertiesCheckTest extends BaseFileSetCheckTestSupport {
      */
     @Test
     public void testDefault() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(UniquePropertiesCheck.class);
         final String[] expected = {
             "3: " + getCheckMessage(MSG_KEY, "general.exception", 2),
             "5: " + getCheckMessage(MSG_KEY, "DefaultLogger.auditStarted", 2),
@@ -88,19 +91,60 @@ public class UniquePropertiesCheckTest extends BaseFileSetCheckTestSupport {
     }
 
     /**
-     * Tests the {@link UniquePropertiesCheck#getLineNumber(List, String)}
+     * Pitest requires all closes of streams and readers to be verified. Using PowerMock
+     * is almost only possibility to check it without rewriting production code.
+     *
+     * @throws Exception when code tested throws some exception
+     */
+    @Test
+    public void testCloseInputStream() throws Exception {
+        mockStatic(Closeables.class);
+        doNothing().when(Closeables.class);
+        Closeables.closeQuietly(any(FileInputStream.class));
+
+        final DefaultConfiguration checkConfig = createModuleConfig(UniquePropertiesCheck.class);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputUniquePropertiesWithoutErrors.properties"), expected);
+
+        verifyStatic(times(1));
+        Closeables.closeQuietly(any(FileInputStream.class));
+    }
+
+    /**
+     * Tests the {@link UniquePropertiesCheck#getLineNumber(FileText, String)}
      * method return value.
      */
     @Test
-    public void testNotFoundKey() {
+    public void testNotFoundKey() throws Exception {
         final List<String> testStrings = new ArrayList<>(3);
+        final Method getLineNumber = UniquePropertiesCheck.class.getDeclaredMethod(
+            "getLineNumber", FileText.class, String.class);
+        Assert.assertNotNull("Get line number method should be present", getLineNumber);
+        getLineNumber.setAccessible(true);
         testStrings.add("");
         testStrings.add("0 = 0");
         testStrings.add("445");
-        final int stringNumber =
-                UniquePropertiesCheck.getLineNumber(testStrings,
-                        "some key");
-        assertEquals(0, stringNumber);
+        final FileText fileText = new FileText(new File("some.properties"), testStrings);
+        final Object lineNumber = getLineNumber.invoke(UniquePropertiesCheck.class,
+                fileText, "some key");
+        Assert.assertNotNull("Line number should not be null", lineNumber);
+        assertEquals("Invalid line number", 0, lineNumber);
+    }
+
+    @Test
+    public void testDuplicatedProperty() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(UniquePropertiesCheck.class);
+        final String[] expected = {
+            "2: " + getCheckMessage(MSG_KEY, "key", 2),
+        };
+        verify(checkConfig, getPath("InputUniquePropertiesWithDuplicates.properties"), expected);
+    }
+
+    @Test
+    public void testShouldNotProcessFilesWithWrongFileExtension() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(UniquePropertiesCheck.class);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputUniqueProperties.txt"), expected);
     }
 
     /**
@@ -108,13 +152,15 @@ public class UniquePropertiesCheckTest extends BaseFileSetCheckTestSupport {
      */
     @Test
     public void testIoException() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(UniquePropertiesCheck.class);
         final UniquePropertiesCheck check = new UniquePropertiesCheck();
         check.configure(checkConfig);
         final String fileName =
                 getPath("InputUniquePropertiesCheckNotExisting.properties");
         final File file = new File(fileName);
+        final FileText fileText = new FileText(file, Collections.emptyList());
         final SortedSet<LocalizedMessage> messages =
-                check.process(file, Collections.emptyList());
+                check.process(file, fileText);
         assertEquals("Wrong messages count: " + messages.size(),
                 1, messages.size());
         final LocalizedMessage message = messages.iterator().next();
@@ -140,10 +186,11 @@ public class UniquePropertiesCheckTest extends BaseFileSetCheckTestSupport {
         final Object result = method.invoke(uniqueProperties, 1, "value");
         final Map<Object, Object> table = new HashMap<>();
         final Object expected = table.put(1, "value");
-        assertEquals(expected, result);
+        assertEquals("Invalid result of put method", expected, result);
+
         final Object result2 = method.invoke(uniqueProperties, 1, "value");
         final Object expected2 = table.put(1, "value");
-        assertEquals(expected2, result2);
+        assertEquals("Value should be substituted", expected2, result2);
     }
 
     /**
@@ -164,4 +211,5 @@ public class UniquePropertiesCheckTest extends BaseFileSetCheckTestSupport {
             return ex.getLocalizedMessage();
         }
     }
+
 }

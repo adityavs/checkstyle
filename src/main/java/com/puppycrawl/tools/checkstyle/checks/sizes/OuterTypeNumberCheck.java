@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.sizes;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -27,6 +28,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * Checks for the number of defined types at the "outer" level.
  * @author oliverb
  */
+@FileStatefulCheck
 public class OuterTypeNumberCheck extends AbstractCheck {
 
     /**
@@ -44,18 +46,18 @@ public class OuterTypeNumberCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.CLASS_DEF, TokenTypes.INTERFACE_DEF,
-            TokenTypes.ENUM_DEF, TokenTypes.ANNOTATION_DEF, };
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.CLASS_DEF, TokenTypes.INTERFACE_DEF,
+            TokenTypes.ENUM_DEF, TokenTypes.ANNOTATION_DEF, };
     }
 
     @Override
@@ -91,4 +93,5 @@ public class OuterTypeNumberCheck extends AbstractCheck {
     public void setMax(int max) {
         this.max = max;
     }
+
 }

@@ -17,7 +17,8 @@
 
     <section name="Overview">
       <p>
-        A Checkstyle listener monitors the progress of a <code>Checker</code> during the audit of files. The <code>Checker</code> notifies its attached listeners of
+        A Checkstyle listener monitors the progress of a <code>Checker</code> during the audit
+        of files. The <code>Checker</code> notifies its attached listeners of
         significant events such as the start of the audit of a file and
         the logging of a Check error, and the listeners respond
         appropriately.  Any number of listeners can be attached to a
@@ -62,8 +63,9 @@
         error logging has a message, a severity level, a message source
         such as the name of a <code>Check</code>, and file
         line and column numbers that may be relevant to the error. The
-        notification of an exception to a <code>AuditListener</code> includes an error <code>AuditEvent</code> and the details of the
-        exception. Here is a UML diagram for classes <code>AuditListener</code> and <code>AuditEvent</code>.
+        notification of an exception to a <code>AuditListener</code> includes an error
+        <code>AuditEvent</code> and the details of the exception. Here is a UML diagram for
+        classes <code>AuditListener</code> and <code>AuditEvent</code>.
       </p>
 
       <img src="images/AuditListener.gif" width="381" height="488"
@@ -86,8 +88,10 @@
         The custom listener that we demonstrate here is a verbose
         listener that simply prints each event notification to an output
         stream, and reports the number of errors per audited file and
-        the total number of errors. The default output stream is <code>System.out</code>. In order to enable the
-        specification of output to a file through property <code>file</code>, the class extends <code>AutomaticBean</code> and defines method <code>setFile(String)</code>.
+        the total number of errors. The default output stream is <code>System.out</code>.
+        In order to enable the specification of output to a file through property
+        <code>file</code>, the class extends <code>AutomaticBean</code> and defines method
+        <code>setFile(String)</code>.
       </p>
 
       <source>
@@ -196,7 +200,9 @@ public class VerboseListener
         the listener in the <a
         href="config.html#AuditListeners">configuration file</a>. For
         example, to configure a <code>Checker</code> so
-        that it uses custom listener <code>VerboseListener</code> to print audit messages to a
+        that it uses custom listener
+        <a href="https://github.com/checkstyle/contribution/blob/master/examples/listeners/com/mycompany/listeners/VerboseListener.java">VerboseListener</a>
+        to print audit messages to a
         file named &quot;audit.txt&quot;, include the following module
         in the configuration file:
       </p>
@@ -231,7 +237,8 @@ Audit finished. Total errors: 1
         listener, <code> CommonsLoggingListener</code>,
         hands off events to the <a
         href="http://commons.apache.org/proper/commons-logging/">Apache
-        Commons Logging</a> facade and the second, <code>MailLogger</code>, sends a report of an audit via
+        Commons Logging</a> facade and the second, <code>MailLogger</code>,
+        sends a report of an audit via
         e-mail. The discussion of these examples and how to use them is
         derived from material in <a
         href="https://www.manning.com/books/java-development-with-ant">&quot;Java Development
@@ -248,13 +255,14 @@ Audit finished. Total errors: 1
         Commons Logging</a> provides a facade for logging tools
         <a
         href="http://logging.apache.org/log4j/2.x/index.html">log4j</a>,
-        , J2SE 1.4, and others. Checkstyle listener <code> CommonsLoggingListener</code> responds to an
-        AuditEvent by handing it off to the current Commons Logging Log.
+        J2SE 1.4, and others. Checkstyle listener <code>CommonsLoggingListener</code>
+        responds to an AuditEvent by handing it off to the current Commons Logging Log.
       </p>
 
       <p>
-        The source code for <code>CommonsLoggingListener</code> is in distribution
-        directory <code>https://github.com/checkstyle/contribution/examples/listeners</code>.  Notice that
+        The source code for
+        <a href="https://github.com/checkstyle/contribution/blob/master/examples/listeners/com/mycompany/listeners/CommonsLoggingListener.java">
+        CommonsLoggingListener</a>.  Notice that
         each <code>AuditListener</code> method that
         receives an <code> AuditEvent</code> calls a method
         for the Commons Logging log level corresponding to the
@@ -262,7 +270,8 @@ Audit finished. Total errors: 1
       </p>
 
       <p>
-        The easiest way to use <code>CommonsLoggingListener</code> is to include <code>checkstyle-${projectVersion}-all.jar</code>
+        The easiest way to use <code>CommonsLoggingListener</code> is to include
+        <code>checkstyle-${projectVersion}-all.jar</code>
         in the classpath because that jar file contains all the Commons
         Logging classes.  The default Log under J2SE 1.4 is wrapper
         class <a
@@ -316,7 +325,9 @@ INFO  com.puppycrawl...Checker  - Audit finished.
       <a name="MailLogger"/>
       <h4>MailLogger</h4>
       <p>
-        <code>MailLogger</code> sends an audit report in an
+        <a href="https://github.com/checkstyle/contribution/blob/master/examples/listeners/com/mycompany/listeners/MailLogger.java">
+        MailLogger</a>
+        sends an audit report in an
         email message.  The listener uses a <code>DefaultLogger</code> to prepare the text of the
         message. The listener obtains other message parameters such as
         <code>to</code> and <code>subject</code> from environment properties that
@@ -324,8 +335,7 @@ INFO  com.puppycrawl...Checker  - Audit finished.
       </p>
 
       <p>
-        The source code for <code>CommonsLoggingListener</code> is in distribution
-        directory <code>https://github.com/checkstyle/contribution/examples/listeners</code>.  This
+        This
         implementation uses the <a
         href="http://www.oracle.com/technetwork/java/javamail/index.html">JavaMail API</a> as
         the mail system, and you must include appropriate jar files in

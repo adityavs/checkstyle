@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ package com.puppycrawl.tools.checkstyle.checks.naming;
 
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
@@ -37,7 +38,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * <p>
  * The default format has been chosen to match the requirements in the
  * <a
- * href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-7.html">
+ * href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-7.html">
  * Java Language specification</a> and the Sun coding conventions.
  * However both underscores and uppercase letters are rather uncommon,
  * so most projects should probably use
@@ -62,8 +63,10 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *
  * @author Oliver Burn
  */
+@StatelessCheck
 public class PackageNameCheck
     extends AbstractCheck {
+
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -72,7 +75,7 @@ public class PackageNameCheck
 
     /** The regexp to match against. */
     // Uppercase letters seem rather uncommon, but they're allowed in
-    // http://docs.oracle.com/javase/specs/
+    // https://docs.oracle.com/javase/specs/
     //  second_edition/html/packages.doc.html#40169
     private Pattern format = Pattern.compile("^[a-z]+(\\.[a-zA-Z_][a-zA-Z0-9_]*)*$");
 
@@ -86,17 +89,17 @@ public class PackageNameCheck
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.PACKAGE_DEF};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.PACKAGE_DEF};
     }
 
     @Override
@@ -111,4 +114,5 @@ public class PackageNameCheck
                 format.pattern());
         }
     }
+
 }

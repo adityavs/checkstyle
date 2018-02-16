@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -50,6 +50,7 @@ import com.puppycrawl.tools.checkstyle.gui.MainFrameModel.ParseMode;
  *
  * @author Lars Kühne
  * @author Vladislav Lisetskiy
+ * @noinspection MagicNumber
  */
 public class MainFrame extends JFrame {
 
@@ -62,7 +63,7 @@ public class MainFrame extends JFrame {
     /** Code text area. */
     private JTextArea textArea;
     /** Tree table. */
-    private JTreeTable treeTable;
+    private TreeTable treeTable;
 
     /** Create a new MainFrame. */
     public MainFrame() {
@@ -77,7 +78,7 @@ public class MainFrame extends JFrame {
         textArea.setEditable(false);
         final JScrollPane textAreaScrollPane = new JScrollPane(textArea);
 
-        treeTable = new JTreeTable(model.getParseTreeTableModel());
+        treeTable = new TreeTable(model.getParseTreeTableModel());
         treeTable.setEditor(textArea);
         treeTable.setLinePositionMap(model.getLinesToPosition());
         final JScrollPane treeTableScrollPane = new JScrollPane(treeTable);
@@ -155,6 +156,7 @@ public class MainFrame extends JFrame {
      * Handler for file selection action events.
      */
     private class FileSelectionAction extends AbstractAction {
+
         private static final long serialVersionUID = 1762396148873280589L;
 
         @Override
@@ -169,24 +171,28 @@ public class MainFrame extends JFrame {
                 openFile(file);
             }
         }
+
     }
 
     /**
      * Handler for reload action events.
      */
     private class ReloadAction extends AbstractAction {
+
         private static final long serialVersionUID = -890320994114628011L;
 
         @Override
         public void actionPerformed(ActionEvent event) {
             openFile(model.getCurrentFile());
         }
+
     }
 
     /**
      * Filter for Java files.
      */
     private static class JavaFileFilter extends FileFilter {
+
         @Override
         public boolean accept(File file) {
             return MainFrameModel.shouldAcceptFile(file);
@@ -196,5 +202,7 @@ public class MainFrame extends JFrame {
         public String getDescription() {
             return "Java Source File";
         }
+
     }
+
 }

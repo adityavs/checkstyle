@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -32,6 +32,7 @@ import java.util.Set;
  */
 public class FilterSet
     implements Filter {
+
     /** Filter set. */
     private final Set<Filter> filters = new HashSet<>();
 
@@ -83,16 +84,19 @@ public class FilterSet
 
     @Override
     public boolean accept(AuditEvent event) {
+        boolean result = true;
         for (Filter filter : filters) {
             if (!filter.accept(event)) {
-                return false;
+                result = false;
+                break;
             }
         }
-        return true;
+        return result;
     }
 
     /** Clears the FilterSet. */
     public void clear() {
         filters.clear();
     }
+
 }

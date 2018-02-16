@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -31,6 +31,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author jrichard
  */
 public abstract class AbstractExpressionHandler {
+
     /**
      * The instance of {@code IndentationCheck} using this handler.
      */
@@ -77,6 +78,7 @@ public abstract class AbstractExpressionHandler {
      * value is returned.
      *
      * @return the expected indentation amount
+     * @noinspection WeakerAccess
      */
     public final IndentLevel getIndent() {
         if (indent == null) {
@@ -102,6 +104,7 @@ public abstract class AbstractExpressionHandler {
      *                  type)
      *
      * @return suggested indentation for child
+     * @noinspection WeakerAccess
      */
     public IndentLevel getSuggestedChildIndent(AbstractExpressionHandler child) {
         return new IndentLevel(getIndent(), getBasicOffset());
@@ -181,6 +184,7 @@ public abstract class AbstractExpressionHandler {
      * @param ast2   the second expression
      *
      * @return true if they are, false otherwise
+     * @noinspection WeakerAccess
      */
     public static boolean areOnSameLine(DetailAST ast1, DetailAST ast2) {
         return ast1.getLineNo() == ast2.getLineNo();
@@ -191,6 +195,7 @@ public abstract class AbstractExpressionHandler {
      * which represents first symbol for this sub-tree in file.
      * @param ast a root of sub-tree in which the search should be performed.
      * @return a token which occurs first in the file.
+     * @noinspection WeakerAccess
      */
     public static DetailAST getFirstToken(DetailAST ast) {
         DetailAST first = ast;
@@ -353,7 +358,8 @@ public abstract class AbstractExpressionHandler {
     protected void checkWrappingIndentation(DetailAST firstNode, DetailAST lastNode,
             int wrappedIndentLevel, int startIndent, boolean ignoreFirstLine) {
         indentCheck.getLineWrappingHandler().checkIndentation(firstNode, lastNode,
-                wrappedIndentLevel, startIndent, ignoreFirstLine);
+                wrappedIndentLevel, startIndent,
+                LineWrappingHandler.LineWrappingOptions.ofBoolean(ignoreFirstLine));
     }
 
     /**
@@ -415,7 +421,7 @@ public abstract class AbstractExpressionHandler {
      *
      * @return the first line of the expression
      */
-    protected final int getFirstLine(int startLine, DetailAST tree) {
+    protected static int getFirstLine(int startLine, DetailAST tree) {
         int realStart = startLine;
         final int currLine = tree.getLineNo();
         if (currLine < realStart) {
@@ -541,7 +547,7 @@ public abstract class AbstractExpressionHandler {
      * @param rparen parenthesis to check
      * @param lparen left parenthesis associated with aRparen
      */
-    protected final void checkRParen(DetailAST lparen, DetailAST rparen) {
+    protected final void checkRightParen(DetailAST lparen, DetailAST rparen) {
         if (rparen != null) {
             // the rcurly can either be at the correct indentation,
             // or not first on the line
@@ -561,7 +567,7 @@ public abstract class AbstractExpressionHandler {
      * Check the indentation of the left parenthesis.
      * @param lparen parenthesis to check
      */
-    protected final void checkLParen(final DetailAST lparen) {
+    protected final void checkLeftParen(final DetailAST lparen) {
         // the rcurly can either be at the correct indentation, or on the
         // same line as the lcurly
         if (lparen != null
@@ -570,4 +576,5 @@ public abstract class AbstractExpressionHandler {
             logError(lparen, "lparen", expandedTabsColumnNo(lparen));
         }
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,42 +27,21 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.junit.Before;
 import org.junit.Test;
 
 import antlr.CommonHiddenStreamToken;
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class GenericWhitespaceCheckTest
-    extends BaseCheckTestSupport {
-    private DefaultConfiguration checkConfig;
-
-    @Before
-    public void setUp() {
-        checkConfig = createCheckConfig(GenericWhitespaceCheck.class);
-        final Map<Class<?>, Integer> x = new HashMap<>();
-        x.entrySet().forEach(Map.Entry::getValue);
-    }
+    extends AbstractModuleTestSupport {
 
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "whitespace" + File.separator + filename);
-    }
-
-    @Override
-    protected String getNonCompilablePath(String filename) throws IOException {
-        return super.getNonCompilablePath("checks" + File.separator
-                + "whitespace" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/whitespace/genericwhitespace";
     }
 
     @Test
@@ -72,11 +51,13 @@ public class GenericWhitespaceCheckTest
             TokenTypes.GENERIC_START,
             TokenTypes.GENERIC_END,
         };
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testDefault() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(GenericWhitespaceCheck.class);
         final String[] expected = {
             "16:13: " + getCheckMessage(MSG_WS_PRECEDED, "<"),
             "16:15: " + getCheckMessage(MSG_WS_FOLLOWED, "<"),
@@ -105,37 +86,61 @@ public class GenericWhitespaceCheckTest
             "60:60: " + getCheckMessage(MSG_WS_NOT_PRECEDED, "&"),
             "63:60: " + getCheckMessage(MSG_WS_FOLLOWED, ">"),
         };
-        verify(checkConfig, getPath("InputGenericWhitespace.java"), expected);
+        verify(checkConfig, getPath("InputGenericWhitespaceDefault.java"), expected);
     }
 
     @Test
-    public void testGh47() throws Exception {
+    public void testAtTheStartOfTheLine() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(GenericWhitespaceCheck.class);
+        final String[] expected = {
+            "10:1: " + getCheckMessage(MSG_WS_PRECEDED, ">"),
+            "12:1: " + getCheckMessage(MSG_WS_PRECEDED, "<"),
+        };
+        verify(checkConfig, getPath("InputGenericWhitespaceAtStartOfTheLine.java"), expected);
+    }
+
+    @Test
+    public void testNestedGeneric() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(GenericWhitespaceCheck.class);
+        final String[] expected = {
+            "11:2: " + getCheckMessage(MSG_WS_NOT_PRECEDED, "&"),
+        };
+        verify(checkConfig, getPath("InputGenericWhitespaceNested.java"), expected);
+    }
+
+    @Test
+    public void testList() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(GenericWhitespaceCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getPath("InputGh47.java"), expected);
+        verify(checkConfig, getPath("InputGenericWhitespaceList.java"), expected);
     }
 
     @Test
     public void testInnerClass() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(GenericWhitespaceCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputGenericWhitespaceInnerClass.java"), expected);
     }
 
     @Test
     public void testMethodReferences() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(GenericWhitespaceCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getPath("InputMethodReferences3.java"), expected);
+        verify(checkConfig, getPath("InputGenericWhitespaceMethodRef1.java"), expected);
     }
 
     @Test
     public void testMethodReferences2() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(GenericWhitespaceCheck.class);
         final String[] expected = {
             "10:70: " + getCheckMessage(MSG_WS_FOLLOWED, ">"),
         };
-        verify(checkConfig, getPath("InputGenericWhitespaceMethodRef.java"), expected);
+        verify(checkConfig, getPath("InputGenericWhitespaceMethodRef2.java"), expected);
     }
 
     @Test
     public void testGenericEndsTheLine() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(GenericWhitespaceCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputGenericWhitespaceEndsTheLine.java"), expected);
     }
@@ -148,7 +153,7 @@ public class GenericWhitespaceCheckTest
             TokenTypes.GENERIC_START,
             TokenTypes.GENERIC_END,
         };
-        assertArrayEquals(expected, actual);
+        assertArrayEquals("Default acceptable tokens are invalid", expected, actual);
     }
 
     @Test
@@ -161,7 +166,9 @@ public class GenericWhitespaceCheckTest
             fail("exception expected");
         }
         catch (IllegalArgumentException ex) {
-            assertEquals("Unknown type interface[0x-1]", ex.getMessage());
+            assertEquals("Invalid exception message",
+                "Unknown type interface[0x-1]", ex.getMessage());
         }
     }
+
 }

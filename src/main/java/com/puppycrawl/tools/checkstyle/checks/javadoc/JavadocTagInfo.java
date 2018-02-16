@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -34,7 +34,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  *
  * <p>
  * This class was modeled after documentation located at
- * <a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/javadoc.html">
+ * <a href="https://docs.oracle.com/javase/8/docs/technotes/tools/windows/javadoc.html">
  * javadoc</a>
  *
  * and
@@ -71,6 +71,7 @@ public enum JavadocTagInfo {
      * {@code @author}.
      */
     AUTHOR("@author", "author", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
@@ -80,110 +81,129 @@ public enum JavadocTagInfo {
                 || astType == TokenTypes.ENUM_DEF
                 || astType == TokenTypes.ANNOTATION_DEF;
         }
+
     },
 
     /**
      * {@code {@code}}.
      */
     CODE("{@code}", "code", Type.INLINE) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
             return Arrays.binarySearch(DEF_TOKEN_TYPES, astType) >= 0
                 && !ScopeUtils.isLocalVariableDef(ast);
         }
+
     },
 
     /**
      * {@code {@docRoot}}.
      */
     DOC_ROOT("{@docRoot}", "docRoot", Type.INLINE) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
             return Arrays.binarySearch(DEF_TOKEN_TYPES, astType) >= 0
                 && !ScopeUtils.isLocalVariableDef(ast);
         }
+
     },
 
     /**
      * {@code @deprecated}.
      */
     DEPRECATED("@deprecated", "deprecated", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
             return Arrays.binarySearch(DEF_TOKEN_TYPES_DEPRECATED, astType) >= 0
                 && !ScopeUtils.isLocalVariableDef(ast);
         }
+
     },
 
     /**
      * {@code @exception}.
      */
     EXCEPTION("@exception", "exception", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
             return astType == TokenTypes.METHOD_DEF || astType == TokenTypes.CTOR_DEF;
         }
+
     },
 
     /**
      * {@code {@inheritDoc}}.
      */
     INHERIT_DOC("{@inheritDoc}", "inheritDoc", Type.INLINE) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
 
             return astType == TokenTypes.METHOD_DEF
-                && !ast.branchContains(TokenTypes.LITERAL_STATIC)
+                && ast.findFirstToken(TokenTypes.MODIFIERS)
+                    .findFirstToken(TokenTypes.LITERAL_STATIC) == null
                 && ScopeUtils.getScopeFromMods(ast
                     .findFirstToken(TokenTypes.MODIFIERS)) != Scope.PRIVATE;
         }
+
     },
 
     /**
      * {@code {@link}}.
      */
     LINK("{@link}", "link", Type.INLINE) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
             return Arrays.binarySearch(DEF_TOKEN_TYPES, astType) >= 0
                 && !ScopeUtils.isLocalVariableDef(ast);
         }
+
     },
 
     /**
      * {@code {@linkplain}}.
      */
     LINKPLAIN("{@linkplain}", "linkplain", Type.INLINE) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
             return Arrays.binarySearch(DEF_TOKEN_TYPES, astType) >= 0
                 && !ScopeUtils.isLocalVariableDef(ast);
         }
+
     },
 
     /**
      * {@code {@literal}}.
      */
     LITERAL("{@literal}", "literal", Type.INLINE) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
             return Arrays.binarySearch(DEF_TOKEN_TYPES, astType) >= 0
                 && !ScopeUtils.isLocalVariableDef(ast);
         }
+
     },
 
     /**
      * {@code @param}.
      */
     PARAM("@param", "param", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
@@ -192,12 +212,14 @@ public enum JavadocTagInfo {
                 || astType == TokenTypes.METHOD_DEF
                 || astType == TokenTypes.CTOR_DEF;
         }
+
     },
 
     /**
      * {@code @return}.
      */
     RETURN("@return", "return", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
@@ -205,26 +227,29 @@ public enum JavadocTagInfo {
 
             return astType == TokenTypes.METHOD_DEF
                 && returnType.getFirstChild().getType() != TokenTypes.LITERAL_VOID;
-
         }
+
     },
 
     /**
      * {@code @see}.
      */
     SEE("@see", "see", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
             return Arrays.binarySearch(DEF_TOKEN_TYPES, astType) >= 0
                 && !ScopeUtils.isLocalVariableDef(ast);
         }
+
     },
 
     /**
      * {@code @serial}.
      */
     SERIAL("@serial", "serial", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
@@ -232,12 +257,14 @@ public enum JavadocTagInfo {
             return astType == TokenTypes.VARIABLE_DEF
                 && !ScopeUtils.isLocalVariableDef(ast);
         }
+
     },
 
     /**
      * {@code @serialData}.
      */
     SERIAL_DATA("@serialData", "serialData", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
@@ -252,12 +279,14 @@ public enum JavadocTagInfo {
                     || "writeReplace".equals(methodName)
                     || "readResolve".equals(methodName));
         }
+
     },
 
     /**
      * {@code @serialField}.
      */
     SERIAL_FIELD("@serialField", "serialField", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
@@ -265,50 +294,58 @@ public enum JavadocTagInfo {
 
             return astType == TokenTypes.VARIABLE_DEF
                 && varType.getFirstChild().getType() == TokenTypes.ARRAY_DECLARATOR
-                && "ObjectStreafield".equals(varType.getFirstChild().getText());
+                && "ObjectStreamField".equals(varType.getFirstChild().getText());
         }
+
     },
 
     /**
      * {@code @since}.
      */
     SINCE("@since", "since", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
             return Arrays.binarySearch(DEF_TOKEN_TYPES, astType) >= 0
                 && !ScopeUtils.isLocalVariableDef(ast);
         }
+
     },
 
     /**
      * {@code @throws}.
      */
     THROWS("@throws", "throws", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
             return astType == TokenTypes.METHOD_DEF
                 || astType == TokenTypes.CTOR_DEF;
         }
+
     },
 
     /**
      * {@code {@value}}.
      */
     VALUE("{@value}", "value", Type.INLINE) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
             return Arrays.binarySearch(DEF_TOKEN_TYPES, astType) >= 0
                 && !ScopeUtils.isLocalVariableDef(ast);
         }
+
     },
 
     /**
      * {@code @version}.
      */
     VERSION("@version", "version", Type.BLOCK) {
+
         @Override
         public boolean isValidOn(final DetailAST ast) {
             final int astType = ast.getType();
@@ -318,6 +355,7 @@ public enum JavadocTagInfo {
                 || astType == TokenTypes.ENUM_DEF
                 || astType == TokenTypes.ANNOTATION_DEF;
         }
+
     };
 
     /** Default token types for DEPRECATED Javadoc tag.*/
@@ -491,10 +529,13 @@ public enum JavadocTagInfo {
      * @author Travis Schneeberger
      */
     public enum Type {
+
         /** Block type. **/
         BLOCK,
 
         /** Inline type. **/
         INLINE
+
     }
+
 }

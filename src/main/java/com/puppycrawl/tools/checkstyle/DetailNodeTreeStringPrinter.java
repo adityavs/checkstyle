@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ package com.puppycrawl.tools.checkstyle;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import com.puppycrawl.tools.checkstyle.JavadocDetailNodeParser.ParseErrorMessage;
 import com.puppycrawl.tools.checkstyle.JavadocDetailNodeParser.ParseStatus;
@@ -29,7 +30,7 @@ import com.puppycrawl.tools.checkstyle.api.DetailNode;
 import com.puppycrawl.tools.checkstyle.api.FileText;
 import com.puppycrawl.tools.checkstyle.api.JavadocTokenTypes;
 import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
-import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 import com.puppycrawl.tools.checkstyle.utils.JavadocUtils;
 
 /**
@@ -76,7 +77,7 @@ public final class DetailNodeTreeStringPrinter {
      * @return tree
      */
     private static DetailNode parseJavadocAsDetailNode(String javadocComment) {
-        final DetailAST blockComment = createFakeBlockComment(javadocComment);
+        final DetailAST blockComment = CommonUtils.createBlockCommentNode(javadocComment);
         return parseJavadocAsDetailNode(blockComment);
     }
 
@@ -105,7 +106,7 @@ public final class DetailNodeTreeStringPrinter {
      * @return string AST.
      */
     public static String printTree(DetailNode ast, String rootPrefix, String prefix) {
-        final StringBuilder messageBuilder = new StringBuilder();
+        final StringBuilder messageBuilder = new StringBuilder(1024);
         DetailNode node = ast;
         while (node != null) {
             if (node.getType() == JavadocTokenTypes.JAVADOC) {
@@ -116,7 +117,7 @@ public final class DetailNodeTreeStringPrinter {
             }
             messageBuilder.append(getIndentation(node))
                     .append(JavadocUtils.getTokenName(node.getType())).append(" -> ")
-                    .append(JavadocUtils.excapeAllControlChars(node.getText())).append(" [")
+                    .append(JavadocUtils.escapeAllControlChars(node.getText())).append(" [")
                     .append(node.getLineNumber()).append(':').append(node.getColumnNumber())
                     .append(']').append(LINE_SEPARATOR)
                     .append(printTree(JavadocUtils.getFirstChild(node), rootPrefix, prefix));
@@ -133,7 +134,7 @@ public final class DetailNodeTreeStringPrinter {
     private static String getIndentation(DetailNode node) {
         final boolean isLastChild = JavadocUtils.getNextSibling(node) == null;
         DetailNode currentNode = node;
-        final StringBuilder indentation = new StringBuilder();
+        final StringBuilder indentation = new StringBuilder(1024);
         while (currentNode.getParent() != null) {
             currentNode = currentNode.getParent();
             if (currentNode.getParent() == null) {
@@ -165,38 +166,9 @@ public final class DetailNodeTreeStringPrinter {
      * @throws IOException if the file could not be read.
      */
     private static DetailNode parseFile(File file) throws IOException {
-        // Details: https://github.com/checkstyle/checkstyle/issues/3034
-        //noinspection MismatchedQueryAndUpdateOfCollection
         final FileText text = new FileText(file.getAbsoluteFile(),
-            System.getProperty("file.encoding", "UTF-8"));
+            System.getProperty("file.encoding", StandardCharsets.UTF_8.name()));
         return parseJavadocAsDetailNode(text.getFullText().toString());
-    }
-
-    /**
-     * Creates DetailAST block comment to pass it to the Javadoc parser.
-     * @param content comment content.
-     * @return DetailAST block comment
-     */
-    private static DetailAST createFakeBlockComment(String content) {
-        final DetailAST blockCommentBegin = new DetailAST();
-        blockCommentBegin.setType(TokenTypes.BLOCK_COMMENT_BEGIN);
-        blockCommentBegin.setText("/*");
-        blockCommentBegin.setLineNo(0);
-        blockCommentBegin.setColumnNo(0);
-
-        final DetailAST commentContent = new DetailAST();
-        commentContent.setType(TokenTypes.COMMENT_CONTENT);
-        commentContent.setText("*" + content);
-        commentContent.setLineNo(0);
-        commentContent.setColumnNo(2);
-
-        final DetailAST blockCommentEnd = new DetailAST();
-        blockCommentEnd.setType(TokenTypes.BLOCK_COMMENT_END);
-        blockCommentEnd.setText("*/");
-
-        blockCommentBegin.setFirstChild(commentContent);
-        commentContent.setNextSibling(blockCommentEnd);
-        return blockCommentBegin;
     }
 
 }

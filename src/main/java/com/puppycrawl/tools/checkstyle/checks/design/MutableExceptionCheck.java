@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -40,6 +41,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *
  * @author <a href="mailto:simon@redhillconsulting.com.au">Simon Harris</a>
  */
+@FileStatefulCheck
 public final class MutableExceptionCheck extends AbstractCheck {
 
     /**
@@ -77,17 +79,17 @@ public final class MutableExceptionCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return new int[] {TokenTypes.CLASS_DEF, TokenTypes.VARIABLE_DEF};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getDefaultTokens();
+        return new int[] {TokenTypes.CLASS_DEF, TokenTypes.VARIABLE_DEF};
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.CLASS_DEF, TokenTypes.VARIABLE_DEF};
+        return getRequiredTokens();
     }
 
     @Override
@@ -157,6 +159,7 @@ public final class MutableExceptionCheck extends AbstractCheck {
      * @return true if extended class name conforms to specified format
      */
     private boolean isExtendedClassNamedAsException(DetailAST ast) {
+        boolean result = false;
         final DetailAST extendsClause = ast.findFirstToken(TokenTypes.EXTENDS_CLAUSE);
         if (extendsClause != null) {
             DetailAST currentNode = extendsClause;
@@ -164,8 +167,9 @@ public final class MutableExceptionCheck extends AbstractCheck {
                 currentNode = currentNode.getLastChild();
             }
             final String extendedClassName = currentNode.getText();
-            return extendedClassNameFormat.matcher(extendedClassName).matches();
+            result = extendedClassNameFormat.matcher(extendedClassName).matches();
         }
-        return false;
+        return result;
     }
+
 }

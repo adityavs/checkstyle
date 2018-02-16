@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.api;
 
-import com.google.common.collect.ImmutableCollection;
+import java.util.Collection;
 
 /**
  * A context to be used in subcomponents. The general idea of
@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableCollection;
  * @see Contextualizable
  */
 public interface Context {
+
     /**
      * Searches for the value with the specified attribute key in this context.
      * @param key the attribute key.
@@ -40,5 +41,6 @@ public interface Context {
      * Returns the names of all attributes of this context.
      * @return the names of all attributes of this context.
      */
-    ImmutableCollection<String> getAttributeNames();
+    Collection<String> getAttributeNames();
+
 }

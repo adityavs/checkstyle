@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -51,6 +52,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *
  * @author <a href="mailto:simon@redhillconsulting.com.au">Simon Harris</a>
  */
+@FileStatefulCheck
 public final class ReturnCountCheck extends AbstractCheck {
 
     /**
@@ -58,6 +60,11 @@ public final class ReturnCountCheck extends AbstractCheck {
      * file.
      */
     public static final String MSG_KEY = "return.count";
+    /**
+     * A key pointing to the warning message text in "messages.properties"
+     * file.
+     */
+    public static final String MSG_KEY_VOID = "return.countVoid";
 
     /** Stack of method contexts. */
     private final Deque<Context> contextStack = new ArrayDeque<>();
@@ -197,10 +204,10 @@ public final class ReturnCountCheck extends AbstractCheck {
         // we can't identify which max to use for lambdas, so we can only assign
         // after the first return statement is seen
         if (ast.getFirstChild().getType() == TokenTypes.SEMI) {
-            context.visitLiteralReturn(maxForVoid);
+            context.visitLiteralReturn(maxForVoid, true);
         }
         else {
-            context.visitLiteralReturn(max);
+            context.visitLiteralReturn(max, false);
         }
     }
 
@@ -209,12 +216,15 @@ public final class ReturnCountCheck extends AbstractCheck {
      * @author <a href="mailto:simon@redhillconsulting.com.au">Simon Harris</a>
      */
     private class Context {
+
         /** Whether we should check this method or not. */
         private final boolean checking;
         /** Counter for return statements. */
         private int count;
         /** Maximum allowed number of return statements. */
         private Integer maxAllowed;
+        /** Identifies if context is void. */
+        private boolean isVoidContext;
 
         /**
          * Creates new method context.
@@ -225,10 +235,12 @@ public final class ReturnCountCheck extends AbstractCheck {
         }
 
         /**
-         * Increase the number of return statements.
+         * Increase the number of return statements and set context return type.
          * @param maxAssigned Maximum allowed number of return statements.
+         * @param voidReturn Identifies if context is void.
          */
-        public void visitLiteralReturn(int maxAssigned) {
+        public void visitLiteralReturn(int maxAssigned, Boolean voidReturn) {
+            isVoidContext = voidReturn;
             if (maxAllowed == null) {
                 maxAllowed = maxAssigned;
             }
@@ -243,8 +255,15 @@ public final class ReturnCountCheck extends AbstractCheck {
          */
         public void checkCount(DetailAST ast) {
             if (checking && maxAllowed != null && count > maxAllowed) {
-                log(ast.getLineNo(), ast.getColumnNo(), MSG_KEY, count, maxAllowed);
+                if (isVoidContext) {
+                    log(ast.getLineNo(), ast.getColumnNo(), MSG_KEY_VOID, count, maxAllowed);
+                }
+                else {
+                    log(ast.getLineNo(), ast.getColumnNo(), MSG_KEY, count, maxAllowed);
+                }
             }
         }
+
     }
+
 }

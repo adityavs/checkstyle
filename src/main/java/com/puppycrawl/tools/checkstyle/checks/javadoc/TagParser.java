@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -45,6 +45,7 @@ import java.util.List;
  * @author Chris Stillwell
  */
 class TagParser {
+
     /** List of HtmlTags found on the input line of text. */
     private final List<HtmlTag> tags = new LinkedList<>();
 
@@ -109,7 +110,7 @@ class TagParser {
     }
 
     /**
-     * Parses the tag and return position after it
+     * Parses the tag and return position after it.
      * @param text the source line to parse.
      * @param lineNo the source line number.
      * @param nLines line length
@@ -169,28 +170,28 @@ class TagParser {
      * @return id for given tag
      */
     private static String getTagId(String[] javadocText, Point tagStart) {
+        String tagId = "";
         int column = tagStart.getColumnNo() + 1;
         String text = javadocText[tagStart.getLineNo()];
-        if (column >= text.length()) {
-            return "";
+        if (column < text.length()) {
+            if (text.charAt(column) == '/') {
+                column++;
+            }
+
+            text = text.substring(column).trim();
+            int position = 0;
+
+            //Character.isJavaIdentifier... may not be a valid HTML
+            //identifier but is valid for generics
+            while (position < text.length()
+                    && (Character.isJavaIdentifierStart(text.charAt(position))
+                        || Character.isJavaIdentifierPart(text.charAt(position)))) {
+                position++;
+            }
+
+            tagId = text.substring(0, position);
         }
-
-        if (text.charAt(column) == '/') {
-            column++;
-        }
-
-        text = text.substring(column).trim();
-        int position = 0;
-
-        //Character.isJavaIdentifier... may not be a valid HTML
-        //identifier but is valid for generics
-        while (position < text.length()
-            && (Character.isJavaIdentifierStart(text.charAt(position))
-                || Character.isJavaIdentifierPart(text.charAt(position)))) {
-            position++;
-        }
-
-        return text.substring(0, position);
+        return tagId;
     }
 
     /**
@@ -276,6 +277,7 @@ class TagParser {
      * @author o_sukholsky
      */
     private static final class Point {
+
         /** Line number. */
         private final int lineNo;
         /** Column number.*/
@@ -306,5 +308,7 @@ class TagParser {
         public int getColumnNo() {
             return columnNo;
         }
+
     }
+
 }

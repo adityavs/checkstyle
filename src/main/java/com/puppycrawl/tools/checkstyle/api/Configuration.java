@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,7 @@
 package com.puppycrawl.tools.checkstyle.api;
 
 import java.io.Serializable;
-
-import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 
 /**
  * A Configuration is used to configure a Configurable component.  The general
@@ -30,6 +29,7 @@ import com.google.common.collect.ImmutableMap;
  * @author lkuehne
  */
 public interface Configuration extends Serializable {
+
     /**
      * The set of attribute names.
      * @return The set of attribute names, never null.
@@ -61,5 +61,6 @@ public interface Configuration extends Serializable {
      * for this configuration.
      * @return unmodifiable map containing custom messages
      */
-    ImmutableMap<String, String> getMessages();
+    Map<String, String> getMessages();
+
 }

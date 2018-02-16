@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.sizes;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -63,6 +64,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * </pre>
  * @author Oliver Burn
  */
+@StatelessCheck
 public class ParameterNumberCheck
     extends AbstractCheck {
 
@@ -141,4 +143,5 @@ public class ParameterNumberCheck
                 && (AnnotationUtility.containsAnnotation(ast, OVERRIDE)
                 || AnnotationUtility.containsAnnotation(ast, CANONICAL_OVERRIDE));
     }
+
 }

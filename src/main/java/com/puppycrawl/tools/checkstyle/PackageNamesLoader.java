@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -37,7 +37,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import com.google.common.io.Closeables;
-import com.puppycrawl.tools.checkstyle.api.AbstractLoader;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
@@ -46,7 +45,8 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author Rick Giles
  */
 public final class PackageNamesLoader
-    extends AbstractLoader {
+    extends XmlLoader {
+
     /** The public ID for the configuration dtd. */
     private static final String DTD_PUBLIC_ID =
         "-//Puppy Crawl//DTD Package Names 1.0//EN";
@@ -97,12 +97,12 @@ public final class PackageNamesLoader
      * @return the full name of the current package.
      */
     private String getPackageName() {
-        final StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder(256);
         final Iterator<String> iterator = packageStack.descendingIterator();
         while (iterator.hasNext()) {
             final String subPackage = iterator.next();
             buf.append(subPackage);
-            if (!CommonUtils.endsWithChar(subPackage, '.')) {
+            if (!CommonUtils.endsWithChar(subPackage, '.') && iterator.hasNext()) {
                 buf.append('.');
             }
         }
@@ -114,7 +114,6 @@ public final class PackageNamesLoader
                            String localName,
                            String qName) {
         if (PACKAGE_ELEMENT_NAME.equals(qName)) {
-
             packageNames.add(getPackageName());
             packageStack.pop();
         }
@@ -131,7 +130,6 @@ public final class PackageNamesLoader
      */
     public static Set<String> getPackageNames(ClassLoader classLoader)
             throws CheckstyleException {
-
         final Set<String> result;
         try {
             //create the loader outside the loop to prevent PackageObjectFactory
@@ -141,24 +139,10 @@ public final class PackageNamesLoader
             final Enumeration<URL> packageFiles = classLoader.getResources(CHECKSTYLE_PACKAGES);
 
             while (packageFiles.hasMoreElements()) {
-                final URL packageFile = packageFiles.nextElement();
-                InputStream stream = null;
-
-                try {
-                    stream = new BufferedInputStream(packageFile.openStream());
-                    final InputSource source = new InputSource(stream);
-                    namesLoader.parseInputSource(source);
-                }
-                catch (IOException ex) {
-                    throw new CheckstyleException("unable to open " + packageFile, ex);
-                }
-                finally {
-                    Closeables.closeQuietly(stream);
-                }
+                processFile(packageFiles.nextElement(), namesLoader);
             }
 
             result = namesLoader.packageNames;
-
         }
         catch (IOException ex) {
             throw new CheckstyleException("unable to get package file resources", ex);
@@ -169,4 +153,28 @@ public final class PackageNamesLoader
 
         return result;
     }
+
+    /**
+     * Reads the file provided and parses it with package names loader.
+     * @param packageFile file from package
+     * @param namesLoader package names loader
+     * @throws SAXException if an error while parsing occurs
+     * @throws CheckstyleException if unable to open file
+     */
+    private static void processFile(URL packageFile, PackageNamesLoader namesLoader)
+            throws SAXException, CheckstyleException {
+        InputStream stream = null;
+        try {
+            stream = new BufferedInputStream(packageFile.openStream());
+            final InputSource source = new InputSource(stream);
+            namesLoader.parseInputSource(source);
+        }
+        catch (IOException ex) {
+            throw new CheckstyleException("unable to open " + packageFile, ex);
+        }
+        finally {
+            Closeables.closeQuietly(stream);
+        }
+    }
+
 }

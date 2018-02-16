@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 
@@ -32,7 +33,7 @@ import com.puppycrawl.tools.checkstyle.api.DetailAST;
  *
  * <p>
  * The basic idea behind this is that while
- * pretty printers are sometimes convenient for reformats of
+ * pretty printers are sometimes convenient for reformatting of
  * legacy code, they often either aren't configurable enough or
  * just can't anticipate how format should be done.  Sometimes this is
  * personal preference, other times it is practical experience.  In any
@@ -80,8 +81,11 @@ import com.puppycrawl.tools.checkstyle.api.DetailAST;
  * @author o_sukhodolsky
  * @author Maikel Steneker
  * @author maxvetrenko
+ * @noinspection ThisEscapedInObjectConstruction
  */
+@FileStatefulCheck
 public class IndentationCheck extends AbstractCheck {
+
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -297,17 +301,17 @@ public class IndentationCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return handlerFactory.getHandledTypes();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return handlerFactory.getHandledTypes();
     }
 
     @Override
@@ -350,4 +354,5 @@ public class IndentationCheck extends AbstractCheck {
     public final HandlerFactory getHandlerFactory() {
         return handlerFactory;
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,25 +22,22 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 import static com.puppycrawl.tools.checkstyle.checks.coding.FallThroughCheck.MSG_FALL_THROUGH;
 import static com.puppycrawl.tools.checkstyle.checks.coding.FallThroughCheck.MSG_FALL_THROUGH_LAST;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 
-public class FallThroughCheckTest extends BaseCheckTestSupport {
+public class FallThroughCheckTest extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "coding" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/coding/fallthrough";
     }
 
     @Test
     public void testDefault() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(FallThroughCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(FallThroughCheck.class);
         final String[] expected = {
             "14:13: " + getCheckMessage(MSG_FALL_THROUGH),
             "38:13: " + getCheckMessage(MSG_FALL_THROUGH),
@@ -57,7 +54,9 @@ public class FallThroughCheckTest extends BaseCheckTestSupport {
             "424:9: " + getCheckMessage(MSG_FALL_THROUGH),
             "436:9: " + getCheckMessage(MSG_FALL_THROUGH),
             "446:9: " + getCheckMessage(MSG_FALL_THROUGH),
-
+            "555:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "556:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "557:9: " + getCheckMessage(MSG_FALL_THROUGH),
         };
         verify(checkConfig,
                getPath("InputFallThrough.java"),
@@ -66,7 +65,7 @@ public class FallThroughCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testLastCaseGroup() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(FallThroughCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(FallThroughCheck.class);
         checkConfig.addAttribute("checkLastCaseGroup", "true");
         final String[] expected = {
             "14:13: " + getCheckMessage(MSG_FALL_THROUGH),
@@ -86,6 +85,9 @@ public class FallThroughCheckTest extends BaseCheckTestSupport {
             "424:9: " + getCheckMessage(MSG_FALL_THROUGH),
             "436:9: " + getCheckMessage(MSG_FALL_THROUGH),
             "446:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "555:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "556:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "557:9: " + getCheckMessage(MSG_FALL_THROUGH),
         };
         verify(checkConfig,
                getPath("InputFallThrough.java"),
@@ -94,10 +96,9 @@ public class FallThroughCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testOwnPattern() throws Exception {
-        final String ownPattern = "Continue with next case";
         final DefaultConfiguration checkConfig =
-            createCheckConfig(FallThroughCheck.class);
-        checkConfig.addAttribute("reliefPattern", ownPattern);
+            createModuleConfig(FallThroughCheck.class);
+        checkConfig.addAttribute("reliefPattern", "Continue with next case");
 
         final String[] expected = {
             "14:13: " + getCheckMessage(MSG_FALL_THROUGH),
@@ -132,24 +133,32 @@ public class FallThroughCheckTest extends BaseCheckTestSupport {
             "424:9: " + getCheckMessage(MSG_FALL_THROUGH),
             "436:9: " + getCheckMessage(MSG_FALL_THROUGH),
             "446:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "491:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "495:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "501:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "507:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "514:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "546:12: " + getCheckMessage(MSG_FALL_THROUGH),
+            "555:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "556:9: " + getCheckMessage(MSG_FALL_THROUGH),
+            "557:9: " + getCheckMessage(MSG_FALL_THROUGH),
         };
         verify(checkConfig,
                getPath("InputFallThrough.java"),
                expected);
-
     }
 
     @Test
     public void testTokensNotNull() {
         final FallThroughCheck check = new FallThroughCheck();
-        Assert.assertNotNull(check.getAcceptableTokens());
-        Assert.assertNotNull(check.getDefaultTokens());
-        Assert.assertNotNull(check.getRequiredTokens());
+        Assert.assertNotNull("Acceptable tokens should not be null", check.getAcceptableTokens());
+        Assert.assertNotNull("Default tokens should not be null", check.getDefaultTokens());
+        Assert.assertNotNull("Rrequired tokens should not be null", check.getRequiredTokens());
     }
 
     @Test
     public void testFallThroughNoElse() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(FallThroughCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(FallThroughCheck.class);
         final String[] expected = {
             "20:13: " + getCheckMessage(MSG_FALL_THROUGH),
             "35:13: " + getCheckMessage(MSG_FALL_THROUGH),
@@ -165,4 +174,5 @@ public class FallThroughCheckTest extends BaseCheckTestSupport {
             getPath("InputFallThrough2.java"),
             expected);
     }
+
 }

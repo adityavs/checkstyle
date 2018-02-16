@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,13 +24,14 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 import org.apache.tools.ant.AntClassLoader;
 import org.apache.tools.ant.BuildException;
@@ -46,13 +47,17 @@ import org.apache.tools.ant.types.Reference;
 import com.google.common.io.Closeables;
 import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.ConfigurationLoader;
-import com.puppycrawl.tools.checkstyle.DefaultContext;
 import com.puppycrawl.tools.checkstyle.DefaultLogger;
+import com.puppycrawl.tools.checkstyle.ModuleFactory;
+import com.puppycrawl.tools.checkstyle.PackageObjectFactory;
 import com.puppycrawl.tools.checkstyle.PropertiesExpander;
+import com.puppycrawl.tools.checkstyle.ThreadModeSettings;
 import com.puppycrawl.tools.checkstyle.XMLLogger;
 import com.puppycrawl.tools.checkstyle.api.AuditListener;
+import com.puppycrawl.tools.checkstyle.api.AutomaticBean;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
+import com.puppycrawl.tools.checkstyle.api.RootModule;
 import com.puppycrawl.tools.checkstyle.api.SeverityLevel;
 import com.puppycrawl.tools.checkstyle.api.SeverityLevelCounter;
 
@@ -60,8 +65,10 @@ import com.puppycrawl.tools.checkstyle.api.SeverityLevelCounter;
  * An implementation of a ANT task for calling checkstyle. See the documentation
  * of the task for usage.
  * @author Oliver Burn
+ * @noinspection ClassLoaderInstantiation
  */
 public class CheckstyleAntTask extends Task {
+
     /** Poor man's enum for an xml formatter. */
     private static final String E_XML = "xml";
     /** Poor man's enum for an plain formatter. */
@@ -69,6 +76,9 @@ public class CheckstyleAntTask extends Task {
 
     /** Suffix for time string. */
     private static final String TIME_SUFFIX = " ms.";
+
+    /** Contains the paths to process. */
+    private final List<Path> paths = new ArrayList<>();
 
     /** Contains the filesets to process. */
     private final List<FileSet> fileSets = new ArrayList<>();
@@ -86,7 +96,7 @@ public class CheckstyleAntTask extends Task {
     private String fileName;
 
     /** Config file containing configuration. */
-    private String configLocation;
+    private String config;
 
     /** Whether to fail build on violations. */
     private boolean failOnViolation = true;
@@ -104,11 +114,11 @@ public class CheckstyleAntTask extends Task {
     private int maxWarnings = Integer.MAX_VALUE;
 
     /**
-     * Whether to omit ignored modules - some modules may log tove
+     * Whether to execute ignored modules - some modules may log above
      * their severity depending on their configuration (e.g. WriteTag) so
      * need to be included
      */
-    private boolean omitIgnoredModules = true;
+    private boolean executeIgnoredModules;
 
     ////////////////////////////////////////////////////////////////////////////
     // Setters for ANT specific attributes
@@ -147,6 +157,14 @@ public class CheckstyleAntTask extends Task {
      */
     public void setMaxWarnings(int maxWarnings) {
         this.maxWarnings = maxWarnings;
+    }
+
+    /**
+     * Adds a path.
+     * @param path the path to add.
+     */
+    public void addPath(Path path) {
+        paths.add(path);
     }
 
     /**
@@ -215,54 +233,25 @@ public class CheckstyleAntTask extends Task {
 
     /**
      * Sets configuration file.
-     * @param file the configuration file to use
+     * @param configuration the configuration file, URL, or resource to use
      */
-    public void setConfig(File file) {
-        setConfigLocation(file.getAbsolutePath());
-    }
-
-    /**
-     * Sets URL to the configuration.
-     * @param url the URL of the configuration to use
-     * @deprecated please use setConfigUrl instead
-     */
-    // -@cs[AbbreviationAsWordInName] Should be removed at 7.0 version,
-    // we keep for some time to avoid braking compatibility.
-    @Deprecated
-    public void setConfigURL(URL url) {
-        setConfigUrl(url);
-    }
-
-    /**
-     * Sets URL to the configuration.
-     * @param url the URL of the configuration to use
-     */
-    public void setConfigUrl(URL url) {
-        setConfigLocation(url.toExternalForm());
-    }
-
-    /**
-     * Sets the location of the configuration.
-     * @param location the location, which is either a
-     */
-    private void setConfigLocation(String location) {
-        if (configLocation != null) {
-            throw new BuildException("Attributes 'config' and 'configURL' "
-                    + "must not be set at the same time");
+    public void setConfig(String configuration) {
+        if (config != null) {
+            throw new BuildException("Attribute 'config' has already been set");
         }
-        configLocation = location;
+        config = configuration;
     }
 
     /**
-     * Sets flag - whether to omit ignored modules.
-     * @param omit whether to omit ignored modules
+     * Sets flag - whether to execute ignored modules.
+     * @param omit whether to execute ignored modules
      */
-    public void setOmitIgnoredModules(boolean omit) {
-        omitIgnoredModules = omit;
+    public void setExecuteIgnoredModules(boolean omit) {
+        executeIgnoredModules = omit;
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Setters for Checker configuration attributes
+    // Setters for Root Module's configuration attributes
     ////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -294,12 +283,14 @@ public class CheckstyleAntTask extends Task {
             log("compiled on " + compileTimestamp, Project.MSG_VERBOSE);
 
             // Check for no arguments
-            if (fileName == null && fileSets.isEmpty()) {
+            if (fileName == null
+                    && fileSets.isEmpty()
+                    && paths.isEmpty()) {
                 throw new BuildException(
-                        "Must specify at least one of 'file' or nested 'fileset'.",
+                        "Must specify at least one of 'file' or nested 'fileset' or 'path'.",
                         getLocation());
             }
-            if (configLocation == null) {
+            if (config == null) {
                 throw new BuildException("Must specify 'config'.", getLocation());
             }
             realExecute(version);
@@ -316,61 +307,61 @@ public class CheckstyleAntTask extends Task {
      * @param checkstyleVersion Checkstyle compile version.
      */
     private void realExecute(String checkstyleVersion) {
-        // Create the checker
-        Checker checker = null;
+        // Create the root module
+        RootModule rootModule = null;
         try {
-            checker = createChecker();
+            rootModule = createRootModule();
 
             // setup the listeners
             final AuditListener[] listeners = getListeners();
             for (AuditListener element : listeners) {
-                checker.addListener(element);
+                rootModule.addListener(element);
             }
             final SeverityLevelCounter warningCounter =
                 new SeverityLevelCounter(SeverityLevel.WARNING);
-            checker.addListener(warningCounter);
+            rootModule.addListener(warningCounter);
 
-            processFiles(checker, warningCounter, checkstyleVersion);
+            processFiles(rootModule, warningCounter, checkstyleVersion);
         }
         finally {
-            destroyChecker(checker);
+            destroyRootModule(rootModule);
         }
     }
 
     /**
-     * Destroy Checker. This method exists only due to bug in cobertura library
+     * Destroy root module. This method exists only due to bug in cobertura library
      * https://github.com/cobertura/cobertura/issues/170
-     * @param checker Checker that was used to process files
+     * @param rootModule Root module that was used to process files
      */
-    private static void destroyChecker(Checker checker) {
-        if (checker != null) {
-            checker.destroy();
+    private static void destroyRootModule(RootModule rootModule) {
+        if (rootModule != null) {
+            rootModule.destroy();
         }
     }
 
     /**
-     * Scans and processes files by means given checker.
-     * @param checker Checker to process files
-     * @param warningCounter Checker's counter of warnings
+     * Scans and processes files by means given root module.
+     * @param rootModule Root module to process files
+     * @param warningCounter Root Module's counter of warnings
      * @param checkstyleVersion Checkstyle compile version
      */
-    private void processFiles(Checker checker, final SeverityLevelCounter warningCounter,
+    private void processFiles(RootModule rootModule, final SeverityLevelCounter warningCounter,
             final String checkstyleVersion) {
         final long startTime = System.currentTimeMillis();
-        final List<File> files = scanFileSets();
+        final List<File> files = getFilesToCheck();
         final long endTime = System.currentTimeMillis();
         log("To locate the files took " + (endTime - startTime) + TIME_SUFFIX,
             Project.MSG_VERBOSE);
 
         log("Running Checkstyle " + checkstyleVersion + " on " + files.size()
                 + " files", Project.MSG_INFO);
-        log("Using configuration " + configLocation, Project.MSG_VERBOSE);
+        log("Using configuration " + config, Project.MSG_VERBOSE);
 
         final int numErrs;
 
         try {
             final long processingStartTime = System.currentTimeMillis();
-            numErrs = checker.process(files);
+            numErrs = rootModule.process(files);
             final long processingEndTime = System.currentTimeMillis();
             log("To process the files took " + (processingEndTime - processingStartTime)
                 + TIME_SUFFIX, Project.MSG_VERBOSE);
@@ -397,37 +388,49 @@ public class CheckstyleAntTask extends Task {
     }
 
     /**
-     * Creates new instance of {@code Checker}.
-     * @return new instance of {@code Checker}
+     * Creates new instance of the root module.
+     * @return new instance of the root module
      */
-    private Checker createChecker() {
-        final Checker checker;
+    private RootModule createRootModule() {
+        final RootModule rootModule;
         try {
             final Properties props = createOverridingProperties();
-            final Configuration config =
-                ConfigurationLoader.loadConfiguration(
-                    configLocation,
-                    new PropertiesExpander(props),
-                    omitIgnoredModules);
+            final ThreadModeSettings threadModeSettings =
+                    ThreadModeSettings.SINGLE_THREAD_MODE_INSTANCE;
+            final ConfigurationLoader.IgnoredModulesOptions ignoredModulesOptions;
+            if (executeIgnoredModules) {
+                ignoredModulesOptions = ConfigurationLoader.IgnoredModulesOptions.EXECUTE;
+            }
+            else {
+                ignoredModulesOptions = ConfigurationLoader.IgnoredModulesOptions.OMIT;
+            }
 
-            final DefaultContext context = new DefaultContext();
-            final ClassLoader loader = new AntClassLoader(getProject(),
-                    classpath);
-            context.add("classloader", loader);
+            final Configuration configuration = ConfigurationLoader.loadConfiguration(config,
+                    new PropertiesExpander(props), ignoredModulesOptions, threadModeSettings);
 
             final ClassLoader moduleClassLoader =
                 Checker.class.getClassLoader();
-            context.add("moduleClassLoader", moduleClassLoader);
 
-            checker = new Checker();
-            checker.contextualize(context);
-            checker.configure(config);
+            final ModuleFactory factory = new PackageObjectFactory(
+                    Checker.class.getPackage().getName() + ".", moduleClassLoader);
+
+            rootModule = (RootModule) factory.createModule(configuration.getName());
+            rootModule.setModuleClassLoader(moduleClassLoader);
+
+            if (rootModule instanceof Checker) {
+                final ClassLoader loader = new AntClassLoader(getProject(),
+                        classpath);
+
+                ((Checker) rootModule).setClassLoader(loader);
+            }
+
+            rootModule.configure(configuration);
         }
         catch (final CheckstyleException ex) {
-            throw new BuildException(String.format(Locale.ROOT, "Unable to create a Checker: "
-                    + "configLocation {%s}, classpath {%s}.", configLocation, classpath), ex);
+            throw new BuildException(String.format(Locale.ROOT, "Unable to create Root Module: "
+                    + "config {%s}, classpath {%s}.", config, classpath), ex);
         }
-        return checker;
+        return rootModule;
     }
 
     /**
@@ -484,7 +487,8 @@ public class CheckstyleAntTask extends Task {
             if (formatters.isEmpty()) {
                 final OutputStream debug = new LogOutputStream(this, Project.MSG_DEBUG);
                 final OutputStream err = new LogOutputStream(this, Project.MSG_ERR);
-                listeners[0] = new DefaultLogger(debug, true, err, true);
+                listeners[0] = new DefaultLogger(debug, AutomaticBean.OutputStreamOptions.CLOSE,
+                        err, AutomaticBean.OutputStreamOptions.CLOSE);
             }
             else {
                 for (int i = 0; i < formatterCount; i++) {
@@ -502,33 +506,112 @@ public class CheckstyleAntTask extends Task {
 
     /**
      * Returns the list of files (full path name) to process.
-     * @return the list of files included via the filesets.
+     * @return the list of files included via the fileName, filesets and paths.
      */
-    protected List<File> scanFileSets() {
-        final List<File> list = new ArrayList<>();
+    private List<File> getFilesToCheck() {
+        final List<File> allFiles = new ArrayList<>();
         if (fileName != null) {
             // oops we've got an additional one to process, don't
             // forget it. No sweat, it's fully resolved via the setter.
             log("Adding standalone file for audit", Project.MSG_VERBOSE);
-            list.add(new File(fileName));
+            allFiles.add(new File(fileName));
         }
-        for (int i = 0; i < fileSets.size(); i++) {
-            final FileSet fileSet = fileSets.get(i);
-            final DirectoryScanner scanner = fileSet.getDirectoryScanner(getProject());
-            scanner.scan();
 
-            final String[] names = scanner.getIncludedFiles();
-            log(i + ") Adding " + names.length + " files from directory "
-                    + scanner.getBasedir(), Project.MSG_VERBOSE);
+        final List<File> filesFromFileSets = scanFileSets();
+        allFiles.addAll(filesFromFileSets);
 
-            for (String element : names) {
-                final String pathname = scanner.getBasedir() + File.separator
-                        + element;
-                list.add(new File(pathname));
+        final List<File> filesFromPaths = scanPaths();
+        allFiles.addAll(filesFromPaths);
+
+        return allFiles;
+    }
+
+    /**
+     * Retrieves all files from the defined paths.
+     * @return a list of files defined via paths.
+     */
+    private List<File> scanPaths() {
+        final List<File> allFiles = new ArrayList<>();
+
+        for (int i = 0; i < paths.size(); i++) {
+            final Path currentPath = paths.get(i);
+            final List<File> pathFiles = scanPath(currentPath, i + 1);
+            allFiles.addAll(pathFiles);
+        }
+
+        return allFiles;
+    }
+
+    /**
+     * Scans the given path and retrieves all files for the given path.
+     *
+     * @param path      A path to scan.
+     * @param pathIndex The index of the given path. Used in log messages only.
+     * @return A list of files, extracted from the given path.
+     */
+    private List<File> scanPath(Path path, int pathIndex) {
+        final String[] resources = path.list();
+        log(pathIndex + ") Scanning path " + path, Project.MSG_VERBOSE);
+        final List<File> allFiles = new ArrayList<>();
+        int concreteFilesCount = 0;
+
+        for (String resource : resources) {
+            final File file = new File(resource);
+            if (file.isFile()) {
+                concreteFilesCount++;
+                allFiles.add(file);
+            }
+            else {
+                final DirectoryScanner scanner = new DirectoryScanner();
+                scanner.setBasedir(file);
+                scanner.scan();
+                final List<File> scannedFiles = retrieveAllScannedFiles(scanner, pathIndex);
+                allFiles.addAll(scannedFiles);
             }
         }
 
-        return list;
+        if (concreteFilesCount > 0) {
+            log(String.format(Locale.ROOT, "%d) Adding %d files from path %s",
+                pathIndex, concreteFilesCount, path), Project.MSG_VERBOSE);
+        }
+
+        return allFiles;
+    }
+
+    /**
+     * Returns the list of files (full path name) to process.
+     * @return the list of files included via the filesets.
+     */
+    protected List<File> scanFileSets() {
+        final List<File> allFiles = new ArrayList<>();
+
+        for (int i = 0; i < fileSets.size(); i++) {
+            final FileSet fileSet = fileSets.get(i);
+            final DirectoryScanner scanner = fileSet.getDirectoryScanner(getProject());
+            final List<File> scannedFiles = retrieveAllScannedFiles(scanner, i);
+            allFiles.addAll(scannedFiles);
+        }
+
+        return allFiles;
+    }
+
+    /**
+     * Retrieves all matched files from the given scanner.
+     *
+     * @param scanner  A directory scanner. Note, that {@link DirectoryScanner#scan()}
+     *                 must be called before calling this method.
+     * @param logIndex A log entry index. Used only for log messages.
+     * @return A list of files, retrieved from the given scanner.
+     */
+    private List<File> retrieveAllScannedFiles(DirectoryScanner scanner, int logIndex) {
+        final String[] fileNames = scanner.getIncludedFiles();
+        log(String.format(Locale.ROOT, "%d) Adding %d files from directory %s",
+            logIndex, fileNames.length, scanner.getBasedir()), Project.MSG_VERBOSE);
+
+        return Arrays.stream(fileNames)
+            .map(name -> scanner.getBasedir() + File.separator + name)
+            .map(File::new)
+            .collect(Collectors.toList());
     }
 
     /**
@@ -536,6 +619,7 @@ public class CheckstyleAntTask extends Task {
      * @author Oliver Burn
      */
     public static class FormatterType extends EnumeratedAttribute {
+
         /** My possible values. */
         private static final String[] VALUES = {E_XML, E_PLAIN};
 
@@ -543,6 +627,7 @@ public class CheckstyleAntTask extends Task {
         public String[] getValues() {
             return VALUES.clone();
         }
+
     }
 
     /**
@@ -550,6 +635,7 @@ public class CheckstyleAntTask extends Task {
      * @author Oliver Burn
      */
     public static class Formatter {
+
         /** The formatter type. */
         private FormatterType type;
         /** The file to output to. */
@@ -588,11 +674,15 @@ public class CheckstyleAntTask extends Task {
          * @throws IOException if an error occurs
          */
         public AuditListener createListener(Task task) throws IOException {
+            final AuditListener listener;
             if (type != null
                     && E_XML.equals(type.getValue())) {
-                return createXmlLogger(task);
+                listener = createXmlLogger(task);
             }
-            return createDefaultLogger(task);
+            else {
+                listener = createDefaultLogger(task);
+            }
+            return listener;
         }
 
         /**
@@ -603,13 +693,22 @@ public class CheckstyleAntTask extends Task {
          */
         private AuditListener createDefaultLogger(Task task)
                 throws IOException {
+            final AuditListener defaultLogger;
             if (toFile == null || !useFile) {
-                return new DefaultLogger(
+                defaultLogger = new DefaultLogger(
                     new LogOutputStream(task, Project.MSG_DEBUG),
-                    true, new LogOutputStream(task, Project.MSG_ERR), true);
+                        AutomaticBean.OutputStreamOptions.CLOSE,
+                        new LogOutputStream(task, Project.MSG_ERR),
+                        AutomaticBean.OutputStreamOptions.CLOSE
+                );
             }
-            final FileOutputStream infoStream = new FileOutputStream(toFile);
-            return new DefaultLogger(infoStream, true, infoStream, false);
+            else {
+                final FileOutputStream infoStream = new FileOutputStream(toFile);
+                defaultLogger =
+                        new DefaultLogger(infoStream, AutomaticBean.OutputStreamOptions.CLOSE,
+                                infoStream, AutomaticBean.OutputStreamOptions.NONE);
+            }
+            return defaultLogger;
         }
 
         /**
@@ -619,18 +718,25 @@ public class CheckstyleAntTask extends Task {
          * @throws IOException if an error occurs
          */
         private AuditListener createXmlLogger(Task task) throws IOException {
+            final AuditListener xmlLogger;
             if (toFile == null || !useFile) {
-                return new XMLLogger(new LogOutputStream(task,
-                        Project.MSG_INFO), true);
+                xmlLogger = new XMLLogger(new LogOutputStream(task, Project.MSG_INFO),
+                        AutomaticBean.OutputStreamOptions.CLOSE);
             }
-            return new XMLLogger(new FileOutputStream(toFile), true);
+            else {
+                xmlLogger = new XMLLogger(new FileOutputStream(toFile),
+                        AutomaticBean.OutputStreamOptions.CLOSE);
+            }
+            return xmlLogger;
         }
+
     }
 
     /**
      * Represents a property that consists of a key and value.
      */
     public static class Property {
+
         /** The property key. */
         private String key;
         /** The property value. */
@@ -675,10 +781,12 @@ public class CheckstyleAntTask extends Task {
         public void setFile(File file) {
             value = file.getAbsolutePath();
         }
+
     }
 
     /** Represents a custom listener. */
     public static class Listener {
+
         /** Class name of the listener class. */
         private String className;
 
@@ -697,5 +805,7 @@ public class CheckstyleAntTask extends Task {
         public void setClassname(String name) {
             className = name;
         }
+
     }
+
 }

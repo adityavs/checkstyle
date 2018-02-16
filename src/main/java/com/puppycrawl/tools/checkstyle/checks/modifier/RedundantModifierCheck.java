@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ package com.puppycrawl.tools.checkstyle.checks.modifier;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -29,19 +30,19 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * Checks for redundant modifiers in interface and annotation definitions,
- * final modifier on methods of final classes, inner <code>interface</code>
- * declarations that are declared as <code>static</code>, non public class
+ * final modifier on methods of final classes, inner {@code interface}
+ * declarations that are declared as {@code static}, non public class
  * constructors and enum constructors, nested enum definitions that are declared
- * as <code>static</code>.
+ * as {@code static}.
  *
- * <p>Interfaces by definition are abstract so the <code>abstract</code>
+ * <p>Interfaces by definition are abstract so the {@code abstract}
  * modifier on the interface is redundant.
  *
  * <p>Classes inside of interfaces by definition are public and static,
- * so the <code>public</code> and <code>static</code> modifiers
+ * so the {@code public} and {@code static} modifiers
  * on the inner classes are redundant. On the other hand, classes
  * inside of interfaces can be abstract or non abstract.
- * So, <code>abstract</code> modifier is allowed.
+ * So, {@code abstract} modifier is allowed.
  *
  * <p>Fields in interfaces and annotations are automatically
  * public, static and final, so these modifiers are redundant as
@@ -52,8 +53,8 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * annotation fields are automatically public and abstract.</p>
  *
  * <p>Enums by definition are static implicit subclasses of java.lang.Enum&#60;E&#62;.
- * So, the <code>static</code> modifier on the enums is redundant. In addition,
- * if enum is inside of interface, <code>public</code> modifier is also redundant.</p>
+ * So, the {@code static} modifier on the enums is redundant. In addition,
+ * if enum is inside of interface, {@code public} modifier is also redundant.</p>
  *
  * <p>Enums can also contain abstract methods and methods which can be overridden by the declared
  * enumeration fields.
@@ -74,7 +75,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * <p>Since these methods can be overridden in these situations, the final methods are not
  * marked as redundant even though they can't be extended by other classes/enums.</p>
  *
- * <p>Final classes by definition cannot be extended so the <code>final</code>
+ * <p>Final classes by definition cannot be extended so the {@code final}
  * modifier on the method of a final class is redundant.
  *
  * <p>Public modifier for constructors in non-public non-protected classes
@@ -114,6 +115,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author <a href="mailto:andreyselkin@gmail.com">Andrei Selkin</a>
  * @author Vladislav Lisetskiy
  */
+@StatelessCheck
 public class RedundantModifierCheck
     extends AbstractCheck {
 
@@ -209,11 +211,27 @@ public class RedundantModifierCheck
      */
     private void checkEnumConstructorModifiers(DetailAST ast) {
         final DetailAST modifiers = ast.findFirstToken(TokenTypes.MODIFIERS);
-        final DetailAST modifier = modifiers.getFirstChild();
+        final DetailAST modifier = getFirstModifierAst(modifiers);
+
         if (modifier != null) {
             log(modifier.getLineNo(), modifier.getColumnNo(),
                     MSG_KEY, modifier.getText());
         }
+    }
+
+    /**
+     * Retrieves the first modifier that is not an annotation.
+     * @param modifiers The ast to examine.
+     * @return The first modifier or {@code null} if none found.
+     */
+    private static DetailAST getFirstModifierAst(DetailAST modifiers) {
+        DetailAST modifier = modifiers.getFirstChild();
+
+        while (modifier != null && modifier.getType() == TokenTypes.ANNOTATION) {
+            modifier = modifier.getNextSibling();
+        }
+
+        return modifier;
     }
 
     /**
@@ -237,7 +255,6 @@ public class RedundantModifierCheck
         final DetailAST modifiers = ast.findFirstToken(TokenTypes.MODIFIERS);
         DetailAST modifier = modifiers.getFirstChild();
         while (modifier != null) {
-
             // javac does not allow final or static in interface methods
             // order annotation fields hence no need to check that this
             // is not a method or annotation field
@@ -268,18 +285,23 @@ public class RedundantModifierCheck
                         ast.findFirstToken(TokenTypes.MODIFIERS);
         // private method?
         boolean checkFinal =
-            modifiers.branchContains(TokenTypes.LITERAL_PRIVATE);
+            modifiers.findFirstToken(TokenTypes.LITERAL_PRIVATE) != null;
         // declared in a final class?
         DetailAST parent = ast.getParent();
-        while (parent != null) {
+        while (parent != null && !checkFinal) {
             if (parent.getType() == TokenTypes.CLASS_DEF) {
                 final DetailAST classModifiers =
                     parent.findFirstToken(TokenTypes.MODIFIERS);
-                checkFinal = checkFinal || classModifiers.branchContains(TokenTypes.FINAL);
+                checkFinal = classModifiers.findFirstToken(TokenTypes.FINAL) != null;
                 parent = null;
             }
-            else if (parent.getType() == TokenTypes.LITERAL_NEW) {
+            else if (parent.getType() == TokenTypes.LITERAL_NEW
+                    || parent.getType() == TokenTypes.ENUM_CONSTANT_DEF) {
                 checkFinal = true;
+                parent = null;
+            }
+            else if (parent.getType() == TokenTypes.ENUM_DEF) {
+                checkFinal = modifiers.findFirstToken(TokenTypes.LITERAL_STATIC) != null;
                 parent = null;
             }
             else {
@@ -290,7 +312,7 @@ public class RedundantModifierCheck
             checkForRedundantModifier(ast, TokenTypes.FINAL);
         }
 
-        if (!ast.branchContains(TokenTypes.SLIST)) {
+        if (ast.findFirstToken(TokenTypes.SLIST) == null) {
             processAbstractMethodParameters(ast);
         }
     }
@@ -355,7 +377,7 @@ public class RedundantModifierCheck
     private static boolean isClassProtected(DetailAST classDef) {
         final DetailAST classModifiers =
                 classDef.findFirstToken(TokenTypes.MODIFIERS);
-        return classModifiers.branchContains(TokenTypes.LITERAL_PROTECTED);
+        return classModifiers.findFirstToken(TokenTypes.LITERAL_PROTECTED) != null;
     }
 
     /**
@@ -367,7 +389,8 @@ public class RedundantModifierCheck
         boolean isAccessibleFromPublic = false;
         final boolean isMostOuterScope = ast.getParent() == null;
         final DetailAST modifiersAst = ast.findFirstToken(TokenTypes.MODIFIERS);
-        final boolean hasPublicModifier = modifiersAst.branchContains(TokenTypes.LITERAL_PUBLIC);
+        final boolean hasPublicModifier =
+                modifiersAst.findFirstToken(TokenTypes.LITERAL_PUBLIC) != null;
 
         if (isMostOuterScope) {
             isAccessibleFromPublic = hasPublicModifier;
@@ -410,7 +433,7 @@ public class RedundantModifierCheck
     }
 
     /**
-     * Checks if method definition is annotated with
+     * Checks if method definition is annotated with.
      * <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/SafeVarargs.html">
      * SafeVarargs</a> annotation
      * @param methodDef method definition node
@@ -445,4 +468,5 @@ public class RedundantModifierCheck
         }
         return annotationsList;
     }
+
 }

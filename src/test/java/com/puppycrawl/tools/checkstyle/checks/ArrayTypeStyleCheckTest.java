@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,52 +23,52 @@ import static com.puppycrawl.tools.checkstyle.checks.ArrayTypeStyleCheck.MSG_KEY
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
 public class ArrayTypeStyleCheckTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/arraytypestyle";
     }
 
     @Test
     public void testGetRequiredTokens() {
         final ArrayTypeStyleCheck checkObj = new ArrayTypeStyleCheck();
         final int[] expected = {TokenTypes.ARRAY_DECLARATOR};
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Required tokens differs from expected",
+                expected, checkObj.getRequiredTokens());
     }
 
     @Test
-    public void testJavaStyle()
+    public void testJavaStyleOn()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ArrayTypeStyleCheck.class);
+            createModuleConfig(ArrayTypeStyleCheck.class);
         final String[] expected = {
             "14:23: " + getCheckMessage(MSG_KEY),
-            "20:44: " + getCheckMessage(MSG_KEY),
+            "15:18: " + getCheckMessage(MSG_KEY),
+            "21:44: " + getCheckMessage(MSG_KEY),
         };
         verify(checkConfig, getPath("InputArrayTypeStyle.java"), expected);
     }
 
     @Test
-    public void testCStyle()
+    public void testJavaStyleOff()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(ArrayTypeStyleCheck.class);
+            createModuleConfig(ArrayTypeStyleCheck.class);
         checkConfig.addAttribute("javaStyle", "false");
         final String[] expected = {
             "13:16: " + getCheckMessage(MSG_KEY),
-            "16:39: " + getCheckMessage(MSG_KEY),
-            "22:18: " + getCheckMessage(MSG_KEY),
-            "30:20: " + getCheckMessage(MSG_KEY),
+            "17:39: " + getCheckMessage(MSG_KEY),
+            "23:18: " + getCheckMessage(MSG_KEY),
+            "31:20: " + getCheckMessage(MSG_KEY),
         };
         verify(checkConfig, getPath("InputArrayTypeStyle.java"), expected);
     }
@@ -78,7 +78,10 @@ public class ArrayTypeStyleCheckTest
         final int[] expected = {TokenTypes.ARRAY_DECLARATOR };
         final ArrayTypeStyleCheck check = new ArrayTypeStyleCheck();
         final int[] actual = check.getAcceptableTokens();
-        assertEquals(1, actual.length);
-        assertArrayEquals(expected, actual);
+        assertEquals("Amount of acceptable tokens differs from expected",
+                1, actual.length);
+        assertArrayEquals("Acceptable tokens differs from expected",
+                expected, actual);
     }
+
 }

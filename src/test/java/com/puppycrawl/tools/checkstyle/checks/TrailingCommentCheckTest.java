@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,45 +23,38 @@ import static com.puppycrawl.tools.checkstyle.checks.TrailingCommentCheck.MSG_KE
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-public class TrailingCommentCheckTest extends BaseCheckTestSupport {
-    private DefaultConfiguration checkConfig;
-
-    @Before
-    public void setUp() {
-        checkConfig = createCheckConfig(TrailingCommentCheck.class);
-    }
+public class TrailingCommentCheckTest extends AbstractModuleTestSupport {
 
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/trailingcomment";
     }
 
     @Test
     public void testGetRequiredTokens() {
         final TrailingCommentCheck checkObj = new TrailingCommentCheck();
-        assertArrayEquals(CommonUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
+        assertArrayEquals("Required tokens array is not empty",
+                CommonUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testGetAcceptableTokens() {
         final TrailingCommentCheck checkObj = new TrailingCommentCheck();
-        assertArrayEquals(CommonUtils.EMPTY_INT_ARRAY, checkObj.getAcceptableTokens());
+        assertArrayEquals("Acceptable tokens array is not empty",
+                CommonUtils.EMPTY_INT_ARRAY, checkObj.getAcceptableTokens());
     }
 
     @Test
     public void testDefaults() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(TrailingCommentCheck.class);
         final String[] expected = {
             "4: " + getCheckMessage(MSG_KEY),
             "7: " + getCheckMessage(MSG_KEY),
@@ -75,6 +68,7 @@ public class TrailingCommentCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testLegalComment() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(TrailingCommentCheck.class);
         checkConfig.addAttribute("legalComment", "^NOI18N$");
         final String[] expected = {
             "4: " + getCheckMessage(MSG_KEY),
@@ -87,6 +81,27 @@ public class TrailingCommentCheckTest extends BaseCheckTestSupport {
     }
 
     @Test
+    public void testFormat() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(TrailingCommentCheck.class);
+        checkConfig.addAttribute("format", "NOT MATCH");
+        final String[] expected = {
+            "4: " + getCheckMessage(MSG_KEY),
+            "5: " + getCheckMessage(MSG_KEY),
+            "6: " + getCheckMessage(MSG_KEY),
+            "7: " + getCheckMessage(MSG_KEY),
+            "8: " + getCheckMessage(MSG_KEY),
+            "13: " + getCheckMessage(MSG_KEY),
+            "14: " + getCheckMessage(MSG_KEY),
+            "15: " + getCheckMessage(MSG_KEY),
+            "18: " + getCheckMessage(MSG_KEY),
+            "19: " + getCheckMessage(MSG_KEY),
+            "26: " + getCheckMessage(MSG_KEY),
+            "29: " + getCheckMessage(MSG_KEY),
+        };
+        verify(checkConfig, getPath("InputTrailingComment.java"), expected);
+    }
+
+    @Test
     public void testCallVisitToken() {
         final TrailingCommentCheck check = new TrailingCommentCheck();
         try {
@@ -94,7 +109,9 @@ public class TrailingCommentCheckTest extends BaseCheckTestSupport {
             Assert.fail("IllegalStateException is expected");
         }
         catch (IllegalStateException ex) {
-            assertEquals("visitToken() shouldn't be called.", ex.getMessage());
+            assertEquals("Error message is unexpected",
+                    "visitToken() shouldn't be called.", ex.getMessage());
         }
     }
+
 }

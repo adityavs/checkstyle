@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ package com.puppycrawl.tools.checkstyle.checks.annotation;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TextBlock;
@@ -96,7 +97,9 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author Travis Schneeberger
  */
+@StatelessCheck
 public final class MissingDeprecatedCheck extends AbstractCheck {
+
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -153,11 +156,16 @@ public final class MissingDeprecatedCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
+        return getRequiredTokens();
+    }
+
+    @Override
+    public int[] getRequiredTokens() {
         return new int[] {
             TokenTypes.INTERFACE_DEF,
             TokenTypes.CLASS_DEF,
@@ -169,11 +177,6 @@ public final class MissingDeprecatedCheck extends AbstractCheck {
             TokenTypes.ENUM_CONSTANT_DEF,
             TokenTypes.ANNOTATION_FIELD_DEF,
         };
-    }
-
-    @Override
-    public int[] getRequiredTokens() {
-        return getAcceptableTokens();
     }
 
     @Override
@@ -199,33 +202,28 @@ public final class MissingDeprecatedCheck extends AbstractCheck {
      * @return true if contains the tag
      */
     private boolean containsJavadocTag(final TextBlock javadoc) {
-        if (javadoc == null) {
-            return false;
-        }
-
-        final String[] lines = javadoc.getText();
-
         boolean found = false;
+        if (javadoc != null) {
+            final String[] lines = javadoc.getText();
+            int currentLine = javadoc.getStartLineNo() - 1;
 
-        int currentLine = javadoc.getStartLineNo() - 1;
+            for (int i = 0; i < lines.length; i++) {
+                currentLine++;
+                final String line = lines[i];
 
-        for (int i = 0; i < lines.length; i++) {
-            currentLine++;
-            final String line = lines[i];
+                final Matcher javadocNoArgMatcher = MATCH_DEPRECATED.matcher(line);
+                final Matcher noArgMultilineStart = MATCH_DEPRECATED_MULTILINE_START.matcher(line);
 
-            final Matcher javadocNoArgMatcher =
-                MATCH_DEPRECATED.matcher(line);
-            final Matcher noArgMultilineStart = MATCH_DEPRECATED_MULTILINE_START.matcher(line);
-
-            if (javadocNoArgMatcher.find()) {
-                if (found) {
-                    log(currentLine, MSG_KEY_JAVADOC_DUPLICATE_TAG,
-                        JavadocTagInfo.DEPRECATED.getText());
+                if (javadocNoArgMatcher.find()) {
+                    if (found) {
+                        log(currentLine, MSG_KEY_JAVADOC_DUPLICATE_TAG,
+                                JavadocTagInfo.DEPRECATED.getText());
+                    }
+                    found = true;
                 }
-                found = true;
-            }
-            else if (noArgMultilineStart.find()) {
-                found = checkTagAtTheRestOfComment(lines, found, currentLine, i);
+                else if (noArgMultilineStart.find()) {
+                    found = checkTagAtTheRestOfComment(lines, found, currentLine, i);
+                }
             }
         }
         return found;
@@ -244,10 +242,9 @@ public final class MissingDeprecatedCheck extends AbstractCheck {
      */
     private boolean checkTagAtTheRestOfComment(String[] lines, boolean foundBefore,
             int currentLine, int index) {
-
         boolean found = false;
-        for (int reindex = index + 1;
-            reindex < lines.length;) {
+        int reindex = index + 1;
+        while (reindex <= lines.length - 1) {
             final Matcher multilineCont = MATCH_DEPRECATED_MULTILINE_CONT.matcher(lines[reindex]);
 
             if (multilineCont.find()) {
@@ -273,4 +270,5 @@ public final class MissingDeprecatedCheck extends AbstractCheck {
         }
         return found;
     }
+
 }

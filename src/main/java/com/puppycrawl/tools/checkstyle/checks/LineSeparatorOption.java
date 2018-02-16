@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@ import java.util.Arrays;
  * @see NewlineAtEndOfFileCheck
  */
 public enum LineSeparatorOption {
+
     /** Windows-style line separators. **/
     CRLF("\r\n"),
 
@@ -65,23 +66,27 @@ public enum LineSeparatorOption {
      *     of this line separator
      */
     public boolean matches(byte... bytes) {
+        final boolean result;
         if (this == LF_CR_CRLF) {
             // this silently assumes CRLF and ANY have the same length
             // and LF and CR are of length 1
-            return CRLF.matches(bytes)
+            result = CRLF.matches(bytes)
                 || LF.matches(Arrays.copyOfRange(bytes, 1, 2))
                 || CR.matches(Arrays.copyOfRange(bytes, 1, 2));
         }
         else {
-            return Arrays.equals(bytes, lineSeparator);
+            result = Arrays.equals(bytes, lineSeparator);
         }
+        return result;
     }
 
     /**
+     * Returns length of file separator in bytes.
      * @return the length of the file separator in bytes,
      *     e.g. 1 for CR, 2 for CRLF, ...
      */
     public int length() {
         return lineSeparator.length;
     }
+
 }

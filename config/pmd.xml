@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0
          http://pmd.sourceforge.net/ruleset_2_0_0.xsd">
   <description>
-    PMD ruleset for Checkstyle
+    PMD common ruleset for Checkstyle main/test sourcesets
   </description>
   <rule ref="rulesets/java/basic.xml"/>
   <rule ref="rulesets/java/braces.xml"/>
@@ -52,8 +52,9 @@
   <rule ref="rulesets/java/codesize.xml/TooManyMethods">
     <properties>
       <property name="maxmethods" value="20"/>
-      <!-- Reducing the number of methods requires making excess hierarchy or duplicating code, or making existing methods too complex. -->
-      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='RequireThisCheck']"/>
+      <!-- Reducing the number of methods in RequireThisCheck requires making excess hierarchy or duplicating code, or making existing methods too complex. -->
+      <!-- PackageObjectFactory has many boilerplate methods. -->
+      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='RequireThisCheck' or @Image='PackageObjectFactory']"/>
     </properties>
   </rule>
   <rule ref="rulesets/java/codesize.xml/ExcessiveClassLength">
@@ -67,6 +68,14 @@
     <properties>
       <!-- JavadocMethodCheck is deprecated class, till it is redone to use JavadocAst -->
       <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='JavadocMethodCheck']"/>
+      <!-- getDetails() method is a huge SWITCH, it has to be monolithic -->
+      <property name="violationSuppressXPath" value="//MethodDeclaration[@Name='getDetails' and ../../..[@Image='RightCurlyCheck']]"/>
+    </properties>
+  </rule>
+  <rule ref="rulesets/java/codesize.xml/ExcessiveParameterList">
+    <properties>
+      <!-- LocalizedMessage class has constructor with many parameters -->
+      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='LocalizedMessage']"/>
     </properties>
   </rule>
 
@@ -126,7 +135,7 @@
     <properties>
       <!-- TreeWalker integrates Checkstyle and antlr and CheckstyleAntTask integrates Checkstyle
        with Ant. Checker collects external resource locations and setup configuration. -->
-      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='TreeWalker' or @Image='CheckstyleAntTask' or @Image='Checker' or @Image='Main']"/>
+      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='CheckstyleAntTask' or @Image='Checker' or @Image='Main']"/>
     </properties>
   </rule>
   <rule ref="rulesets/java/coupling.xml/CouplingBetweenObjects">
@@ -147,6 +156,9 @@
     <exclude name="FieldDeclarationsShouldBeAtStartOfClass"/>
     <!-- too much alarms of Checks, we will never move logic out of Check, each Check is independent logic container -->
     <exclude name="GodClass"/>
+    <!--we do not care about this minor overhead, we are not Android application and we do not want to change
+     visibility of methods. Package-private visibility should be avoid almost always.-->
+    <exclude name="AccessorMethodGeneration"/>
   </rule>
 
   <rule ref="rulesets/java/design.xml/ConfusingTernary">
@@ -172,13 +184,7 @@
     <properties>
      <!-- Can not change API -->
     <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='AbstractFileSetCheck'
-    or @Image='AbstractCheck' or @Image='AbstractJavadocCheck']"/>
-    </properties>
-  </rule>
-  <rule ref="rulesets/java/design.xml/AbstractClassWithoutAnyMethod">
-    <properties>
-     <!-- Can not change API -->
-    <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='Check']"/>
+    or @Image='AbstractCheck' or @Image='AbstractJavadocCheck' or @Image='AbstractNode' or @Image='AbstractViolationReporter']"/>
     </properties>
   </rule>
 
@@ -190,14 +196,26 @@
     </properties>
   </rule>
 
+  <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel">
+    <properties>
+      <!-- UniqueProperties#put overloads synchronized method, so it should have synchronized modifier -->
+      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='UniqueProperties']//MethodDeclarator[@Image='put']"/>
+    </properties>
+  </rule>
+
   <rule ref="rulesets/java/empty.xml"/>
+  <rule ref="rulesets/java/empty.xml/EmptyCatchBlock">
+    <properties>
+      <property name="allowCommentedBlocks" value="true"/>
+    </properties>
+  </rule>
+
   <rule ref="rulesets/java/finalizers.xml"/>
   <rule ref="rulesets/java/imports.xml"/>
   <rule ref="rulesets/java/javabeans.xml">
     <!-- too many false-positives -->
     <exclude name="BeanMembersShouldSerialize"/>
   </rule>
-  <rule ref="rulesets/java/junit.xml"/>
   <rule ref="rulesets/java/logging-jakarta-commons.xml"/>
 
   <rule ref="rulesets/java/logging-java.xml"/>
@@ -246,7 +264,7 @@
   <rule ref="rulesets/java/naming.xml/AbstractNaming">
     <properties>
      <!-- We can not brake compatibility with previous versions -->
-     <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='Check' or @Image='AbstractClassNameCheck']"/>
+     <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='AbstractClassNameCheck' or @Image='AutomaticBean']"/>
     </properties>
   </rule>
   <rule ref="rulesets/java/naming.xml/LongVariable">

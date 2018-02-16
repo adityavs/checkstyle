@@ -2,7 +2,7 @@
 
 <!DOCTYPE module PUBLIC
         "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
-        "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+        "http://checkstyle.sourceforge.net/dtds/configuration_1_2.dtd">
 
 <module name="Checker">
     <!-- All checks are from https://github.com/sevntu-checkstyle/sevntu.checkstyle project -->
@@ -14,14 +14,13 @@
     <module name="SuppressionFilter">
         <property name="file" value="${project.basedir}/config/sevntu_suppressions.xml"/>
     </module>
-    <module name="SuppressWithNearbyCommentFilter">
-        <property name="commentFormat" value="-@cs\[(\w{8,})\] \w[\(\)\-\.\'\`\,\:\;\w ]{10,}"/>
-        <property name="checkFormat" value="$1"/>
-        <property name="influenceFormat" value="3"/>
-    </module>
 
     <module name="TreeWalker">
-        <module name="FileContentsHolder"/>
+        <module name="SuppressWithNearbyCommentFilter">
+            <property name="commentFormat" value="-@cs\[(\w{8,})\] \w[\(\)\-\.\'\`\,\:\;\w ]{10,}"/>
+            <property name="checkFormat" value="$1"/>
+            <property name="influenceFormat" value="3"/>
+        </module>
         <module name="StaticMethodCandidate"/>
         <module name="UselessSingleCatchCheck"/>
         <module name="NestedSwitchCheck"/>
@@ -34,7 +33,7 @@
         <module name="PublicReferenceToPrivateTypeCheck"/>
         <module name="NoNullForCollectionReturnCheck"/>
         <module name="NoMainMethodInAbstractClass"/>
-        <module name="InterfaceTypeParameterNameCheck"/>
+        <module name="com.github.sevntu.checkstyle.checks.naming.InterfaceTypeParameterNameCheck"/>
         <module name="ForbidThrowAnonymousExceptionsCheck"/>
         <module name="ForbidReturnInFinallyBlock"/>
         <module name="ForbidInstantiation">
@@ -88,15 +87,13 @@
         <module name="WhitespaceBeforeArrayInitializer"/>
         <module name="InnerClass"/>
         <module name="EnumValueNameCheck">
-            <property name="objFormat" value="^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$"/>
+            <property name="format" value="^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$"/>
         </module>
         <module name="OverridableMethodInConstructor">
             <property name="checkCloneMethod" value="true"/>
             <property name="checkReadObjectMethod" value="true"/>
             <property name="matchMethodsByArgCount" value="true"/>
         </module>
-        <!--commented till https://github.com/sevntu-checkstyle/sevntu.checkstyle/issues/410-->
-        <!--<module name="AvoidModifiersForTypes"/>-->
         <module name="ForbidAnnotation">
             <property name="annotationNames" value="Ignore, VisibleForTesting"/>
             <property name="annotationTargets" value="METHOD_DEF"/>
@@ -123,7 +120,21 @@
         <module name="ForbidCertainImports">
             <property name="packageNameRegexp" value=".+\.checkstyle\.api.*|.+\.checkstyle\.utils.*"/>
             <property name="forbiddenImportsRegexp" value=".+\.checks\..+"/>
-            <property name="forbiddenImportsExcludesRegexp" value=""/>
+            <!-- AccessModifier is in util package (should be moved to api package) to disallow
+            its usage by API clients till https://github.com/checkstyle/checkstyle/issues/3511-->
+            <property name="forbiddenImportsExcludesRegexp"
+                      value="^com.puppycrawl.tools.checkstyle.checks.naming.AccessModifier$"/>
+        </module>
+        <module name="ForbidCertainImports">
+            <property name="packageNameRegexp" value=".+"/>
+            <property name="id" value="ForbidInterfacesImportFromJavaUtilStream"/>
+            <!--Disallowed till https://github.com/mojohaus/cobertura-maven-plugin/issues/29-->
+            <property name="forbiddenImportsRegexp" value="java\.util\.stream\.Stream|
+            java\.util\.stream\.Stream\.Builder|java\.util\.stream\.DoubleStream|
+            java\.util\.stream\.DoubleStream\.Builder|java\.util\.stream\.IntStream|
+            java\.util\.stream\.IntStream\.Builder|java\.util\.stream\.LongStream|
+            java\.util\.stream\.LongStream\.Builder|java\.util\.stream\.BaseStream|
+            java\.util\.stream\.Collector"/>
         </module>
         <module name="LineLengthExtended">
             <property name="max" value="100"/>
@@ -178,16 +189,25 @@
         <module name="NumericLiteralNeedsUnderscoreCheck"/>
         <module name="UniformEnumConstantNameCheck" />
         <module name="ForbidAnnotationElementValueCheck" />
-        <module name="HideUtilityClassConstructorCheck" />
+        <module name="com.github.sevntu.checkstyle.checks.design.HideUtilityClassConstructorCheck" />
         <module name="AvoidModifiersForTypesCheck">
           <property name="forbiddenClassesRegexpProtected" value="Logger"/>
           <property name="forbiddenClassesRegexpPublic" value="Logger"/>
           <property name="forbiddenClassesRegexpPackagePrivate" value="Logger"/>
+          <property name="forbiddenClassesRegexpStatic" value="Logger"/>
         </module>
         <module name="ConstructorWithoutParamsCheck">
           <property name="classNameFormat" value=".*Exception$"/>
           <property name="ignoredClassNameFormat" value="UnsupportedOperationException"/>
         </module>
-        <module name="ReturnCountExtendedCheck" />
+        <module name="ReturnCountExtendedCheck">
+          <property name="maxReturnCount" value="1"/>
+          <property name="topLinesToIgnoreCount" value="5"/>
+          <property name="ignoreMethodLinesCount" value="0"/>
+          <property name="ignoreEmptyReturns" value="false"/>
+        </module>
+        <module name="MoveVariableInsideIfCheck" />
+        <module name="RequireFailForTryCatchInJunit" />
+        <module name="CheckstyleTestMakeupCheck" />
     </module>
 </module>

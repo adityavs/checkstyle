@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,9 +27,11 @@ import java.util.Map;
  * {@link LocalizedMessage localized messages} that are created by the module.
  *
  * @author lkuehne
+ * @noinspection NoopMethodInAbstractClass
  */
 public abstract class AbstractViolationReporter
     extends AutomaticBean {
+
     /** The severity level of any violations found. */
     private SeverityLevel severityLevel = SeverityLevel.ERROR;
 
@@ -41,6 +43,7 @@ public abstract class AbstractViolationReporter
      * @return the severity level
      * @see SeverityLevel
      * @see LocalizedMessage#getSeverityLevel
+     * @noinspection WeakerAccess
      */
     public final SeverityLevel getSeverityLevel() {
         return severityLevel;
@@ -61,6 +64,7 @@ public abstract class AbstractViolationReporter
      *  Get the severity level's name.
      *
      *  @return  the check's severity level name.
+     *  @noinspection WeakerAccess
      */
     public final String getSeverity() {
         return severityLevel.getName();
@@ -119,25 +123,22 @@ public abstract class AbstractViolationReporter
      *     used by the module.
      */
     private static String getMessageBundle(final String className) {
+        final String messageBundle;
         final int endIndex = className.lastIndexOf('.');
         final String messages = "messages";
-        if (endIndex < 0) {
-            return messages;
+        if (endIndex == -1) {
+            messageBundle = messages;
         }
-        final String packageName = className.substring(0, endIndex);
-        return packageName + "." + messages;
+        else {
+            final String packageName = className.substring(0, endIndex);
+            messageBundle = packageName + "." + messages;
+        }
+        return messageBundle;
     }
 
-    /**
-     * Helper method to log a LocalizedMessage.
-     *
-     * @param ast a node to get line id column numbers associated
-     *             with the message
-     * @param key key to locale message format
-     * @param args arguments to format
-     */
-    protected final void log(DetailAST ast, String key, Object... args) {
-        log(ast.getLineNo(), ast.getColumnNo(), key, args);
+    @Override
+    protected void finishLocalSetup() throws CheckstyleException {
+        // No code by default
     }
 
     /**
@@ -167,4 +168,5 @@ public abstract class AbstractViolationReporter
     // overloaded methods. See https://github.com/sevntu-checkstyle/sevntu.checkstyle/issues/414
     public abstract void log(int line, int col, String key,
             Object... args);
+
 }

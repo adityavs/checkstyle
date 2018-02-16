@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,21 +22,19 @@ package com.puppycrawl.tools.checkstyle.checks.naming;
 import static com.puppycrawl.tools.checkstyle.checks.naming.AbstractNameCheck.MSG_INVALID_PATTERN;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-public class CatchParameterNameCheckTest extends BaseCheckTestSupport {
+public class CatchParameterNameCheckTest extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator + "naming" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/naming/catchparametername";
     }
 
     @Test
@@ -44,21 +42,23 @@ public class CatchParameterNameCheckTest extends BaseCheckTestSupport {
         final CatchParameterNameCheck catchParameterNameCheck = new CatchParameterNameCheck();
         final int[] expected = {TokenTypes.PARAMETER_DEF};
 
-        assertArrayEquals(expected, catchParameterNameCheck.getRequiredTokens());
-        assertArrayEquals(expected, catchParameterNameCheck.getAcceptableTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, catchParameterNameCheck.getRequiredTokens());
+        assertArrayEquals("Default acceptable tokens are invalid",
+            expected, catchParameterNameCheck.getAcceptableTokens());
     }
 
     @Test
     public void testDefaultConfigurationOnCorrectFile() throws Exception {
-        final Configuration checkConfig = createCheckConfig(CatchParameterNameCheck.class);
+        final Configuration checkConfig = createModuleConfig(CatchParameterNameCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        verify(checkConfig, getPath("InputSimple.java"), expected);
+        verify(checkConfig, getPath("InputCatchParameterNameSimple.java"), expected);
     }
 
     @Test
     public void testDefaultConfigurationOnFileWithViolations() throws Exception {
-        final Configuration checkConfig = createCheckConfig(CatchParameterNameCheck.class);
+        final Configuration checkConfig = createModuleConfig(CatchParameterNameCheck.class);
         final String defaultFormat = "^(e|t|ex|[a-z][a-z][a-zA-Z]+)$";
 
         final String[] expected = {
@@ -77,13 +77,12 @@ public class CatchParameterNameCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testCustomFormatFromJavadoc() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(CatchParameterNameCheck.class);
-        final String format = "^[a-z][a-zA-Z0-9]+$";
-        checkConfig.addAttribute("format", format);
+        final DefaultConfiguration checkConfig = createModuleConfig(CatchParameterNameCheck.class);
+        checkConfig.addAttribute("format", "^[a-z][a-zA-Z0-9]+$");
 
         final String[] expected = {
-            "6:28: " + getCheckMessage(MSG_INVALID_PATTERN, "e", format),
-            "24:28: " + getCheckMessage(MSG_INVALID_PATTERN, "t", format),
+            "6:28: " + getCheckMessage(MSG_INVALID_PATTERN, "e", "^[a-z][a-zA-Z0-9]+$"),
+            "24:28: " + getCheckMessage(MSG_INVALID_PATTERN, "t", "^[a-z][a-zA-Z0-9]+$"),
         };
 
         verify(checkConfig, getPath("InputCatchParameterName.java"), expected);
@@ -91,12 +90,12 @@ public class CatchParameterNameCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testCustomFormatWithNoAnchors() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(CatchParameterNameCheck.class);
-        final String format = "[a-z]";
-        checkConfig.addAttribute("format", format);
+        final DefaultConfiguration checkConfig = createModuleConfig(CatchParameterNameCheck.class);
+        checkConfig.addAttribute("format", "[a-z]");
 
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputCatchParameterName.java"), expected);
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,8 +23,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.beanutils.ConversionException;
-
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
@@ -32,6 +31,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
+ * Checks the ordering/grouping of imports. Features are:
  * <ul>
  * <li>groups imports: ensures that groups of imports come in a specific order
  * (e.g., java. comes first, javax. comes second, then everything else)</li>
@@ -46,7 +46,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * <li>groups static imports: ensures that static imports are at the top (or the
  * bottom) of all the imports, or above (or under) each group, or are treated
  * like non static imports (@see {@link ImportOrderOption}</li>
- * </ul>
+ * </ul>.
  *
  * <pre>
  * Properties:
@@ -61,7 +61,8 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *   <tr><td>ordered</td><td>whether imports within group should be sorted</td>
  *       <td>Boolean</td><td>true</td></tr>
  *   <tr><td>separated</td><td>whether imports groups should be separated by, at least,
- *       one blank line and aren't separated internally</td><td>Boolean</td><td>false</td></tr>
+ *       one blank line or comment and aren't separated internally
+ *       </td><td>Boolean</td><td>false</td></tr>
  *   <tr><td>caseSensitive</td><td>whether string comparison should be case sensitive or not.
  *       Case sensitive sorting is in ASCII sort order</td><td>Boolean</td><td>true</td></tr>
  *   <tr><td>sortStaticImportsAlphabetically</td><td>whether static imports grouped by top or
@@ -182,6 +183,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author <a href="mailto:nesterenko-aleksey@list.ru">Aleksey Nesterenko</a>
  * @author Andrei Selkin
  */
+@FileStatefulCheck
 public class ImportOrderCheck
     extends AbstractCheck {
 
@@ -239,14 +241,14 @@ public class ImportOrderCheck
     /**
      * Set the option to enforce.
      * @param optionStr string to decode option from
-     * @throws ConversionException if unable to decode
+     * @throws IllegalArgumentException if unable to decode
      */
     public void setOption(String optionStr) {
         try {
             option = ImportOrderOption.valueOf(optionStr.trim().toUpperCase(Locale.ENGLISH));
         }
         catch (IllegalArgumentException iae) {
-            throw new ConversionException("unable to parse " + optionStr, iae);
+            throw new IllegalArgumentException("unable to parse " + optionStr, iae);
         }
     }
 
@@ -261,7 +263,6 @@ public class ImportOrderCheck
 
         for (int i = 0; i < packageGroups.length; i++) {
             String pkg = packageGroups[i];
-            final StringBuilder pkgBuilder = new StringBuilder(pkg);
             final Pattern grp;
 
             // if the pkg name is the wildcard, make it match zero chars
@@ -278,6 +279,7 @@ public class ImportOrderCheck
                 grp = Pattern.compile(pkg);
             }
             else {
+                final StringBuilder pkgBuilder = new StringBuilder(pkg);
                 if (!CommonUtils.endsWithChar(pkg, '.')) {
                     pkgBuilder.append('.');
                 }
@@ -305,7 +307,7 @@ public class ImportOrderCheck
      * by at least one blank line.
      *
      * @param separated
-     *            whether groups should be separated by oen blank line.
+     *            whether groups should be separated by one blank line.
      */
     public void setSeparated(boolean separated) {
         this.separated = separated;
@@ -384,36 +386,37 @@ public class ImportOrderCheck
         // using set of IF instead of SWITCH to analyze Enum options to satisfy coverage.
         // https://github.com/checkstyle/checkstyle/issues/1387
         if (option == ImportOrderOption.TOP) {
-
             if (isLastImportAndNonStatic) {
                 lastGroup = Integer.MIN_VALUE;
                 lastImport = "";
             }
             doVisitToken(ident, isStatic, isStaticAndNotLastImport);
 
+            if (isStaticAndNotLastImport && !beforeFirstImport) {
+                log(ident.getLineNo(), MSG_ORDERING, ident.getText());
+            }
         }
         else if (option == ImportOrderOption.BOTTOM) {
-
             if (isStaticAndNotLastImport) {
                 lastGroup = Integer.MIN_VALUE;
                 lastImport = "";
             }
             doVisitToken(ident, isStatic, isLastImportAndNonStatic);
 
+            if (isLastImportAndNonStatic) {
+                log(ident.getLineNo(), MSG_ORDERING, ident.getText());
+            }
         }
         else if (option == ImportOrderOption.ABOVE) {
             // previous non-static but current is static
             doVisitToken(ident, isStatic, isStaticAndNotLastImport);
-
         }
         else if (option == ImportOrderOption.UNDER) {
             doVisitToken(ident, isStatic, isLastImportAndNonStatic);
-
         }
         else if (option == ImportOrderOption.INFLOW) {
             // "previous" argument is useless here
             doVisitToken(ident, isStatic, true);
-
         }
         else {
             throw new IllegalStateException(
@@ -439,19 +442,19 @@ public class ImportOrderCheck
         final int groupIdx = getGroupNumber(name);
         final int line = ident.getLineNo();
 
-        if (groupIdx == lastGroup
-            || !beforeFirstImport && isAlphabeticallySortableStaticImport(isStatic)) {
-            doVisitTokenInSameGroup(isStatic, previous, name, line);
-        }
-        else if (groupIdx > lastGroup) {
-            if (!beforeFirstImport && separated && line - lastImportLine < 2) {
+        if (groupIdx > lastGroup) {
+            if (!beforeFirstImport && separated && line - lastImportLine < 2
+                && !isInSameGroup(groupIdx, isStatic)) {
                 log(line, MSG_SEPARATION, name);
             }
+        }
+        else if (isInSameGroup(groupIdx, isStatic)) {
+            doVisitTokenInSameGroup(isStatic, previous, name, line);
         }
         else {
             log(line, MSG_ORDERING, name);
         }
-        if (checkSeparatorInGroup(groupIdx, isStatic, line)) {
+        if (isSeparatorInGroup(groupIdx, isStatic, line)) {
             log(line, MSG_SEPARATED_IN_GROUP, name);
         }
 
@@ -466,21 +469,38 @@ public class ImportOrderCheck
      * @param line the line of the current import.
      * @return true if imports group are separated internally.
      */
-    private boolean checkSeparatorInGroup(int groupIdx, boolean isStatic, int line) {
-        return !beforeFirstImport && separated && groupIdx == lastGroup
-                && isStatic == lastImportStatic && line - lastImportLine > 1;
+    private boolean isSeparatorInGroup(int groupIdx, boolean isStatic, int line) {
+        final boolean inSameGroup = isInSameGroup(groupIdx, isStatic);
+        return (!separated || inSameGroup) && isSeparatorBeforeImport(line);
     }
 
     /**
-     * Checks whether static imports grouped by <b>top</b> or <b>bottom</b> option
-     * are sorted alphabetically or not.
-     * @param isStatic if current import is static.
-     * @return true if static imports should be sorted alphabetically.
+     * Checks whether there is any separator before current import.
+     * @param line the line of the current import.
+     * @return true if there is separator before current import which isn't the first import.
      */
-    private boolean isAlphabeticallySortableStaticImport(boolean isStatic) {
-        return isStatic && sortStaticImportsAlphabetically
-                && (option == ImportOrderOption.TOP
-                    || option == ImportOrderOption.BOTTOM);
+    private boolean isSeparatorBeforeImport(int line) {
+        return !beforeFirstImport && line - lastImportLine > 1;
+    }
+
+    /**
+     * Checks whether imports are in same group.
+     * @param groupIdx group number.
+     * @param isStatic whether the token is static or not.
+     * @return true if imports are in same group.
+     */
+    private boolean isInSameGroup(int groupIdx, boolean isStatic) {
+        final boolean isStaticImportGroupIndependent =
+            option == ImportOrderOption.TOP || option == ImportOrderOption.BOTTOM;
+        final boolean result;
+        if (isStaticImportGroupIndependent) {
+            result = isStatic && lastImportStatic
+                || groupIdx == lastGroup && isStatic == lastImportStatic;
+        }
+        else {
+            result = groupIdx == lastGroup;
+        }
+        return result;
     }
 
     /**
@@ -527,12 +547,22 @@ public class ImportOrderCheck
      */
     private boolean isWrongOrder(String name, boolean isStatic) {
         final boolean result;
-        if (isStatic && useContainerOrderingForStatic) {
-            result = compareContainerOrder(lastImport, name, caseSensitive) > 0;
+        if (isStatic) {
+            if (useContainerOrderingForStatic) {
+                result = compareContainerOrder(lastImport, name, caseSensitive) >= 0;
+            }
+            else if (option == ImportOrderOption.TOP
+                || option == ImportOrderOption.BOTTOM) {
+                result = sortStaticImportsAlphabetically
+                    && compare(lastImport, name, caseSensitive) >= 0;
+            }
+            else {
+                result = compare(lastImport, name, caseSensitive) >= 0;
+            }
         }
         else {
             // out of lexicographic order
-            result = compare(lastImport, name, caseSensitive) > 0;
+            result = compare(lastImport, name, caseSensitive) >= 0;
         }
         return result;
     }
@@ -611,20 +641,22 @@ public class ImportOrderCheck
      */
     private int getGroupNumber(String name) {
         int bestIndex = groups.length;
-        int bestLength = -1;
-        int bestPos = 0;
+        int bestEnd = -1;
+        int bestPos = Integer.MAX_VALUE;
 
         // find out what group this belongs in
         // loop over groups and get index
         for (int i = 0; i < groups.length; i++) {
             final Matcher matcher = groups[i].matcher(name);
-            while (matcher.find()) {
-                final int length = matcher.end() - matcher.start();
-                if (length > bestLength
-                    || length == bestLength && matcher.start() < bestPos) {
+            if (matcher.find()) {
+                if (matcher.start() < bestPos) {
                     bestIndex = i;
-                    bestLength = length;
+                    bestEnd = matcher.end();
                     bestPos = matcher.start();
+                }
+                else if (matcher.start() == bestPos && matcher.end() > bestEnd) {
+                    bestIndex = i;
+                    bestEnd = matcher.end();
                 }
             }
         }
@@ -658,4 +690,5 @@ public class ImportOrderCheck
 
         return result;
     }
+
 }

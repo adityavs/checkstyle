@@ -32,7 +32,7 @@
           />
     <logo name="Stackoverflow"
           img="images/stackoverflow.jpeg"
-          href="http://stackoverflow.com/questions/tagged/checkstyle"
+          href="https://stackoverflow.com/questions/tagged/checkstyle"
           />
     <logo name="GoogleGroups"
           img="images/groups.png"
@@ -44,7 +44,11 @@
           />
     <logo name="Google+"
           img="images/Google-Plus-Logo-120x38.png"
-          href="https://plus.google.com/108692338295483568100/posts"
+          href="https://plus.google.com/+CheckstyleJava"
+          />
+    <logo name="JProfiler"
+          img="https://www.ej-technologies.com/images/product_banners/jprofiler_medium.png"
+          href="https://www.ej-technologies.com/products/jprofiler/overview.html"
           />
   </poweredBy>
 

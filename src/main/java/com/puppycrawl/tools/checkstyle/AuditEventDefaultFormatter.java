@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,10 @@ import com.puppycrawl.tools.checkstyle.api.SeverityLevel;
 
 /**
  * Represents the default formatter for log message.
- * Default log message format is: [SEVERITY LEVEL] filePath:lineNo:columnNo: message. [CheckName]
+ * Default log message format is:
+ * [SEVERITY LEVEL] filePath:lineNo:columnNo: message. [CheckName]
+ * When the module id of the message has been set, the format is:
+ * [SEVERITY LEVEL] filePath:lineNo:columnNo: message. [ModuleId]
  * @author Andrei Selkin
  */
 public class AuditEventDefaultFormatter implements AuditEventFormatter {
@@ -62,9 +65,15 @@ public class AuditEventDefaultFormatter implements AuditEventFormatter {
         if (event.getColumn() > 0) {
             sb.append(':').append(event.getColumn());
         }
-        sb.append(": ").append(message);
-        final String checkShortName = getCheckShortName(event);
-        sb.append(" [").append(checkShortName).append(']');
+        sb.append(": ").append(message).append(" [");
+        if (event.getModuleId() == null) {
+            final String checkShortName = getCheckShortName(event);
+            sb.append(checkShortName);
+        }
+        else {
+            sb.append(event.getModuleId());
+        }
+        sb.append(']');
 
         return sb.toString();
     }
@@ -85,7 +94,7 @@ public class AuditEventDefaultFormatter implements AuditEventFormatter {
 
     /**
      * Returns check name without 'Check' suffix.
-     * @param event audit ivent.
+     * @param event audit event.
      * @return check name without 'Check' suffix.
      */
     private static String getCheckShortName(AuditEvent event) {
@@ -111,4 +120,5 @@ public class AuditEventDefaultFormatter implements AuditEventFormatter {
         }
         return checkShortName;
     }
+
 }

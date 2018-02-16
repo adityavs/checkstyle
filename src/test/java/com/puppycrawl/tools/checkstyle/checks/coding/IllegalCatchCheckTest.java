@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,25 +21,22 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import static com.puppycrawl.tools.checkstyle.checks.coding.IllegalCatchCheck.MSG_KEY;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 
-public class IllegalCatchCheckTest extends BaseCheckTestSupport {
+public class IllegalCatchCheckTest extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "coding" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/coding/illegalcatch";
     }
 
     @Test
     public void testDefault() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(IllegalCatchCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(IllegalCatchCheck.class);
 
         final String[] expected = {
             "6:11: " + getCheckMessage(MSG_KEY, "RuntimeException"),
@@ -55,7 +52,7 @@ public class IllegalCatchCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testIllegalClassNames() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(IllegalCatchCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(IllegalCatchCheck.class);
         checkConfig.addAttribute("illegalClassNames",
                                  "java.lang.Error, java.lang.Exception, java.lang.Throwable");
 
@@ -71,7 +68,7 @@ public class IllegalCatchCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testIllegalClassNamesBad() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(IllegalCatchCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(IllegalCatchCheck.class);
         checkConfig.addAttribute("illegalClassNames",
                                  "java.lang.Error, java.lang.Exception, NullPointerException");
 
@@ -89,7 +86,7 @@ public class IllegalCatchCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testMultipleTypes() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(IllegalCatchCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(IllegalCatchCheck.class);
 
         final String[] expected = {
             "7:11: " + getCheckMessage(MSG_KEY, "RuntimeException"),
@@ -104,8 +101,9 @@ public class IllegalCatchCheckTest extends BaseCheckTestSupport {
     @Test
     public void testTokensNotNull() {
         final IllegalCatchCheck check = new IllegalCatchCheck();
-        Assert.assertNotNull(check.getAcceptableTokens());
-        Assert.assertNotNull(check.getDefaultTokens());
-        Assert.assertNotNull(check.getRequiredTokens());
+        Assert.assertNotNull("Acceptable tokens should not be null", check.getAcceptableTokens());
+        Assert.assertNotNull("Default tokens should not be null", check.getDefaultTokens());
+        Assert.assertNotNull("Required tokens should not be null", check.getRequiredTokens());
     }
+
 }

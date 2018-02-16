@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@ package com.puppycrawl.tools.checkstyle.checks.javadoc;
  * @author Chris Stillwell
  */
 class HtmlTag {
+
     /** The maximum length of text to display with this tag. */
     private static final int MAX_TEXT_LEN = 60;
 
@@ -117,9 +118,22 @@ class HtmlTag {
 
     @Override
     public String toString() {
+        return "HtmlTag[id='" + id + '\''
+                + ", lineNo=" + lineNo
+                + ", position=" + position
+                + ", text='" + text + '\''
+                + ", closedTag=" + closedTag
+                + ", incompleteTag=" + incompleteTag + ']';
+    }
+
+    /**
+     * Returns the comment line of text where this tag appears.
+     * @return text of the tag
+     */
+    public String getText() {
         final int startOfText = position;
-        final int endOfText =
-            Math.min(startOfText + MAX_TEXT_LEN, text.length());
+        final int endOfText = Math.min(startOfText + MAX_TEXT_LEN, text.length());
         return text.substring(startOfText, endOfText);
     }
+
 }

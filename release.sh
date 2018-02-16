@@ -25,10 +25,10 @@ echo "Please provide password for $SF_USER,checkstyle@shell.sourceforge.net"
 echo "exit" | ssh -t $SF_USER,checkstyle@shell.sourceforge.net create
 
 # Version bump in pom.xml - https://github.com/checkstyle/checkstyle/commits/master
-mvn -Pgpg release:prepare -B -Darguments="-DskipTests -DskipITs -Dpmd.skip=true -Dfindbugs.skip=true -Dcobertura.skip=true -Dcheckstyle.ant.skip=true -Dcheckstyle.skip=true -Dxml.skip=true"
+mvn -e -Pgpg release:prepare -B -Darguments="-DskipTests -DskipITs -Dpmd.skip=true -Dfindbugs.skip=true -Dcobertura.skip=true -Dcheckstyle.ant.skip=true -Dcheckstyle.skip=true -Dxml.skip=true"
 
 # deployment of jars to maven central and publication of site to http://checkstyle.sourceforge.net/new-site/
-mvn -Pgpg release:perform -Darguments='-Dcheckstyle.ant.skip=true'
+mvn -e -Pgpg release:perform -Darguments='-Dcheckstyle.ant.skip=true -Dcheckstyle.skip=true'
 
 #############################
 
@@ -41,7 +41,6 @@ mv htdocs/new-site/ .
 mv htdocs htdocs-$PREV_RELEASE
 mv new-site htdocs
 ln -s /home/project-web/checkstyle/reports htdocs/reports
-ln -s /home/project-web/checkstyle/dtds htdocs/dtds
 
 #Archiving
 tar cfz htdocs-$PREV_RELEASE.tar.gz htdocs-$PREV_RELEASE/
@@ -54,7 +53,7 @@ EOF
 git checkout checkstyle-$RELEASE
 
 #Generate all binaries
-mvn -Passembly clean package
+mvn -e -Passembly clean package
 
 #Publish them to sourceforce
 FRS_PATH=/home/frs/project/checkstyle/checkstyle/$RELEASE

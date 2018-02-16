@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,6 @@
 
 package com.puppycrawl.tools.checkstyle.utils;
 
-import com.google.common.base.CharMatcher;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -85,7 +84,7 @@ public final class AnnotationUtility {
             throw new IllegalArgumentException(THE_AST_IS_NULL);
         }
         final DetailAST holder = getAnnotationHolder(ast);
-        return holder != null && holder.branchContains(TokenTypes.ANNOTATION);
+        return holder != null && holder.findFirstToken(TokenTypes.ANNOTATION) != null;
     }
 
     /**
@@ -146,7 +145,7 @@ public final class AnnotationUtility {
             throw new IllegalArgumentException("the annotation is null");
         }
 
-        if (CharMatcher.WHITESPACE.matchesAllOf(annotation)) {
+        if (CommonUtils.isBlank(annotation)) {
             throw new IllegalArgumentException(
                     "the annotation is empty or spaces");
         }
@@ -156,7 +155,7 @@ public final class AnnotationUtility {
         for (DetailAST child = holder.getFirstChild();
             child != null; child = child.getNextSibling()) {
             if (child.getType() == TokenTypes.ANNOTATION) {
-                final DetailAST firstChild = child.getFirstChild();
+                final DetailAST firstChild = child.findFirstToken(TokenTypes.AT);
                 final String name =
                     FullIdent.createFullIdent(firstChild.getNextSibling()).getText();
                 if (annotation.equals(name)) {

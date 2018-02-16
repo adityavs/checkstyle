@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,8 +21,11 @@ package com.puppycrawl.tools.checkstyle;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -62,11 +65,12 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author Andrei Selkin
  */
 public class Checker extends AutomaticBean implements MessageDispatcher, RootModule {
-    /** Logger for Checker. */
-    private static final Log LOG = LogFactory.getLog(Checker.class);
 
     /** Message to use when an exception occurs and should be printed as a violation. */
-    private static final String EXCEPTION_MSG = "general.exception";
+    public static final String EXCEPTION_MSG = "general.exception";
+
+    /** Logger for Checker. */
+    private final Log log;
 
     /** Maintains error count. */
     private final SeverityLevelCounter counter = new SeverityLevelCounter(
@@ -119,13 +123,13 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
      * here. Consequently Checker does not extend AbstractViolationReporter,
      * leading to a bit of duplicated code for severity level setting.
      */
-    private SeverityLevel severityLevel = SeverityLevel.ERROR;
+    private SeverityLevel severity = SeverityLevel.ERROR;
 
     /** Name of a charset. */
-    private String charset = System.getProperty("file.encoding", "UTF-8");
+    private String charset = System.getProperty("file.encoding", StandardCharsets.UTF_8.name());
 
     /** Cache file. **/
-    private PropertyCacheFile cache;
+    private PropertyCacheFile cacheFile;
 
     /** Controls whether exceptions should halt execution or not. */
     private boolean haltOnException = true;
@@ -136,6 +140,7 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
      */
     public Checker() {
         addListener(counter);
+        log = LogFactory.getLog(Checker.class);
     }
 
     /**
@@ -145,8 +150,8 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
      */
     public void setCacheFile(String fileName) throws IOException {
         final Configuration configuration = getConfiguration();
-        cache = new PropertyCacheFile(configuration, fileName);
-        cache.load();
+        cacheFile = new PropertyCacheFile(configuration, fileName);
+        cacheFile.load();
     }
 
     /**
@@ -168,11 +173,12 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
     @Override
     public void destroy() {
         listeners.clear();
+        fileSetChecks.clear();
         beforeExecutionFileFilters.clear();
         filters.clear();
-        if (cache != null) {
+        if (cacheFile != null) {
             try {
-                cache.persist();
+                cacheFile.persist();
             }
             catch (IOException ex) {
                 throw new IllegalStateException("Unable to persist cache file.", ex);
@@ -198,8 +204,8 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
 
     @Override
     public int process(List<File> files) throws CheckstyleException {
-        if (cache != null) {
-            cache.putExternalResources(getExternalResourceLocations());
+        if (cacheFile != null) {
+            cacheFile.putExternalResources(getExternalResourceLocations());
         }
 
         // Prepare to start
@@ -272,13 +278,13 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
             try {
                 final String fileName = file.getAbsolutePath();
                 final long timestamp = file.lastModified();
-                if (cache != null && cache.isInCache(fileName, timestamp)
+                if (cacheFile != null && cacheFile.isInCache(fileName, timestamp)
                         || !CommonUtils.matchesFileExtension(file, fileExtensions)
                         || !acceptFileStarted(fileName)) {
                     continue;
                 }
-                if (cache != null) {
-                    cache.put(fileName, timestamp);
+                if (cacheFile != null) {
+                    cacheFile.put(fileName, timestamp);
                 }
                 fireFileStarted(fileName);
                 final SortedSet<LocalizedMessage> fileMessages = processFile(file);
@@ -315,7 +321,7 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
             }
         }
         catch (final IOException ioe) {
-            LOG.debug("IOException occurred.", ioe);
+            log.debug("IOException occurred.", ioe);
             fileMessages.add(new LocalizedMessage(0,
                     Definitions.CHECKSTYLE_BUNDLE, EXCEPTION_MSG,
                     new String[] {ioe.getMessage()}, null, getClass(), null));
@@ -326,10 +332,16 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
                 throw ex;
             }
 
-            LOG.debug("Exception occurred.", ex);
+            log.debug("Exception occurred.", ex);
+
+            final StringWriter sw = new StringWriter();
+            final PrintWriter pw = new PrintWriter(sw, true);
+
+            ex.printStackTrace(pw);
+
             fileMessages.add(new LocalizedMessage(0,
                     Definitions.CHECKSTYLE_BUNDLE, EXCEPTION_MSG,
-                    new String[] {ex.getClass().getName() + ": " + ex.getMessage()},
+                    new String[] {sw.getBuffer().toString()},
                     null, getClass(), null));
         }
         return fileMessages;
@@ -381,8 +393,8 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
                 }
             }
         }
-        if (hasNonFilteredViolations && cache != null) {
-            cache.remove(fileName);
+        if (hasNonFilteredViolations && cacheFile != null) {
+            cacheFile.remove(fileName);
         }
     }
 
@@ -402,12 +414,11 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
     }
 
     @Override
-    public void finishLocalSetup() throws CheckstyleException {
+    protected void finishLocalSetup() throws CheckstyleException {
         final Locale locale = new Locale(localeLanguage, localeCountry);
         LocalizedMessage.setLocale(locale);
 
         if (moduleFactory == null) {
-
             if (moduleClassLoader == null) {
                 throw new CheckstyleException(
                         "if no custom moduleFactory is set, "
@@ -424,11 +435,15 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
         context.add("charset", charset);
         context.add("classLoader", classLoader);
         context.add("moduleFactory", moduleFactory);
-        context.add("severity", severityLevel.getName());
+        context.add("severity", severity.getName());
         context.add("basedir", basedir);
         childContext = context;
     }
 
+    /**
+     * {@inheritDoc} Creates child module.
+     * @noinspection ChainOfInstanceofChecks
+     */
     @Override
     protected void setupChild(Configuration childConf)
             throws CheckstyleException {
@@ -559,7 +574,7 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
      * @see SeverityLevel
      */
     public final void setSeverity(String severity) {
-        severityLevel = SeverityLevel.getInstance(severity);
+        this.severity = SeverityLevel.getInstance(severity);
     }
 
     /**
@@ -571,19 +586,6 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
      */
     public final void setClassLoader(ClassLoader classLoader) {
         this.classLoader = classLoader;
-    }
-
-    /**
-     * Sets the classloader that is used to contextualize fileset checks.
-     * Some Check implementations will use that classloader to improve the
-     * quality of their reports, e.g. to load a class and then analyze it via
-     * reflection.
-     * @param loader the new classloader
-     * @deprecated use {@link #setClassLoader(ClassLoader loader)} instead.
-     */
-    @Deprecated
-    public final void setClassloader(ClassLoader loader) {
-        classLoader = loader;
     }
 
     @Override
@@ -617,8 +619,9 @@ public class Checker extends AutomaticBean implements MessageDispatcher, RootMod
      * Clears the cache.
      */
     public void clearCache() {
-        if (cache != null) {
-            cache.reset();
+        if (cacheFile != null) {
+            cacheFile.reset();
         }
     }
+
 }

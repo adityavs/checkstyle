@@ -14,13 +14,12 @@
   </head>
 
   <body>
-<!-- till https://issues.apache.org/jira/browse/MSITE-748
     <section name="Content">
       <macro name="toc">
         <param name="fromDepth" value="1"/>
         <param name="toDepth" value="1"/>
       </macro>
-    </section> -->
+    </section>
 
     <section name="Overview">
       <p>
@@ -79,12 +78,12 @@
 
       <source>
 &lt;module name=&quot;Checker&quot;&gt;
-    &lt;module name=&quot;JavadocPackage&quot;/&gt;
-    &lt;module name=&quot;TreeWalker&quot;&gt;
-        &lt;module name=&quot;AvoidStarImport&quot;/&gt;
-        &lt;module name=&quot;ConstantName&quot;/&gt;
-        &lt;module name=&quot;EmptyBlock&quot;/&gt;
-    &lt;/module&gt;
+  &lt;module name=&quot;JavadocPackage&quot;/&gt;
+  &lt;module name=&quot;TreeWalker&quot;&gt;
+    &lt;module name=&quot;AvoidStarImport&quot;/&gt;
+    &lt;module name=&quot;ConstantName&quot;/&gt;
+    &lt;module name=&quot;EmptyBlock&quot;/&gt;
+  &lt;/module&gt;
 &lt;/module&gt;
       </source>
 
@@ -101,7 +100,8 @@
         </li>
         <li>
           Module <code>TreeWalker</code> has submodules
-          <code>AvoidStarImport</code>, <code>ConstantName</code>, and <code>EmptyBlock</code>.  (Modules <a
+          <code>AvoidStarImport</code>, <code>ConstantName</code>,
+          and <code>EmptyBlock</code>.  (Modules <a
           href="config_imports.html"><code>AvoidStarImport</code></a>, <a
           href="config_naming.html"><code>ConstantName</code></a>, and <a
           href="config_blocks.html"><code>EmptyBlock</code></a> check that a Java source
@@ -119,8 +119,8 @@
 
       <ol>
         <li>
-          Load a class directly according to a package-qualified <code>name</code>, such as loading class <code>com.puppycrawl.tools.checkstyle.TreeWalker</code>
-          for element:
+          Load a class directly according to a package-qualified <code>name</code>, such as loading
+          class <code>com.puppycrawl.tools.checkstyle.TreeWalker</code> for element:
 
           <source>
 &lt;module name=&quot;com.puppycrawl.tools.checkstyle.TreeWalker&quot;/&gt;
@@ -139,7 +139,8 @@
 
           Checkstyle applies packages <code>
           com.puppycrawl.tools.checkstyle</code>, <code>
-          com.puppycrawl.tools.checkstyle.filters</code>, and <code> com.puppycrawl.tools.checkstyle.checks</code>
+          com.puppycrawl.tools.checkstyle.filters</code>, and
+          <code>com.puppycrawl.tools.checkstyle.checks</code>
           and its sub-packages (only those included in the Checkstyle
           distribution). You can specify other packages in a <a
           href="#Packages"><em>package names XML document</em></a>
@@ -166,7 +167,8 @@
         Each module property has a default value, and you are not
         required to define a property in the configuration document if
         the default value is satisfactory.  To assign a non-default
-        value to a module's property, define a child <code>property</code> element of the <code>module</code> element in the configuration XML
+        value to a module's property, define a child <code>property</code> element
+        of the <code>module</code> element in the configuration XML
         document. Also provide appropriate <code>name</code> and <code>value</code>
         attributes for the <code>property</code> element.
         For example, property <code>max</code> of module
@@ -180,7 +182,7 @@
 
       <source>
 &lt;module name=&quot;MethodLength&quot;&gt;
-    &lt;property name=&quot;max&quot; value=&quot;60&quot;/&gt;
+  &lt;property name=&quot;max&quot; value=&quot;60&quot;/&gt;
 &lt;/module&gt;
       </source>
 
@@ -191,18 +193,19 @@
         are inherited in the module hierarchy. These features make it
         easy to define one property value that applies to many
         modules. For example, the following configuration fragment
-        specifies that a <code>tabWidth</code> of <code>4</code> applies to <code>TreeWalker</code> and its submodules:
+        specifies that a <code>tabWidth</code> of <code>4</code>
+        applies to <code>TreeWalker</code> and its submodules:
       </p>
 
       <source>
 &lt;module name=&quot;Checker&quot;&gt;
-    &lt;module name=&quot;JavadocPackage&quot;/&gt;
-    &lt;module name=&quot;TreeWalker&quot;&gt;
-        &lt;property name=&quot;tabWidth&quot; value=&quot;4&quot;/&gt;
-        &lt;module name=&quot;AvoidStarImport&quot;/&gt;
-        &lt;module name=&quot;ConstantName&quot;/&gt;
-        ...
-    &lt;/module&gt;
+  &lt;module name=&quot;JavadocPackage&quot;/&gt;
+  &lt;module name=&quot;TreeWalker&quot;&gt;
+    &lt;property name=&quot;tabWidth&quot; value=&quot;4&quot;/&gt;
+    &lt;module name=&quot;AvoidStarImport&quot;/&gt;
+    &lt;module name=&quot;ConstantName&quot;/&gt;
+    ...
+  &lt;/module&gt;
 &lt;/module&gt;
       </source>
 
@@ -219,7 +222,7 @@
 
       <source>
 &lt;module name=&quot;Header&quot;&gt;
-    &lt;property name=&quot;headerFile&quot; value=&quot;${checkstyle.header.file}&quot;/&gt;
+  &lt;property name=&quot;headerFile&quot; value=&quot;${checkstyle.header.file}&quot;/&gt;
 &lt;/module&gt;
       </source>
 
@@ -240,8 +243,8 @@
       <source>
 &lt;module name=&quot;JavadocMethod&quot;&gt;
   &lt;property name=&quot;severity&quot;
-               value=&quot;${checkstyle.javadoc.severity}&quot;
-               default=&quot;error&quot;/&gt;
+    value=&quot;${checkstyle.javadoc.severity}&quot;
+    default=&quot;error&quot;/&gt;
 &lt;/module&gt;
       </source>
 
@@ -263,254 +266,284 @@
     </section>
 
     <section name="Checker">
+      <subsection name="Description">
+        <p>Since Checkstyle 3.0</p>
+        <p>
+          All configurations have root module <code>Checker</code>.  <code>Checker</code>
+          contains:
+        </p>
 
-      <p>
-        All configurations have root module <code>Checker</code>.  <code>Checker</code>
-        contains:
-      </p>
+        <ul>
+          <li><em>FileSetCheck</em> children: modules that check sets of
+          files.</li>
+          <li><em>Filter</em> children: modules that filter audit
+          events.</li>
+          <li><em>FileFilter</em> children: modules that filter files
+          for Checkstyle to process.</li>
+          <li><em>AuditListener</em> children: modules that report
+          filtered events.</li>
+        </ul>
 
-      <ul>
-        <li><em>FileSetCheck</em> children: modules that check sets of
-        files.</li>
-        <li><em>Filter</em> children: modules that filter audit
-        events.</li>
-        <li><em>AuditListener</em> children: modules that report
-        filtered events.</li>
-      </ul>
+        <p>
+          <code>Checker</code> also defines properties that are
+          inherited by all other modules of a configuration.
+        </p>
+      </subsection>
 
-      <p>
-        <code>Checker</code> also defines properties that are
-        inherited by all other modules of a configuration.
-      </p>
+      <subsection name="Properties">
+        <table>
+          <tr>
+            <th>name</th>
+            <th>description</th>
+            <th>type</th>
+            <th>default value</th>
+            <th>since</th>
+          </tr>
+          <tr>
+            <td>basedir</td>
+            <td>base directory name; stripped off in messages about files</td>
+            <td><a href="property_types.html#string">String</a></td>
+            <td><code>null</code></td>
+            <td>3.0</td>
+          </tr>
+          <tr>
+            <td>cacheFile</td>
+            <td>caches information about files that have checked OK; used
+                to avoid repeated checks of the same files</td>
+            <td><a href="property_types.html#file">File</a></td>
+            <td><code>null</code> (no cache file)</td>
+            <td>6.16</td>
+          </tr>
+          <tr>
+            <td>localeCountry</td>
+            <td>locale country for messages</td>
+            <td><a href="property_types.html#string">String</a> (either
+            the empty string or an uppercase ISO 3166 2-letter code)</td>
+            <td>default locale country for the Java Virtual Machine</td>
+            <td>3.0</td>
+          </tr>
+          <tr>
+            <td>localeLanguage</td>
+            <td>locale language for messages</td>
+            <td><a href="property_types.html#string">String</a> (either
+            the empty string or a lowercase ISO 639 code)</td>
+            <td>default locale language for the Java Virtual Machine</td>
+            <td>3.0</td>
+          </tr>
+          <tr>
+            <td>charset</td>
+            <td>name of the file charset</td>
+            <td><a href="property_types.html#string">String</a></td>
+            <td>System property &quot;file.encoding&quot;</td>
+            <td>5.0</td>
+          </tr>
+          <tr>
+            <td>fileExtensions</td>
+            <td>file extensions that are accepted</td>
+            <td><a href="property_types.html#stringSet">String Set</a></td>
+            <td><code>all files</code></td>
+            <td>6.3</td>
+          </tr>
+          <tr>
+            <td>severity</td>
+            <td>the default severity level of all violations</td>
+            <td><a href="property_types.html#severity">Severity</a></td>
+            <td><code>error</code></td>
+            <td>3.1</td>
+          </tr>
+          <tr>
+            <td>haltOnException</td>
+            <td>whether to stop execution of Checkstyle if a single file produces any kind of
+            exception during verification</td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
+            <td><code>true</code></td>
+            <td>7.4</td>
+          </tr>
+        </table>
+      </subsection>
 
-      <h4>Properties</h4>
-      <table>
-        <tr>
-          <th>name</th>
-          <th>description</th>
-          <th>type</th>
-          <th>default value</th>
-        </tr>
-        <tr>
-          <td>basedir</td>
-          <td>base directory name; stripped off in messages about files</td>
-          <td><a href="property_types.html#string">string</a></td>
-          <td><code>null</code></td>
-        </tr>
-        <tr>
-          <td>cacheFile</td>
-          <td>caches information about files that have checked OK; used
-              to avoid repeated checks of the same files</td>
-          <td><a href="property_types.html#string">string</a></td>
-          <td><code>null</code> (no cache file)</td>
-        </tr>
-        <tr>
-          <td>localeCountry</td>
-          <td>locale country for messages</td>
-          <td><a href="property_types.html#string">string</a>: either
-          the empty string or an uppercase ISO 3166 2-letter code</td>
-          <td>default locale country for the Java Virtual Machine</td>
-        </tr>
-        <tr>
-          <td>localeLanguage</td>
-          <td>locale language for messages</td>
-          <td><a href="property_types.html#string">string</a>: either
-          the empty string or a lowercase ISO 639 code</td>
-          <td>default locale language for the Java Virtual Machine</td>
-        </tr>
-        <tr>
-          <td>charset</td>
-          <td>name of the file charset</td>
-          <td><a href="property_types.html#string">String</a></td>
-          <td>System property &quot;file.encoding&quot;</td>
-        </tr>
-        <tr>
-          <td>fileExtensions</td>
-          <td>file extensions that are accepted</td>
-          <td><a href="property_types.html#string">String</a> array</td>
-          <td><code>null</code></td>
-        </tr>
-        <tr>
-          <td>haltOnException</td>
-          <td>whether to stop execution of Checkstyle if a single file produces any kind of
-          exception during verification</td>
-          <td><a href="property_types.html#boolean">Boolean</a></td>
-          <td><code>true</code></td>
-        </tr>
-      </table>
+      <subsection name="Examples">
+        <p>
+          For example, the following configuration fragment specifies base
+          directory <code>src/checkstyle</code>, cache file <code>target/cachefile</code> and German
+          locale for all modules:
+        </p>
 
-      <p>
-        For example, the following configuration fragment specifies base
-        directory <code>src/checkstyle</code>, cache file <code>target/cachefile</code> and German
-        locale for all modules:
-      </p>
-
-      <source>
+        <source>
 &lt;module name=&quot;Checker&quot;&gt;
-    &lt;property name=&quot;basedir&quot; value=&quot;src/checkstyle&quot;/&gt;
-    &lt;property name=&quot;cacheFile&quot; value=&quot;target/cachefile&quot;/&gt;
-    &lt;property name=&quot;localeCountry&quot; value=&quot;DE&quot;/&gt;
-    &lt;property name=&quot;localeLanguage&quot; value=&quot;de&quot;/&gt;
-    &lt;module name=&quot;JavadocPackage&quot;/&gt;
-    &lt;module name=&quot;TreeWalker&quot;&gt;
-        ...
-    &lt;/module&gt;
+  &lt;property name=&quot;basedir&quot; value=&quot;src/checkstyle&quot;/&gt;
+  &lt;property name=&quot;cacheFile&quot; value=&quot;target/cachefile&quot;/&gt;
+  &lt;property name=&quot;localeCountry&quot; value=&quot;DE&quot;/&gt;
+  &lt;property name=&quot;localeLanguage&quot; value=&quot;de&quot;/&gt;
+  &lt;module name=&quot;JavadocPackage&quot;/&gt;
+  &lt;module name=&quot;TreeWalker&quot;&gt;
+      ...
+  &lt;/module&gt;
 &lt;/module&gt;
-      </source>
+        </source>
 
-      <p>
-        To configure a <code>Checker</code> so that it
-        handles files with the <code>UTF-8</code> charset:
-      </p>
+        <p>
+          To configure a <code>Checker</code> so that it
+          handles files with the <code>UTF-8</code> charset:
+        </p>
 
-      <source>
+        <source>
 &lt;module name=&quot;Checker&quot;&gt;
-    &lt;property name=&quot;charset&quot; value=&quot;UTF-8&quot;/&gt;
-    ...
+  &lt;property name=&quot;charset&quot; value=&quot;UTF-8&quot;/&gt;
+  ...
 &lt;/module&gt;
-      </source>
+        </source>
 
-      <p>
-        To configure a <code>Checker</code> so that it
-        handles files with the <code>java, xml, properties</code> extensions:
-      </p>
+        <p>
+          To configure a <code>Checker</code> so that it
+          handles files with the <code>java, xml, properties</code> extensions:
+        </p>
 
-      <source>
+        <source>
 &lt;module name=&quot;Checker&quot;&gt;
-    &lt;property name=&quot;fileExtensions&quot; value=&quot;java, xml, properties&quot;/&gt;
-    ...
+  &lt;property name=&quot;fileExtensions&quot; value=&quot;java, xml, properties&quot;/&gt;
+  ...
 &lt;/module&gt;
-      </source>
+        </source>
 
-      <p>
-        To configure a <code>Checker</code> so that it doesn't stop execution on an
-        <code>Exception</code> and instead prints it as a violation:
-      </p>
+        <p>
+          To configure a <code>Checker</code> so that it doesn't stop execution on an
+          <code>Exception</code> and instead prints it as a violation:
+        </p>
 
-      <source>
+        <source>
 &lt;module name=&quot;Checker&quot;&gt;
-    &lt;property name=&quot;haltOnException&quot; value=&quot;false&quot;/&gt;
-    ...
+  &lt;property name=&quot;haltOnException&quot; value=&quot;false&quot;/&gt;
+  ...
 &lt;/module&gt;
-      </source>
+        </source>
 
-      <p>
-        To configure a <code>Checker</code> so that it
-        handles files with any extension:
-      </p>
+        <p>
+          To configure a <code>Checker</code> so that it
+          handles files with any extension:
+        </p>
 
-      <source>
+        <source>
 &lt;module name=&quot;Checker&quot;&gt;
-    &lt;property name=&quot;fileExtensions&quot; value=&quot;null&quot;/&gt;
-    ...
+  &lt;property name=&quot;fileExtensions&quot; value=&quot;null&quot;/&gt;
+  ...
 &lt;/module&gt;
-      </source>
-        <p>OR</p>
-      <source>
+        </source>
+          <p>OR</p>
+        <source>
 &lt;module name=&quot;Checker&quot;&gt;
-    &lt;property name=&quot;fileExtensions&quot; value=&quot;&quot;/&gt;
-    ...
+  &lt;property name=&quot;fileExtensions&quot; value=&quot;&quot;/&gt;
+  ...
 &lt;/module&gt;
-      </source>
+        </source>
 
+      </subsection>
     </section>
 
     <section name="TreeWalker">
-      <p>
-        FileSetCheck <code>TreeWalker</code> checks
-        individual Java source files and defines properties that are
-        applicable to checking such files.
-      </p>
+      <subsection name="Description">
+        <p>Since Checkstyle 3.0</p>
+        <p>
+          FileSetCheck <code>TreeWalker</code> checks
+          individual Java source files and defines properties that are
+          applicable to checking such files.
+        </p>
+      </subsection>
 
-      <h4>Properties</h4>
-      <table>
-        <tr>
-          <th>name</th>
-          <th>description</th>
-          <th>type</th>
-          <th>default value</th>
-        </tr>
-        <tr>
-          <td>tabWidth</td>
-          <td>number of expanded spaces for a tab character (<code>'\t'</code>); used in messages and Checks that
-          require a tab width, such as <a
-          href="config_sizes.html#LineLength"><code>LineLength</code></a></td>
-          <td><a href="property_types.html#integer">integer</a></td>
-          <td><code>8</code></td>
-        </tr>
-        <tr>
-          <td>fileExtensions</td>
-          <td>file type extension to identify Java files. Setting this
-          property is typically only required if your Java source code
-          is preprocessed before compilation and the original files do
-          not have the extension <code>.java</code></td>
-          <td><a href="property_types.html#stringSet">String Set</a></td>
-          <td><code>java</code></td>
-        </tr>
-      </table>
+      <subsection name="Properties">
+        <table>
+          <tr>
+            <th>name</th>
+            <th>description</th>
+            <th>type</th>
+            <th>default value</th>
+            <th>since</th>
+          </tr>
+          <tr>
+            <td>tabWidth</td>
+            <td>number of expanded spaces for a tab character (<code>'\t'</code>); used in
+            messages and Checks that require a tab width, such as <a
+            href="config_sizes.html#LineLength"><code>LineLength</code></a></td>
+            <td><a href="property_types.html#integer">Integer</a></td>
+            <td><code>8</code></td>
+            <td>3.0</td>
+          </tr>
+          <tr>
+            <td>fileExtensions</td>
+            <td>file type extension to identify Java files. Setting this
+            property is typically only required if your Java source code
+            is preprocessed before compilation and the original files do
+            not have the extension <code>.java</code></td>
+            <td><a href="property_types.html#stringSet">String Set</a></td>
+            <td><code>.java</code></td>
+            <td>3.0</td>
+          </tr>
+        </table>
+      </subsection>
 
-      <p>
-        For example, the following configuration fragment specifies
-        <code>TreeWalker</code> a <code>tabWidth</code> of <code>4</code>:
-      </p>
+      <subsection name="Examples">
+        <p>
+          For example, the following configuration fragment specifies
+          <code>TreeWalker</code> a <code>tabWidth</code> of <code>4</code>:
+        </p>
 
-      <source>
+        <source>
 &lt;module name=&quot;Checker&quot;&gt;
-    &lt;module name=&quot;TreeWalker&quot;&gt;
-        &lt;property name=&quot;tabWidth&quot; value=&quot;4&quot;/&gt;
-        ...
-    &lt;/module&gt;
+  &lt;module name=&quot;TreeWalker&quot;&gt;
+    &lt;property name=&quot;tabWidth&quot; value=&quot;4&quot;/&gt;
+    ...
+  &lt;/module&gt;
 &lt;/module&gt;
-      </source>
+        </source>
 
-      <p>
-        <!--
-          thanks to Paul King for this example, see
-          https://sourceforge.net/tracker/?func=detail&aid=865610&group_id=29721&atid=397078
-        -->
-        To integrate Checkstyle with BEA Weblogic Workshop 8.1:
-      </p>
+        <p>
+          <!--
+            thanks to Paul King for this example, see
+            https://sourceforge.net/tracker/?func=detail&aid=865610&group_id=29721&atid=397078
+          -->
+          To integrate Checkstyle with BEA Weblogic Workshop 8.1:
+        </p>
 
-      <source>
+        <source>
 &lt;module name=&quot;Checker&quot;&gt;
-    &lt;module name=&quot;TreeWalker&quot;&gt;
-        &lt;property name=&quot;fileExtensions&quot; value=&quot;java,ejb,jpf&quot;/&gt;
-        ...
-    &lt;/module&gt;
-&lt;/module&gt;
-      </source>
-
-      <p>
-        To configure <code>TreeWalker</code> so that it
-        handles files with the <code>java</code> extension:
-      </p>
-
-      <source>
-&lt;module name=&quot;TreeWalker&quot;&gt;
-    &lt;property name=&quot;fileExtensions&quot; value=&quot;java&quot;/&gt;
+  &lt;module name=&quot;TreeWalker&quot;&gt;
+    &lt;property name=&quot;fileExtensions&quot; value=&quot;java,ejb,jpf&quot;/&gt;
     ...
+  &lt;/module&gt;
 &lt;/module&gt;
-      </source>
+        </source>
 
-      <p>
-        To configure <code>TreeWalker</code> so that it
-        handles files with any extension:
-      </p>
+        <p>
+          To configure <code>TreeWalker</code> so that it
+          handles files with the <code>java</code> extension:
+        </p>
 
-      <source>
+        <source>
 &lt;module name=&quot;TreeWalker&quot;&gt;
-    &lt;property name=&quot;fileExtensions&quot; value=&quot;null&quot;/&gt;
-    ...
+  &lt;property name=&quot;fileExtensions&quot; value=&quot;java&quot;/&gt;
+  ...
 &lt;/module&gt;
-      </source>
-        <p>OR</p>
-      <source>
-&lt;module name=&quot;TreeWalker&quot;&gt;
-    &lt;property name=&quot;fileExtensions&quot; value=&quot;&quot;/&gt;
-    ...
-&lt;/module&gt;
-      </source>
+        </source>
 
+        <p>
+          To configure <code>TreeWalker</code> so that it
+          handles files with any extension:
+        </p>
+
+        <source>
+&lt;module name=&quot;TreeWalker&quot;&gt;
+  &lt;property name=&quot;fileExtensions&quot; value=&quot;null&quot;/&gt;
+  ...
+&lt;/module&gt;
+        </source>
+          <p>OR</p>
+        <source>
+&lt;module name=&quot;TreeWalker&quot;&gt;
+  &lt;property name=&quot;fileExtensions&quot; value=&quot;&quot;/&gt;
+  ...
+&lt;/module&gt;
+        </source>
+      </subsection>
     </section>
 
     <section name="TreeWalker Checks">
@@ -521,7 +554,8 @@
         <em>Checks</em>, during a walk, or traversal, of the nodes of
         the tree.  Every node of the syntax tree has a token. A visit to
         a node during the traversal triggers all Checks that are
-        configured for its token.  For example, if Check <code>MethodLength</code> has been configured as a
+        configured for its token.  For example, if Check
+        <code>MethodLength</code> has been configured as a
         submodule of <code>TreeWalker</code>, then a visit
         to a node with a method or a constructor definition token
         triggers <code>MethodLength</code> to check the
@@ -544,20 +578,21 @@
       <p>
         The default token set for <code>MethodLength</code>
         is <code>{METHOD_DEF, CTOR_DEF}</code>, method
-        definition and constructor definition tokens, so <code>TreeWalker</code> invokes <code>MethodLength</code> whenever it visits a node with
-        a <code>METHOD_DEF</code> or a <code>CTOR_DEF</code> token.
+        definition and constructor definition tokens, so <code>TreeWalker</code> invokes
+        <code>MethodLength</code> whenever it visits a node with a <code>METHOD_DEF</code>
+        or a <code>CTOR_DEF</code> token.
       </p>
 
       <p>
-        You specify the trigger tokens for a Check with property <code>tokens</code>.  The value of <code>tokens</code> is a list that denotes a subset of
-        the Check's tokens, as in the following element that configures
-        Check <code>MethodLength</code> to check the number
+        You specify the trigger tokens for a Check with property <code>tokens</code>.  The value
+        of <code>tokens</code> is a list that denotes a subset of the Check's tokens, as in the
+        following element that configures Check <code>MethodLength</code> to check the number
         of lines of methods only:
       </p>
 
       <source>
 &lt;module name=&quot;MethodLength&quot;&gt;
-    &lt;property name=&quot;tokens&quot; value=&quot;METHOD_DEF&quot;/&gt;
+  &lt;property name=&quot;tokens&quot; value=&quot;METHOD_DEF&quot;/&gt;
 &lt;/module&gt;
       </source>
 
@@ -571,11 +606,11 @@
 
       <source>
 &lt;module name=&quot;MethodLength&quot;&gt;
-    &lt;property name=&quot;tokens&quot; value=&quot;METHOD_DEF&quot;/&gt;
+  &lt;property name=&quot;tokens&quot; value=&quot;METHOD_DEF&quot;/&gt;
 &lt;/module&gt;
 &lt;module name=&quot;MethodLength&quot;&gt;
-    &lt;property name=&quot;tokens&quot; value=&quot;CTOR_DEF&quot;/&gt;
-    &lt;property name=&quot;max&quot; value=&quot;60&quot;/&gt;
+  &lt;property name=&quot;tokens&quot; value=&quot;CTOR_DEF&quot;/&gt;
+  &lt;property name=&quot;max&quot; value=&quot;60&quot;/&gt;
 &lt;/module&gt;
       </source>
 
@@ -598,7 +633,8 @@
         You can use the severity property to control the output of the
         plain formatter for the <a href="cmdline.html">command line
         tool</a> and the <a href="anttask.html">ANT task</a>. The plain
-        formatter does not report violations with severity level <code>ignore</code>, and notes violations with
+        formatter does not report violations with severity level
+        <code>ignore</code>, and notes violations with
         severity level <code>warning</code>. For
         example, according to the following configuration fragment, the
         plain formatter outputs warnings for translation violations:
@@ -606,7 +642,7 @@
 
       <source>
 &lt;module name=&quot;Translation&quot;&gt;
-    &lt;property name=&quot;severity&quot; value=&quot;warning&quot;/&gt;
+  &lt;property name=&quot;severity&quot; value=&quot;warning&quot;/&gt;
 &lt;/module&gt;
       </source>
 
@@ -630,16 +666,16 @@
 
       <source>
 &lt;module name=&quot;MemberName&quot;&gt;
-    &lt;property name=&quot;format&quot; value=&quot;^m[a-zA-Z0-9]*$&quot;/&gt;
-    &lt;message key=&quot;name.invalidPattern&quot;
-             value=&quot;Member ''{0}'' must start with a lowercase ''m'' (checked pattern ''{1}'').&quot;
-             /&gt;
+  &lt;property name=&quot;format&quot; value=&quot;^m[a-zA-Z0-9]*$&quot;/&gt;
+  &lt;message key=&quot;name.invalidPattern&quot;
+   value=&quot;Member ''{0}'' must start with a lowercase ''m'' (checked pattern ''{1}'').&quot;
+   /&gt;
 &lt;/module&gt;
       </source>
 
       <p>
-        Each check configuration element can have zero or more <code>message</code> elements. Every check uses one or
-        more distinct message keys to log violations. If you want to
+        Each check configuration element can have zero or more <code>message</code> elements.
+        Every check uses one or more distinct message keys to log violations. If you want to
         customize a certain message you need to specify the message key
         in the <code>key</code> attribute of the <code>message</code> element.
       </p>
@@ -649,7 +685,8 @@
         custom message pattern, as shown in the example above.
         Placeholders used in the default message can also be used in the
         custom message.  Note that the message pattern must be a valid
-        <code>java.text.MessageFormat</code> style pattern,
+        <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html">java.text.MessageFormat</a>
+        style pattern,
         so be careful about curly braces outside a placeholder
         definition.
       </p>
@@ -699,7 +736,8 @@
         Checker can have <a href="writinglisteners.html">custom
         AuditListeners</a> that handle audit events. In order to use a
         custom listener, add a <code>Checker</code> submodule for the
-        listener and its properties.  For example, to configure a <code>Checker</code> so that it uses custom listener <a
+        listener and its properties.  For example, to configure a
+        <code>Checker</code> so that it uses custom listener <a
         href="writinglisteners.html#Writing_Listeners">VerboseListener</a> to
         print audit messages to a file named &quot;audit.txt&quot;,
         include the following module in the configuration file:
@@ -707,7 +745,7 @@
 
       <source>
 &lt;module name=&quot;com.mycompany.listeners.VerboseListener&quot;&gt;
-    &lt;property name=&quot;file&quot; value=&quot;audit.txt&quot;/&gt;
+  &lt;property name=&quot;file&quot; value=&quot;audit.txt&quot;/&gt;
 &lt;/module&gt;
       </source>
 
@@ -721,9 +759,11 @@
         for a loadable class.  By default, Checkstyle applies packages
         <code> com.puppycrawl.tools.checkstyle</code>,
         <code>
-        com.puppycrawl.tools.checkstyle.filters</code>, and <code> com.puppycrawl.tools.checkstyle.checks</code> as
+        com.puppycrawl.tools.checkstyle.filters</code>, and
+        <code>com.puppycrawl.tools.checkstyle.checks</code> as
         well as any sub-packages of <code>com.puppycrawl.tools.checkstyle.checks</code> that
-        are distributed with Checkstyle.
+        are distributed with Checkstyle. However standard checkstyle modules are loaded
+        with the help of inner map of their names to fully qualified names.
       </p>
       <p>
         To specify other packages to apply,
@@ -771,9 +811,9 @@
       <source>
 &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
 
-    &lt;!DOCTYPE checkstyle-packages PUBLIC
-    &quot;-//Puppy Crawl//DTD Package Names 1.0//EN&quot;
-    &quot;http://www.puppycrawl.com/dtds/packages_1_0.dtd&quot;&gt;
+&lt;!DOCTYPE checkstyle-packages PUBLIC
+  &quot;-//Puppy Crawl//DTD Package Names 1.0//EN&quot;
+  &quot;http://checkstyle.sourceforge.net/dtds/packages_1_0.dtd&quot;&gt;
 
 &lt;checkstyle-packages&gt;
   &lt;package name=&quot;com.mycompany.checks&quot;/&gt;
@@ -781,9 +821,9 @@
       </source>
 
       <p>
-        Now you can configure a module of package <code>com.mycompany.checks</code>, say <code>com.mycompany.checks.MethodLimitCheck</code>, with
-        a shortened <code>module</code> element in the
-        configuration document:
+        Now you can configure a module of package <code>com.mycompany.checks</code>, say
+        <code>com.mycompany.checks.MethodLimitCheck</code>, with a shortened <code>module</code>
+        element in the configuration document:
       </p>
 
       <source>
@@ -791,7 +831,7 @@
       </source>
 
       <div class="tip">
-        <h4>Note</h4>
+        <b>Note</b>
         <p>
           As of Checkstyle 5.0 it is unnecessary to repeat the
           <code>package</code> elements for Checkstyle's packages in
@@ -803,7 +843,7 @@
 
     <section name="XML Structure">
 
-      <h4>Configuration XML Document</h4>
+      <b>Configuration XML Document</b>
       <p>
         The following DTD for a configuration XML document specifies the
         hierarchy of modules and their properties:
@@ -831,8 +871,8 @@
 
       <source>
 &lt;!DOCTYPE module PUBLIC
-    &quot;-//Puppy Crawl//DTD Check Configuration 1.3//EN&quot;
-    &quot;http://www.puppycrawl.com/dtds/configuration_1_3.dtd&quot;&gt;
+  &quot;-//Puppy Crawl//DTD Check Configuration 1.3//EN&quot;
+  &quot;http://checkstyle.sourceforge.net/dtds/configuration_1_3.dtd&quot;&gt;
       </source>
 
       <p>
@@ -848,7 +888,7 @@
         conventions.
       </p>
 
-      <h4>Package Names XML Document</h4>
+      <b>Package Names XML Document</b>
       <p>
         This is a DTD for a package names XML document:
       </p>
@@ -871,11 +911,11 @@
 
       <source>
 &lt;!DOCTYPE checkstyle-packages PUBLIC
-&quot;-//Puppy Crawl//DTD Package Names 1.1//EN&quot;
-&quot;http://www.puppycrawl.com/dtds/packages_1_1.dtd&quot;&gt;
+  &quot;-//Puppy Crawl//DTD Package Names 1.1//EN&quot;
+  &quot;http://checkstyle.sourceforge.net/dtds/packages_1_1.dtd&quot;&gt;
       </source>
 
-      <h4>Suppressions XML Document</h4>
+      <b>Suppressions XML Document</b>
       <p>
         This is a DTD for a suppressions XML document:
       </p>
@@ -886,8 +926,9 @@
 &lt;!ELEMENT suppressions (suppress*)&gt;
 
 &lt;!ELEMENT suppress EMPTY&gt;
-&lt;!ATTLIST suppress files CDATA #REQUIRED
+&lt;!ATTLIST suppress files CDATA #IMPLIED
                    checks CDATA #IMPLIED
+                   message CDATA #IMPLIED
                    id CDATA #IMPLIED
                    lines CDATA #IMPLIED
                    columns CDATA #IMPLIED&gt;

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -39,6 +39,37 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 public class LineWrappingHandler {
 
     /**
+     * Enum to be used for test if first line's indentation should be checked or not.
+     */
+    public enum LineWrappingOptions {
+
+        /**
+         * First line's indentation should NOT be checked.
+         */
+        IGNORE_FIRST_LINE,
+        /**
+         * First line's indentation should be checked.
+         */
+        NONE;
+
+        /**
+         * Builds enum value from boolean.
+         * @param val value.
+         * @return enum instance.
+         *
+         * @noinspection BooleanParameter
+         */
+        public static LineWrappingOptions ofBoolean(boolean val) {
+            LineWrappingOptions option = NONE;
+            if (val) {
+                option = IGNORE_FIRST_LINE;
+            }
+            return option;
+        }
+
+    }
+
+    /**
      * The current instance of {@code IndentationCheck} class using this
      * handler. This field used to get access to private fields of
      * IndentationCheck instance.
@@ -73,8 +104,9 @@ public class LineWrappingHandler {
      * @param lastNode Last node to examine inclusively.
      * @param indentLevel Indentation all wrapped lines should use.
      */
-    public void checkIndentation(DetailAST firstNode, DetailAST lastNode, int indentLevel) {
-        checkIndentation(firstNode, lastNode, indentLevel, -1, true);
+    private void checkIndentation(DetailAST firstNode, DetailAST lastNode, int indentLevel) {
+        checkIndentation(firstNode, lastNode, indentLevel,
+                -1, LineWrappingOptions.IGNORE_FIRST_LINE);
     }
 
     /**
@@ -87,16 +119,30 @@ public class LineWrappingHandler {
      * @param ignoreFirstLine Test if first line's indentation should be checked or not.
      */
     public void checkIndentation(DetailAST firstNode, DetailAST lastNode, int indentLevel,
-            int startIndent, boolean ignoreFirstLine) {
+            int startIndent, LineWrappingOptions ignoreFirstLine) {
         final NavigableMap<Integer, DetailAST> firstNodesOnLines = collectFirstNodes(firstNode,
                 lastNode);
 
         final DetailAST firstLineNode = firstNodesOnLines.get(firstNodesOnLines.firstKey());
         if (firstLineNode.getType() == TokenTypes.AT) {
-            checkAnnotationIndentation(firstLineNode, firstNodesOnLines, indentLevel);
+            DetailAST node = firstLineNode.getParent();
+            while (node != null) {
+                if (node.getType() == TokenTypes.ANNOTATION) {
+                    final DetailAST atNode = node.getFirstChild();
+                    final NavigableMap<Integer, DetailAST> annotationLines =
+                        firstNodesOnLines.subMap(
+                            node.getLineNo(),
+                            true,
+                            getNextNodeLine(firstNodesOnLines, node),
+                            true
+                        );
+                    checkAnnotationIndentation(atNode, annotationLines, indentLevel);
+                }
+                node = node.getNextSibling();
+            }
         }
 
-        if (ignoreFirstLine) {
+        if (ignoreFirstLine == LineWrappingOptions.IGNORE_FIRST_LINE) {
             // First node should be removed because it was already checked before.
             firstNodesOnLines.remove(firstNodesOnLines.firstKey());
         }
@@ -123,6 +169,23 @@ public class LineWrappingHandler {
     }
 
     /**
+     * Gets the next node line from the firstNodesOnLines map unless there is no next line, in
+     * which case, it returns the last line.
+     *
+     * @param firstNodesOnLines NavigableMap of lines and their first nodes.
+     * @param node the node for which to find the next node line
+     * @return the line number of the next line in the map
+     */
+    private static Integer getNextNodeLine(
+            NavigableMap<Integer, DetailAST> firstNodesOnLines, DetailAST node) {
+        Integer nextNodeLine = firstNodesOnLines.higherKey(node.getLastChild().getLineNo());
+        if (nextNodeLine == null) {
+            nextNodeLine = firstNodesOnLines.lastKey();
+        }
+        return nextNodeLine;
+    }
+
+    /**
      * Finds first nodes on line and puts them into Map.
      *
      * @param firstNode First node to start examining.
@@ -138,7 +201,6 @@ public class LineWrappingHandler {
         DetailAST curNode = firstNode.getFirstChild();
 
         while (curNode != lastNode) {
-
             if (curNode.getType() == TokenTypes.OBJBLOCK
                     || curNode.getType() == TokenTypes.SLIST) {
                 curNode = curNode.getLastChild();
@@ -187,33 +249,57 @@ public class LineWrappingHandler {
         final int firstNodeIndent = getLineStart(atNode);
         final int currentIndent = firstNodeIndent + indentLevel;
         final Collection<DetailAST> values = firstNodesOnLines.values();
-        final DetailAST lastAnnotationNode = getLastAnnotationNode(atNode);
+        final DetailAST lastAnnotationNode = atNode.getParent().getLastChild();
         final int lastAnnotationLine = lastAnnotationNode.getLineNo();
 
         final Iterator<DetailAST> itr = values.iterator();
         while (firstNodesOnLines.size() > 1) {
             final DetailAST node = itr.next();
 
-            if (node.getLineNo() <= lastAnnotationLine) {
-                final DetailAST parentNode = node.getParent();
-                final boolean isCurrentNodeCloseAnnotationAloneInLine =
-                        node.getLineNo() == lastAnnotationLine
-                        && node.equals(lastAnnotationNode);
-                if (isCurrentNodeCloseAnnotationAloneInLine
-                        || node.getType() == TokenTypes.AT
-                        && (parentNode.getParent().getType() == TokenTypes.MODIFIERS
-                            || parentNode.getParent().getType() == TokenTypes.ANNOTATIONS)) {
-                    logWarningMessage(node, firstNodeIndent);
-                }
-                else {
-                    logWarningMessage(node, currentIndent);
-                }
-                itr.remove();
+            final DetailAST parentNode = node.getParent();
+            final boolean isCurrentNodeCloseAnnotationAloneInLine =
+                node.getLineNo() == lastAnnotationLine
+                    && isEndOfScope(lastAnnotationNode, node);
+            if (isCurrentNodeCloseAnnotationAloneInLine
+                    || node.getType() == TokenTypes.AT
+                    && (parentNode.getParent().getType() == TokenTypes.MODIFIERS
+                        || parentNode.getParent().getType() == TokenTypes.ANNOTATIONS)
+                    || node.getLineNo() == atNode.getLineNo()) {
+                logWarningMessage(node, firstNodeIndent);
             }
             else {
-                break;
+                logWarningMessage(node, currentIndent);
+            }
+            itr.remove();
+        }
+    }
+
+    /**
+     * Checks line for end of scope.  Handles occurrences of close braces and close parenthesis on
+     * the same line.
+     *
+     * @param lastAnnotationNode the last node of the annotation
+     * @param node the node indicating where to begin checking
+     * @return true if all the nodes up to the last annotation node are end of scope nodes
+     *         false otherwise
+     */
+    private static boolean isEndOfScope(final DetailAST lastAnnotationNode, final DetailAST node) {
+        DetailAST checkNode = node;
+        boolean endOfScope = true;
+        while (endOfScope && !checkNode.equals(lastAnnotationNode)) {
+            switch (checkNode.getType()) {
+                case TokenTypes.RCURLY:
+                case TokenTypes.RBRACK:
+                    while (checkNode.getNextSibling() == null) {
+                        checkNode = checkNode.getParent();
+                    }
+                    checkNode = checkNode.getNextSibling();
+                    break;
+                default:
+                    endOfScope = false;
             }
         }
+        return endOfScope;
     }
 
     /**
@@ -248,7 +334,6 @@ public class LineWrappingHandler {
      * Get the start of the specified line.
      *
      * @param line the specified line number
-     *
      * @return the start of the specified line
      */
     private int getLineStart(String line) {
@@ -257,20 +342,6 @@ public class LineWrappingHandler {
             index++;
         }
         return CommonUtils.lengthExpandedTabs(line, index, indentCheck.getIndentationTabWidth());
-    }
-
-    /**
-     * Finds and returns last annotation node.
-     * @param atNode first at-clause node.
-     * @return last annotation node.
-     */
-    private static DetailAST getLastAnnotationNode(DetailAST atNode) {
-        DetailAST lastAnnotation = atNode.getParent();
-        while (lastAnnotation.getNextSibling() != null
-                && lastAnnotation.getNextSibling().getType() == TokenTypes.ANNOTATION) {
-            lastAnnotation = lastAnnotation.getNextSibling();
-        }
-        return lastAnnotation.getLastChild();
     }
 
     /**
@@ -297,4 +368,5 @@ public class LineWrappingHandler {
             }
         }
     }
+
 }

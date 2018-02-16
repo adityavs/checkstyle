@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,50 +22,58 @@ package com.puppycrawl.tools.checkstyle.checks.naming;
 import static com.puppycrawl.tools.checkstyle.checks.naming.AbstractNameCheck.MSG_INVALID_PATTERN;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
 public class InterfaceTypeParameterNameCheckTest
-    extends BaseCheckTestSupport {
+    extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "naming" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/naming/interfacetypeparametername";
     }
 
     @Test
-    public void testGetInterfaceRequiredTokens() {
+    public void testGetAcceptableTokens() {
+        final InterfaceTypeParameterNameCheck interfaceTypeParameterNameCheck =
+            new InterfaceTypeParameterNameCheck();
+        final int[] expected = {TokenTypes.TYPE_PARAMETER};
+
+        assertArrayEquals("Default acceptable tokens are invalid",
+                expected, interfaceTypeParameterNameCheck.getAcceptableTokens());
+    }
+
+    @Test
+    public void testGetRequiredTokens() {
         final InterfaceTypeParameterNameCheck checkObj =
             new InterfaceTypeParameterNameCheck();
         final int[] expected = {TokenTypes.TYPE_PARAMETER};
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testInterfaceDefault()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(InterfaceTypeParameterNameCheck.class);
+            createModuleConfig(InterfaceTypeParameterNameCheck.class);
 
         final String pattern = "^[A-Z]$";
 
         final String[] expected = {
             "48:15: " + getCheckMessage(MSG_INVALID_PATTERN, "Input", pattern),
         };
-        verify(checkConfig, getPath("InputTypeParameterName.java"), expected);
+        verify(checkConfig, getPath("InputInterfaceTypeParameterName.java"), expected);
     }
 
     @Test
     public void testInterfaceFooName()
             throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(InterfaceTypeParameterNameCheck.class);
+            createModuleConfig(InterfaceTypeParameterNameCheck.class);
         checkConfig.addAttribute("format", "^foo$");
 
         final String pattern = "^foo$";
@@ -74,6 +82,7 @@ public class InterfaceTypeParameterNameCheckTest
             "48:15: " + getCheckMessage(MSG_INVALID_PATTERN, "Input", pattern),
             "52:24: " + getCheckMessage(MSG_INVALID_PATTERN, "T", pattern),
         };
-        verify(checkConfig, getPath("InputTypeParameterName.java"), expected);
+        verify(checkConfig, getPath("InputInterfaceTypeParameterName.java"), expected);
     }
+
 }

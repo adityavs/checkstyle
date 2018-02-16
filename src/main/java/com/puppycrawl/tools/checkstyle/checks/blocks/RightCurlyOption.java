@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,10 @@
 package com.puppycrawl.tools.checkstyle.checks.blocks;
 
 /**
- * Represents the options for placing the right curly brace {@code '}'}.
+ * Represents the options for placing the right curly brace <code>'}'</code>.
  *
  * @author Oliver Burn
+ * @noinspection HtmlTagCanBeJavadocTag
  */
 public enum RightCurlyOption {
 
@@ -64,7 +65,8 @@ public enum RightCurlyOption {
     /**
      * Represents the policy that the brace should be on the same line as the
      * the next part of a multi-block statement (one that directly contains
-     * multiple blocks: if/else-if/else or try/catch/finally).
+     * multiple blocks: if/else-if/else or try/catch/finally). It also allows
+     * single-line format of multi-block statements.
      *
      * <p>Examples:</p>
      *
@@ -117,7 +119,14 @@ public enum RightCurlyOption {
      *                ...
      *  <b>}</b> // this is NOT OK, not on the same line as the next part of a multi-block statement
      * <b>}</b>); // this is OK, allowed for better code readability
+     *
+     * if (a &#62; 0) { ... <b>}</b> // OK, single-line multi-block statement
+     * if (a &#62; 0) { ... } else { ... <b>}</b> // OK, single-line multi-block statement
+     * if (a &#62; 0) {
+     *     ...
+     * } else { ... <b>}</b> // OK, single-line multi-block statement
      * </pre>
      **/
     SAME
+
 }

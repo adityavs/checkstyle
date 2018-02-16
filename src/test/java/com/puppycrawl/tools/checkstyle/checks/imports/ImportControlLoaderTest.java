@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,40 +26,58 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.BDDMockito;
+import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({ImportControlLoader.class, URI.class})
 public class ImportControlLoaderTest {
+
     private static String getPath(String filename) {
-        return "src/test/resources/com/puppycrawl/tools/checkstyle/checks/imports/" + filename;
+        return "src/test/resources/com/puppycrawl/tools/"
+                + "checkstyle/checks/imports/importcontrolloader/" + filename;
     }
 
     @Test
     public void testLoad() throws CheckstyleException {
         final ImportControl root =
-                ImportControlLoader.load(new File(getPath("import-control_complete.xml")).toURI());
-        assertNotNull(root);
+                ImportControlLoader.load(
+                new File(getPath("InputImportControlLoaderComplete.xml")).toURI());
+        assertNotNull("Import root should not be null", root);
     }
 
     @Test
     public void testWrongFormatUri() throws Exception {
         try {
-            ImportControlLoader.load(new URI("aaa://" + getPath("import-control_complete.xml")));
+            ImportControlLoader.load(new URI("aaa://"
+                    + getPath("InputImportControlLoaderComplete.xml")));
             fail("exception expected");
         }
         catch (CheckstyleException ex) {
-            assertSame(MalformedURLException.class, ex.getCause().getClass());
-            assertEquals("unknown protocol: aaa", ex.getCause().getMessage());
+            assertSame("Invalid exception class",
+                    MalformedURLException.class, ex.getCause().getClass());
+            assertEquals("Invalid exception message",
+                    "unknown protocol: aaa", ex.getCause().getMessage());
         }
     }
 
@@ -67,8 +85,8 @@ public class ImportControlLoaderTest {
     public void testExtraElementInConfig() throws Exception {
         final ImportControl root =
                 ImportControlLoader.load(
-                    new File(getPath("import-control_WithNewElement.xml")).toURI());
-        assertNotNull(root);
+                    new File(getPath("InputImportControlLoaderWithNewElement.xml")).toURI());
+        assertNotNull("Import root should not be null", root);
     }
 
     @Test
@@ -89,8 +107,9 @@ public class ImportControlLoaderTest {
             fail("exception expected");
         }
         catch (InvocationTargetException ex) {
-            assertSame(SAXException.class, ex.getCause().getClass());
-            assertEquals("missing attribute you_cannot_find_me", ex.getCause().getMessage());
+            assertSame("Invalid exception class", SAXException.class, ex.getCause().getClass());
+            assertEquals("Invalid exception message",
+                    "missing attribute you_cannot_find_me", ex.getCause().getMessage());
         }
     }
 
@@ -106,12 +125,60 @@ public class ImportControlLoaderTest {
                 URI.class);
             privateMethod.setAccessible(true);
             privateMethod.invoke(null, source,
-                    new File(getPath("import-control_complete.xml")).toURI());
+                    new File(getPath("InputImportControlLoaderComplete.xml")).toURI());
             fail("exception expected");
         }
         catch (InvocationTargetException ex) {
-            assertSame(CheckstyleException.class, ex.getCause().getClass());
-            assertTrue(ex.getCause().getMessage().startsWith("unable to read"));
+            assertSame("Invalid exception class",
+                    CheckstyleException.class, ex.getCause().getClass());
+            assertTrue("Invalid exception message: " + ex.getCause().getMessage(),
+                    ex.getCause().getMessage().startsWith("unable to read"));
         }
     }
+
+    @Test
+    public void testInputStreamThatFailsOnClose() throws Exception {
+        final InputStream inputStream = PowerMockito.mock(InputStream.class);
+        Mockito.doThrow(IOException.class).when(inputStream).close();
+        final int available = Mockito.doThrow(IOException.class).when(inputStream).available();
+
+        final URL url = PowerMockito.mock(URL.class);
+        BDDMockito.given(url.openStream()).willReturn(inputStream);
+
+        final URI uri = PowerMockito.mock(URI.class);
+        BDDMockito.given(uri.toURL()).willReturn(url);
+
+        try {
+            ImportControlLoader.load(uri);
+            //Using available to bypass 'ignored result' warning
+            fail("exception expected " + available);
+        }
+        catch (CheckstyleException ex) {
+            assertSame("Invalid exception class", IOException.class, ex.getCause().getClass());
+        }
+        Mockito.verify(inputStream).close();
+    }
+
+    @Test
+    public void testInputStreamFailsOnRead() throws Exception {
+        final InputStream inputStream = PowerMockito.mock(InputStream.class);
+        final int available = Mockito.doThrow(IOException.class).when(inputStream).available();
+
+        final URL url = PowerMockito.mock(URL.class);
+        BDDMockito.given(url.openStream()).willReturn(inputStream);
+
+        final URI uri = PowerMockito.mock(URI.class);
+        BDDMockito.given(uri.toURL()).willReturn(url);
+
+        try {
+            ImportControlLoader.load(uri);
+            //Using available to bypass 'ignored result' warning
+            fail("exception expected " + available);
+        }
+        catch (CheckstyleException ex) {
+            assertSame("Invalid exception class",
+                    SAXParseException.class, ex.getCause().getClass());
+        }
+    }
+
 }

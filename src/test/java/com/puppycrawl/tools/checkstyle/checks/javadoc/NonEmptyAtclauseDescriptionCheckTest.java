@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,21 +22,18 @@ package com.puppycrawl.tools.checkstyle.checks.javadoc;
 import static com.puppycrawl.tools.checkstyle.checks.javadoc.NonEmptyAtclauseDescriptionCheck.MSG_KEY;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
 public class NonEmptyAtclauseDescriptionCheckTest
-        extends BaseCheckTestSupport {
+        extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "javadoc" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/javadoc/nonemptyatclausedescription";
     }
 
     @Test
@@ -44,7 +41,8 @@ public class NonEmptyAtclauseDescriptionCheckTest
         final NonEmptyAtclauseDescriptionCheck checkObj =
             new NonEmptyAtclauseDescriptionCheck();
         final int[] expected = {TokenTypes.BLOCK_COMMENT_BEGIN};
-        assertArrayEquals(expected, checkObj.getAcceptableTokens());
+        assertArrayEquals("Default acceptable tokens are invalid",
+            expected, checkObj.getAcceptableTokens());
     }
 
     @Test
@@ -52,14 +50,15 @@ public class NonEmptyAtclauseDescriptionCheckTest
         final NonEmptyAtclauseDescriptionCheck checkObj =
             new NonEmptyAtclauseDescriptionCheck();
         final int[] expected = {TokenTypes.BLOCK_COMMENT_BEGIN};
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testCheck()
             throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(NonEmptyAtclauseDescriptionCheck.class);
+                createModuleConfig(NonEmptyAtclauseDescriptionCheck.class);
         final String[] expected = {
             //this is a case with description that is sequences of spaces
             "26: " + getCheckMessage(MSG_KEY),
@@ -84,7 +83,9 @@ public class NonEmptyAtclauseDescriptionCheckTest
             "91: " + getCheckMessage(MSG_KEY),
             "92: " + getCheckMessage(MSG_KEY),
             "93: " + getCheckMessage(MSG_KEY),
+            "120: " + getCheckMessage(MSG_KEY),
         };
         verify(checkConfig, getPath("InputNonEmptyAtclauseDescription.java"), expected);
     }
+
 }

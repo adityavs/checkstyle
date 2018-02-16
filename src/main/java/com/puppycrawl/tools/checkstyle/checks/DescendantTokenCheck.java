@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Set;
 
 import antlr.collections.AST;
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
@@ -165,6 +166,7 @@ import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
  * @author Tim Tyler &lt;tim@tt1.org&gt;
  * @author Rick Giles
  */
+@FileStatefulCheck
 public class DescendantTokenCheck extends AbstractCheck {
 
     /**
@@ -216,7 +218,7 @@ public class DescendantTokenCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return CommonUtils.EMPTY_INT_ARRAY;
+        return getRequiredTokens();
     }
 
     @Override
@@ -355,7 +357,7 @@ public class DescendantTokenCheck extends AbstractCheck {
         int maxToken = 0;
         for (int i = 0; i < limitedTokensParam.length; i++) {
             limitedTokens[i] = TokenUtils.getTokenId(limitedTokensParam[i]);
-            if (limitedTokens[i] > maxToken) {
+            if (limitedTokens[i] >= maxToken + 1) {
                 maxToken = limitedTokens[i];
             }
         }
@@ -433,4 +435,5 @@ public class DescendantTokenCheck extends AbstractCheck {
     public void setSumTokenCounts(boolean sum) {
         sumTokenCounts = sum;
     }
+
 }

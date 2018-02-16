@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,61 +23,60 @@ import static com.puppycrawl.tools.checkstyle.checks.sizes.FileLengthCheck.MSG_K
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
-import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class FileLengthCheckTest
-    extends BaseCheckTestSupport {
-    @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "sizes" + File.separator + filename);
-    }
+    extends AbstractModuleTestSupport {
 
     @Override
-    protected DefaultConfiguration createCheckerConfig(
-        Configuration config) {
-        final DefaultConfiguration dc = new DefaultConfiguration("root");
-        dc.addChild(config);
-        return dc;
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/sizes/filelength";
     }
 
     @Test
     public void testAlarm() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(FileLengthCheck.class);
+            createModuleConfig(FileLengthCheck.class);
         checkConfig.addAttribute("max", "20");
         final String[] expected = {
             "1: " + getCheckMessage(MSG_KEY, 225, 20),
         };
         verify(createChecker(checkConfig),
-                getPath("InputSimple.java"),
-                getPath("InputSimple.java"), expected);
+                getPath("InputFileLength.java"),
+                getPath("InputFileLength.java"), expected);
+    }
+
+    @Test
+    public void testFileLengthEqualToMaxLength() throws Exception {
+        final DefaultConfiguration checkConfig =
+                createModuleConfig(FileLengthCheck.class);
+        checkConfig.addAttribute("max", "225");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(createChecker(checkConfig),
+                getPath("InputFileLength.java"),
+                getPath("InputFileLength.java"), expected);
     }
 
     @Test
     public void testOk() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(FileLengthCheck.class);
-        checkConfig.addAttribute("max", "2000");
+            createModuleConfig(FileLengthCheck.class);
+        checkConfig.addAttribute("max", "1000");
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(createChecker(checkConfig),
-                getPath("InputSimple.java"),
-                getPath("InputSimple.java"), expected);
+                getPath("InputFileLength.java"),
+                getPath("InputFileLength.java"), expected);
     }
 
     @Test
     public void testArgs() throws Exception {
         final DefaultConfiguration checkConfig =
-            createCheckConfig(FileLengthCheck.class);
+            createModuleConfig(FileLengthCheck.class);
         try {
             checkConfig.addAttribute("max", "abc");
             createChecker(checkConfig);
@@ -85,7 +84,7 @@ public class FileLengthCheckTest
         }
         catch (CheckstyleException ex) {
             // Expected Exception because of illegal argument for "max"
-            assertEquals("cannot initialize module"
+            assertEquals("Invalid exception message", "cannot initialize module"
                 + " com.puppycrawl.tools.checkstyle.checks.sizes.FileLengthCheck"
                 + " - illegal value 'abc' for property 'max' of module"
                 + " com.puppycrawl.tools.checkstyle.checks.sizes.FileLengthCheck",
@@ -96,13 +95,13 @@ public class FileLengthCheckTest
     @Test
     public void testNoAlarmByExtension() throws Exception {
         final DefaultConfiguration checkConfig =
-                createCheckConfig(FileLengthCheck.class);
+                createModuleConfig(FileLengthCheck.class);
         checkConfig.addAttribute("fileExtensions", "txt");
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(createChecker(checkConfig),
-                getPath("InputSimple.java"),
-                getPath("InputSimple.java"), expected);
+                getPath("InputFileLength.java"),
+                getPath("InputFileLength.java"), expected);
     }
 
     @Test
@@ -117,7 +116,9 @@ public class FileLengthCheckTest
             fail("IllegalArgumentException is expected");
         }
         catch (IllegalArgumentException ex) {
-            assertEquals("Extensions array can not be null", ex.getMessage());
+            assertEquals("Invalid exception message",
+                "Extensions array can not be null", ex.getMessage());
         }
     }
+
 }

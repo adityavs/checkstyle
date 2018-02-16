@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,6 @@
 package com.puppycrawl.tools.checkstyle.checks.regexp;
 
 import java.io.File;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
@@ -49,7 +48,6 @@ public class RegexpMultilineCheck extends AbstractFileSetCheck {
 
     @Override
     public void beginProcessing(String charset) {
-        super.beginProcessing(charset);
         final DetectorOptions options = DetectorOptions.newBuilder()
             .reporter(this)
             .compileFlags(Pattern.MULTILINE)
@@ -63,8 +61,8 @@ public class RegexpMultilineCheck extends AbstractFileSetCheck {
     }
 
     @Override
-    protected void processFiltered(File file, List<String> lines) {
-        detector.processLines(FileText.fromLines(file, lines));
+    protected void processFiltered(File file, FileText fileText) {
+        detector.processLines(fileText);
     }
 
     /**
@@ -106,4 +104,5 @@ public class RegexpMultilineCheck extends AbstractFileSetCheck {
     public void setIgnoreCase(boolean ignoreCase) {
         this.ignoreCase = ignoreCase;
     }
+
 }

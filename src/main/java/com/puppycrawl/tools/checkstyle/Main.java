@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -47,17 +47,35 @@ import org.apache.commons.logging.LogFactory;
 
 import com.google.common.io.Closeables;
 import com.puppycrawl.tools.checkstyle.api.AuditListener;
+import com.puppycrawl.tools.checkstyle.api.AutomaticBean;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
+import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * Wrapper command line program for the Checker.
  * @author the original author or authors.
- *
+ * @noinspection UseOfSystemOutOrSystemErr
  **/
 public final class Main {
+
+    /**
+     * A key pointing to the error counter
+     * message in the "messages.properties" file.
+     */
+    public static final String ERROR_COUNTER = "Main.errorCounter";
+    /**
+     * A key pointing to the load properties exception
+     * message in the "messages.properties" file.
+     */
+    public static final String LOAD_PROPERTIES_EXCEPTION = "Main.loadProperties";
+    /**
+     * A key pointing to the create listener exception
+     * message in the "messages.properties" file.
+     */
+    public static final String CREATE_LISTENER_EXCEPTION = "Main.createListener";
     /** Logger for Main. */
     private static final Log LOG = LogFactory.getLog(Main.class);
 
@@ -118,17 +136,36 @@ public final class Main {
     /** Name for the option '--exclude'. */
     private static final String OPTION_EXCLUDE_NAME = "exclude";
 
+    /** Name for the option '--executeIgnoredModules'. */
+    private static final String OPTION_EXECUTE_IGNORED_MODULES_NAME = "executeIgnoredModules";
+
     /** Name for the option 'x'. */
     private static final String OPTION_X_NAME = "x";
 
     /** Name for the option '--exclude-regexp'. */
     private static final String OPTION_EXCLUDE_REGEXP_NAME = "exclude-regexp";
 
+    /** Name for the option '-C'. */
+    private static final String OPTION_CAPITAL_C_NAME = "C";
+
+    /** Name for the option '--checker-threads-number'. */
+    private static final String OPTION_CHECKER_THREADS_NUMBER_NAME = "checker-threads-number";
+
+    /** Name for the option '-W'. */
+    private static final String OPTION_CAPITAL_W_NAME = "W";
+
+    /** Name for the option '--tree-walker-threads-number'. */
+    private static final String OPTION_TREE_WALKER_THREADS_NUMBER_NAME =
+        "tree-walker-threads-number";
+
     /** Name for 'xml' format. */
     private static final String XML_FORMAT_NAME = "xml";
 
     /** Name for 'plain' format. */
     private static final String PLAIN_FORMAT_NAME = "plain";
+
+    /** A string value of 1. */
+    private static final String ONE_STRING_VALUE = "1";
 
     /** Don't create instance of this class, use {@link #main(String[])} method instead. */
     private Main() {
@@ -139,7 +176,7 @@ public final class Main {
      * is the number of errors found in all the files.
      * @param args the command line arguments.
      * @throws IOException if there is a problem with files access
-     * @noinspection CallToPrintStackTrace
+     * @noinspection CallToPrintStackTrace, CallToSystemExit
      **/
     public static void main(String... args) throws IOException {
         int errorCounter = 0;
@@ -191,8 +228,14 @@ public final class Main {
         }
         finally {
             // return exit code base on validation of Checker
-            if (errorCounter != 0 && !cliViolations) {
-                System.out.println(String.format("Checkstyle ends with %d errors.", errorCounter));
+            // two ifs exist till https://github.com/hcoles/pitest/issues/377
+            if (errorCounter != 0) {
+                if (!cliViolations) {
+                    final LocalizedMessage errorCounterMessage = new LocalizedMessage(0,
+                            Definitions.CHECKSTYLE_BUNDLE, ERROR_COUNTER,
+                            new String[] {String.valueOf(errorCounter)}, null, Main.class, null);
+                    System.out.println(errorCounterMessage.getMessage());
+                }
             }
             if (exitStatus != 0) {
                 System.exit(exitStatus);
@@ -290,12 +333,46 @@ public final class Main {
                     result.add(String.format("Could not find file '%s'.", propertiesLocation));
                 }
             }
+            verifyThreadsNumberParameter(cmdLine, result, OPTION_CAPITAL_C_NAME,
+                "Checker threads number must be greater than zero",
+                "Invalid Checker threads number");
+            verifyThreadsNumberParameter(cmdLine, result, OPTION_CAPITAL_W_NAME,
+                "TreeWalker threads number must be greater than zero",
+                "Invalid TreeWalker threads number");
         }
         else {
             result.add("Must specify a config XML file.");
         }
 
         return result;
+    }
+
+    /**
+     * Verifies threads number CLI parameter value.
+     * @param cmdLine a command line
+     * @param result a resulting list of errors
+     * @param cliParameterName a CLI parameter name
+     * @param mustBeGreaterThanZeroMessage a message which should be reported
+     *                                     if the number of threads is less than or equal to zero
+     * @param invalidNumberMessage a message which should be reported if the passed value
+     *                             is not a valid number
+     */
+    private static void verifyThreadsNumberParameter(CommandLine cmdLine, List<String> result,
+        String cliParameterName, String mustBeGreaterThanZeroMessage,
+        String invalidNumberMessage) {
+        if (cmdLine.hasOption(cliParameterName)) {
+            final String checkerThreadsNumberStr =
+                cmdLine.getOptionValue(cliParameterName);
+            if (CommonUtils.isInt(checkerThreadsNumberStr)) {
+                final int checkerThreadsNumber = Integer.parseInt(checkerThreadsNumberStr);
+                if (checkerThreadsNumber < 1) {
+                    result.add(mustBeGreaterThanZeroMessage);
+                }
+            }
+            else {
+                result.add(invalidNumberMessage);
+            }
+        }
     }
 
     /**
@@ -315,12 +392,14 @@ public final class Main {
         if (commandLine.hasOption(OPTION_T_NAME)) {
             // print AST
             final File file = config.files.get(0);
-            final String stringAst = AstTreeStringPrinter.printFileAst(file, false);
+            final String stringAst = AstTreeStringPrinter.printFileAst(file,
+                    JavaParser.Options.WITHOUT_COMMENTS);
             System.out.print(stringAst);
         }
         else if (commandLine.hasOption(OPTION_CAPITAL_T_NAME)) {
             final File file = config.files.get(0);
-            final String stringAst = AstTreeStringPrinter.printFileAst(file, true);
+            final String stringAst = AstTreeStringPrinter.printFileAst(file,
+                    JavaParser.Options.WITH_COMMENTS);
             System.out.print(stringAst);
         }
         else if (commandLine.hasOption(OPTION_J_NAME)) {
@@ -378,6 +457,13 @@ public final class Main {
         conf.configLocation = cmdLine.getOptionValue(OPTION_C_NAME);
         conf.propertiesLocation = cmdLine.getOptionValue(OPTION_P_NAME);
         conf.files = filesToProcess;
+        conf.executeIgnoredModules = cmdLine.hasOption(OPTION_EXECUTE_IGNORED_MODULES_NAME);
+        final String checkerThreadsNumber = cmdLine.getOptionValue(
+                OPTION_CAPITAL_C_NAME, ONE_STRING_VALUE);
+        conf.checkerThreadsNumber = Integer.parseInt(checkerThreadsNumber);
+        final String treeWalkerThreadsNumber = cmdLine.getOptionValue(
+                OPTION_CAPITAL_W_NAME, ONE_STRING_VALUE);
+        conf.treeWalkerThreadsNumber = Integer.parseInt(treeWalkerThreadsNumber);
         return conf;
     }
 
@@ -404,26 +490,37 @@ public final class Main {
         }
 
         // create a configuration
+        final ThreadModeSettings multiThreadModeSettings =
+                new ThreadModeSettings(
+                        cliOptions.checkerThreadsNumber, cliOptions.treeWalkerThreadsNumber);
+
+        final ConfigurationLoader.IgnoredModulesOptions ignoredModulesOptions;
+        if (cliOptions.executeIgnoredModules) {
+            ignoredModulesOptions = ConfigurationLoader.IgnoredModulesOptions.EXECUTE;
+        }
+        else {
+            ignoredModulesOptions = ConfigurationLoader.IgnoredModulesOptions.OMIT;
+        }
+
         final Configuration config = ConfigurationLoader.loadConfiguration(
-                cliOptions.configLocation, new PropertiesExpander(props));
+                cliOptions.configLocation, new PropertiesExpander(props),
+                ignoredModulesOptions, multiThreadModeSettings);
 
         // create a listener for output
         final AuditListener listener = createListener(cliOptions.format, cliOptions.outputLocation);
 
         // create RootModule object and run it
-        int errorCounter = 0;
+        final int errorCounter;
         final ClassLoader moduleClassLoader = Checker.class.getClassLoader();
         final RootModule rootModule = getRootModule(config.getName(), moduleClassLoader);
 
         try {
-
             rootModule.setModuleClassLoader(moduleClassLoader);
             rootModule.configure(config);
             rootModule.addListener(listener);
 
             // run RootModule
             errorCounter = rootModule.process(cliOptions.files);
-
         }
         finally {
             rootModule.destroy();
@@ -444,7 +541,7 @@ public final class Main {
     private static RootModule getRootModule(String name, ClassLoader moduleClassLoader)
             throws CheckstyleException {
         final ModuleFactory factory = new PackageObjectFactory(
-                Checker.class.getPackage().getName() + ".", moduleClassLoader);
+                Checker.class.getPackage().getName(), moduleClassLoader);
 
         return (RootModule) factory.createModule(name);
     }
@@ -467,8 +564,10 @@ public final class Main {
             properties.load(fis);
         }
         catch (final IOException ex) {
-            throw new CheckstyleException(String.format(
-                    "Unable to load properties from file '%s'.", file.getAbsolutePath()), ex);
+            final LocalizedMessage loadPropertiesExceptionMessage = new LocalizedMessage(0,
+                    Definitions.CHECKSTYLE_BUNDLE, LOAD_PROPERTIES_EXCEPTION,
+                    new String[] {file.getAbsolutePath()}, null, Main.class, null);
+            throw new CheckstyleException(loadPropertiesExceptionMessage.getMessage(), ex);
         }
         finally {
             Closeables.closeQuietly(fis);
@@ -484,40 +583,41 @@ public final class Main {
      * @param outputLocation the location of output
      * @return a fresh new {@code AuditListener}
      * @exception FileNotFoundException when provided output location is not found
+     * @noinspection IOResourceOpenedButNotSafelyClosed
      */
     private static AuditListener createListener(String format,
                                                 String outputLocation)
             throws FileNotFoundException {
-
         // setup the output stream
         final OutputStream out;
-        final boolean closeOutputStream;
+        final AutomaticBean.OutputStreamOptions closeOutputStream;
         if (outputLocation == null) {
             out = System.out;
-            closeOutputStream = false;
+            closeOutputStream = AutomaticBean.OutputStreamOptions.NONE;
         }
         else {
             out = new FileOutputStream(outputLocation);
-            closeOutputStream = true;
+            closeOutputStream = AutomaticBean.OutputStreamOptions.CLOSE;
         }
 
         // setup a listener
         final AuditListener listener;
         if (XML_FORMAT_NAME.equals(format)) {
             listener = new XMLLogger(out, closeOutputStream);
-
         }
         else if (PLAIN_FORMAT_NAME.equals(format)) {
-            listener = new DefaultLogger(out, closeOutputStream, out, false);
-
+            listener = new DefaultLogger(out, closeOutputStream, out,
+                    AutomaticBean.OutputStreamOptions.NONE);
         }
         else {
-            if (closeOutputStream) {
+            if (closeOutputStream == AutomaticBean.OutputStreamOptions.CLOSE) {
                 CommonUtils.close(out);
             }
-            throw new IllegalStateException(String.format(
-                    "Invalid output format. Found '%s' but expected '%s' or '%s'.",
-                    format, PLAIN_FORMAT_NAME, XML_FORMAT_NAME));
+            final LocalizedMessage outputFormatExceptionMessage = new LocalizedMessage(0,
+                    Definitions.CHECKSTYLE_BUNDLE, CREATE_LISTENER_EXCEPTION,
+                    new String[] {format, PLAIN_FORMAT_NAME, XML_FORMAT_NAME}, null,
+                    Main.class, null);
+            throw new IllegalStateException(outputFormatExceptionMessage.getMessage());
         }
 
         return listener;
@@ -627,11 +727,18 @@ public final class Main {
                 "Directory path to exclude from CheckStyle");
         options.addOption(OPTION_X_NAME, OPTION_EXCLUDE_REGEXP_NAME, true,
                 "Regular expression of directory to exclude from CheckStyle");
+        options.addOption(OPTION_EXECUTE_IGNORED_MODULES_NAME, false,
+                "Allows ignored modules to be run.");
+        options.addOption(OPTION_CAPITAL_C_NAME, OPTION_CHECKER_THREADS_NUMBER_NAME, true,
+                "(experimental) The number of Checker threads (must be greater than zero)");
+        options.addOption(OPTION_CAPITAL_W_NAME, OPTION_TREE_WALKER_THREADS_NUMBER_NAME, true,
+                "(experimental) The number of TreeWalker threads (must be greater than zero)");
         return options;
     }
 
     /** Helper structure to clear show what is required for Checker to run. **/
     private static class CliOptions {
+
         /** Properties file location. */
         private String propertiesLocation;
         /** Config file location. */
@@ -642,5 +749,13 @@ public final class Main {
         private String outputLocation;
         /** List of file to validate. */
         private List<File> files;
+        /** Switch whether to execute ignored modules or not. */
+        private boolean executeIgnoredModules;
+        /** The checker threads number. */
+        private int checkerThreadsNumber;
+        /** The tree walker threads number. */
+        private int treeWalkerThreadsNumber;
+
     }
+
 }

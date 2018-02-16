@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,50 +22,49 @@ package com.puppycrawl.tools.checkstyle.checks.javadoc;
 import static com.puppycrawl.tools.checkstyle.checks.javadoc.AtclauseOrderCheck.MSG_KEY;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
-public class AtclauseOrderCheckTest extends BaseCheckTestSupport {
+public class AtclauseOrderCheckTest extends AbstractModuleTestSupport {
+
     @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "javadoc" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/javadoc/atclauseorder";
     }
 
     @Test
     public void testGetAcceptableTokens() {
         final AtclauseOrderCheck checkObj = new AtclauseOrderCheck();
         final int[] expected = {TokenTypes.BLOCK_COMMENT_BEGIN};
-        assertArrayEquals(expected, checkObj.getAcceptableTokens());
+        assertArrayEquals("Default acceptable tokens are invalid",
+            expected, checkObj.getAcceptableTokens());
     }
 
     @Test
     public void testGetRequiredTokens() {
         final AtclauseOrderCheck checkObj = new AtclauseOrderCheck();
         final int[] expected = {TokenTypes.BLOCK_COMMENT_BEGIN};
-        assertArrayEquals(expected, checkObj.getRequiredTokens());
+        assertArrayEquals("Default required tokens are invalid",
+            expected, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testCorrect() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(AtclauseOrderCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AtclauseOrderCheck.class);
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        verify(checkConfig, getPath("InputCorrectAtClauseOrder.java"), expected);
+        verify(checkConfig, getPath("InputAtclauseOrderCorrect.java"), expected);
     }
 
     @Test
     public void testIncorrect() throws Exception {
         final String tagOrder = "[@author, @version, @param, @return, @throws, @exception, @see,"
                 + " @since, @serial, @serialField, @serialData, @deprecated]";
-        final DefaultConfiguration checkConfig = createCheckConfig(AtclauseOrderCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AtclauseOrderCheck.class);
         final String[] expected = {
             "9: " + getCheckMessage(MSG_KEY, tagOrder),
             "11: " + getCheckMessage(MSG_KEY, tagOrder),
@@ -108,23 +107,22 @@ public class AtclauseOrderCheckTest extends BaseCheckTestSupport {
             "278: " + getCheckMessage(MSG_KEY, tagOrder),
             "288: " + getCheckMessage(MSG_KEY, tagOrder),
         };
-        verify(checkConfig, getPath("InputIncorrectAtClauseOrder.java"), expected);
+        verify(checkConfig, getPath("InputAtclauseOrderIncorrect.java"), expected);
     }
 
     @Test
     public void testIncorrectCustom() throws Exception {
-
-        final DefaultConfiguration checkConfig = createCheckConfig(AtclauseOrderCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(AtclauseOrderCheck.class);
         checkConfig.addAttribute("target", "CLASS_DEF");
-        final String customOrder = " @since,  @version, @param,@return,@throws, @exception,"
-                + "@deprecated, @see,@serial,   @serialField,  @serialData,@author";
-        checkConfig.addAttribute("tagOrder", customOrder);
+        checkConfig.addAttribute("tagOrder", " @since,  @version, @param,@return,@throws, "
+                + "@exception,@deprecated, @see,@serial,   @serialField,  @serialData,@author");
 
         final String tagOrder = "[@since, @version, @param, @return, @throws, @exception,"
                 + " @deprecated, @see, @serial, @serialField, @serialData, @author]";
         final String[] expected = {
             "113: " + getCheckMessage(MSG_KEY, tagOrder),
         };
-        verify(checkConfig, getPath("InputIncorrectAtClauseOrder.java"), expected);
+        verify(checkConfig, getPath("InputAtclauseOrderIncorrect.java"), expected);
     }
+
 }

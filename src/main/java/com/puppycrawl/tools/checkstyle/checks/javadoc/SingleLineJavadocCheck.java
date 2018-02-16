@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.DetailNode;
 import com.puppycrawl.tools.checkstyle.api.JavadocTokenTypes;
-import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.JavadocUtils;
 
 /**
@@ -106,16 +105,6 @@ public class SingleLineJavadocCheck extends AbstractJavadocCheck {
     }
 
     @Override
-    public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.BLOCK_COMMENT_BEGIN };
-    }
-
-    @Override
-    public int[] getRequiredTokens() {
-        return getAcceptableTokens();
-    }
-
-    @Override
     public void visitJavadocToken(DetailNode ast) {
         if (isSingleLineJavadoc(getBlockCommentAst())
                 && (hasJavadocTags(ast) || !ignoreInlineTags && hasJavadocInlineTags(ast))) {
@@ -142,7 +131,7 @@ public class SingleLineJavadocCheck extends AbstractJavadocCheck {
      * @param javadocRoot javadoc root node.
      * @return true, if comment has javadoc tags which are not ignored.
      * @see <a href=
-     * http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javadoc.html#blockandinlinetags>
+     * https://docs.oracle.com/javase/7/docs/technotes/tools/windows/javadoc.html#blockandinlinetags>
      * Block and inline tags</a>
      */
     private boolean hasJavadocTags(DetailNode javadocRoot) {
@@ -157,7 +146,7 @@ public class SingleLineJavadocCheck extends AbstractJavadocCheck {
      * @param javadocRoot javadoc root node.
      * @return true, if comment has in-line tags which are not ignored.
      * @see <a href=
-     * http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javadoc.html#javadoctags>
+     * https://docs.oracle.com/javase/7/docs/technotes/tools/windows/javadoc.html#javadoctags>
      * JavadocTags</a>
      */
     private boolean hasJavadocInlineTags(DetailNode javadocRoot) {
@@ -184,4 +173,5 @@ public class SingleLineJavadocCheck extends AbstractJavadocCheck {
     private boolean isTagIgnored(DetailNode javadocTagSection) {
         return ignoredTags.contains(JavadocUtils.getTagName(javadocTagSection));
     }
+
 }

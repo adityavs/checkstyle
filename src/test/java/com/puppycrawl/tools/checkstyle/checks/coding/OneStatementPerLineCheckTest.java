@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,31 +21,22 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import static com.puppycrawl.tools.checkstyle.checks.coding.OneStatementPerLineCheck.MSG_KEY;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 
-public class OneStatementPerLineCheckTest extends BaseCheckTestSupport {
-    @Override
-    protected String getPath(String filename) throws IOException {
-        return super.getPath("checks" + File.separator
-                + "coding" + File.separator + filename);
-    }
+public class OneStatementPerLineCheckTest extends AbstractModuleTestSupport {
 
     @Override
-    protected String getNonCompilablePath(String filename) throws IOException {
-        return super.getNonCompilablePath("checks" + File.separator
-                + "coding" + File.separator + filename);
+    protected String getPackageLocation() {
+        return "com/puppycrawl/tools/checkstyle/checks/coding/onestatementperline";
     }
 
     @Test
     public void testMultiCaseClass() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(OneStatementPerLineCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(OneStatementPerLineCheck.class);
         final String[] expected = {
             "24:59: " + getCheckMessage(MSG_KEY),
             "104:21: " + getCheckMessage(MSG_KEY),
@@ -57,21 +48,21 @@ public class OneStatementPerLineCheckTest extends BaseCheckTestSupport {
         };
 
         verify(checkConfig,
-            getPath("InputOneStatementPerLine.java"),
+            getPath("InputOneStatementPerLineSingleLine.java"),
             expected);
     }
 
     @Test
     public void testTokensNotNull() {
         final OneStatementPerLineCheck check = new OneStatementPerLineCheck();
-        Assert.assertNotNull(check.getAcceptableTokens());
-        Assert.assertNotNull(check.getDefaultTokens());
-        Assert.assertNotNull(check.getRequiredTokens());
+        Assert.assertNotNull("Acceptable tokens should not be null", check.getAcceptableTokens());
+        Assert.assertNotNull("Default tokens should not be null", check.getDefaultTokens());
+        Assert.assertNotNull("Required tokens should not be null", check.getRequiredTokens());
     }
 
     @Test
     public void testWithMultilineStatements() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(OneStatementPerLineCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(OneStatementPerLineCheck.class);
         final String[] expected = {
             "44:21: " + getCheckMessage(MSG_KEY),
             "61:17: " + getCheckMessage(MSG_KEY),
@@ -84,13 +75,13 @@ public class OneStatementPerLineCheckTest extends BaseCheckTestSupport {
         };
 
         verify(checkConfig,
-            getPath("InputOneStatementPerLine2.java"),
+            getPath("InputOneStatementPerLineMultiline.java"),
             expected);
     }
 
     @Test
     public void oneStatementNonCompilableInputTest() throws Exception {
-        final DefaultConfiguration checkConfig = createCheckConfig(OneStatementPerLineCheck.class);
+        final DefaultConfiguration checkConfig = createModuleConfig(OneStatementPerLineCheck.class);
         final String[] expected = {
             "32:6: " + getCheckMessage(MSG_KEY),
             "37:58: " + getCheckMessage(MSG_KEY),
@@ -102,4 +93,5 @@ public class OneStatementPerLineCheckTest extends BaseCheckTestSupport {
 
         verify(checkConfig, getNonCompilablePath("InputOneStatementPerLine.java"), expected);
     }
+
 }

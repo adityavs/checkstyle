@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ package com.puppycrawl.tools.checkstyle.checks;
 import java.io.File;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -31,7 +32,9 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author Oliver Burn
  * @author maxvetrenko
  */
+@FileStatefulCheck
 public class OuterTypeFilenameCheck extends AbstractCheck {
+
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -58,20 +61,22 @@ public class OuterTypeFilenameCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {
-            TokenTypes.CLASS_DEF, TokenTypes.INTERFACE_DEF,
-            TokenTypes.ENUM_DEF, TokenTypes.ANNOTATION_DEF,
-        };
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {
+            TokenTypes.CLASS_DEF,
+            TokenTypes.INTERFACE_DEF,
+            TokenTypes.ENUM_DEF,
+            TokenTypes.ANNOTATION_DEF,
+        };
     }
 
     @Override
@@ -85,7 +90,6 @@ public class OuterTypeFilenameCheck extends AbstractCheck {
 
     @Override
     public void visitToken(DetailAST ast) {
-        final String outerTypeName = ast.findFirstToken(TokenTypes.IDENT).getText();
         if (seenFirstToken) {
             final DetailAST modifiers = ast.findFirstToken(TokenTypes.MODIFIERS);
             if (modifiers.findFirstToken(TokenTypes.LITERAL_PUBLIC) != null
@@ -94,6 +98,7 @@ public class OuterTypeFilenameCheck extends AbstractCheck {
             }
         }
         else {
+            final String outerTypeName = ast.findFirstToken(TokenTypes.IDENT).getText();
 
             if (fileName.equals(outerTypeName)) {
                 validFirst = true;
@@ -122,4 +127,5 @@ public class OuterTypeFilenameCheck extends AbstractCheck {
         name = FILE_EXTENSION_PATTERN.matcher(name).replaceAll("");
         return name;
     }
+
 }

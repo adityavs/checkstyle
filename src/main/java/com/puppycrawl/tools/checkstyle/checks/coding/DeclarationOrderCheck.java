@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.Scope;
@@ -50,7 +51,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * </ol>
  *
  * <p>ATTENTION: the check skips class fields which have
- * <a href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.3.3">
+ * <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.3.3">
  * forward references </a> from validation due to the fact that we have Checkstyle's limitations
  * to clearly detect user intention of fields location and grouping. For example,
  * <pre>{@code
@@ -107,6 +108,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  *
  * @author r_auckenthaler
  */
+@FileStatefulCheck
 public class DeclarationOrderCheck extends AbstractCheck {
 
     /**
@@ -161,11 +163,16 @@ public class DeclarationOrderCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
+        return getRequiredTokens();
+    }
+
+    @Override
+    public int[] getRequiredTokens() {
         return new int[] {
             TokenTypes.CTOR_DEF,
             TokenTypes.METHOD_DEF,
@@ -173,11 +180,6 @@ public class DeclarationOrderCheck extends AbstractCheck {
             TokenTypes.OBJBLOCK,
             TokenTypes.VARIABLE_DEF,
         };
-    }
-
-    @Override
-    public int[] getRequiredTokens() {
-        return getAcceptableTokens();
     }
 
     @Override
@@ -228,7 +230,6 @@ public class DeclarationOrderCheck extends AbstractCheck {
      * @param ast constructor AST.
      */
     private void processConstructor(DetailAST ast) {
-
         final ScopeState state = scopeStates.peek();
         if (state.currentScopeState > STATE_CTOR_DEF) {
             if (!ignoreConstructors) {
@@ -291,7 +292,7 @@ public class DeclarationOrderCheck extends AbstractCheck {
      * state({@code Scope}), if it is it updates substate or else it
      * logs violation.
      * @param modifiersAst modifiers to process
-     * @param state curent state
+     * @param state current state
      * @param isStateValid is main state for given modifiers is valid
      */
     private void processModifiersSubState(DetailAST modifiersAst, ScopeState state,
@@ -381,10 +382,13 @@ public class DeclarationOrderCheck extends AbstractCheck {
      * Private class to encapsulate the state.
      */
     private static class ScopeState {
+
         /** The state the check is in. */
         private int currentScopeState = STATE_STATIC_VARIABLE_DEF;
 
         /** The sub-state the check is in. */
         private Scope declarationAccess = Scope.PUBLIC;
+
     }
+
 }

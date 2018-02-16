@@ -2,7 +2,7 @@
 
 <!DOCTYPE suppressions PUBLIC
         "-//Puppy Crawl//DTD Suppressions 1.1//EN"
-        "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
+        "http://checkstyle.sourceforge.net/dtds/suppressions_1_1.dtd">
 
 <suppressions>
 
@@ -26,4 +26,18 @@
     JavadocUtils.java and JavadocUtilsTest.java. -->
     <suppress checks="ForbidCertainImports"
               files="JavadocUtils\.java|JavadocUtilsTest\.java"/>
+
+    <!--ITs and UTs are not included in Cobertura coverage report
+    and do not have coverage problems due to imports from java.util.stream. -->
+    <suppress id="ForbidInterfacesImportFromJavaUtilStream"
+              files=".*[\\/]src[\\/](test|it)[\\/]"/>
+
+    <!-- Tone down the checking for test code -->
+    <suppress checks="ForbidCertainImports"
+              files="DetailASTTest\.java"/>
+
+    <!-- Main and MainTest are technically not part of the checkstyle library,
+    so static Loggers are okay there. -->
+    <suppress checks="AvoidModifiersForTypesCheck"
+              files="Main\.java|MainTest\.java"/>
 </suppressions>

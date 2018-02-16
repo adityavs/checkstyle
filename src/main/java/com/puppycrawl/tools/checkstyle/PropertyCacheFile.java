@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -35,11 +35,11 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
-
+import com.google.common.io.BaseEncoding;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Flushables;
@@ -69,6 +69,14 @@ final class PropertyCacheFile {
      * valid file name.
      */
     public static final String CONFIG_HASH_KEY = "configuration*?";
+
+    /**
+     * The property prefix to use for storing the hashcode of an
+     * external resource. To avoid name clashes with the files that are
+     * checked the prefix is chosen in such a way that it cannot be a
+     * valid file name and makes it clear it is a resource.
+     */
+    public static final String EXTERNAL_RESOURCE_KEY_PREFIX = "module-resource*?:";
 
     /** The details on files. **/
     private final Properties details = new Properties();
@@ -175,8 +183,7 @@ final class PropertyCacheFile {
      */
     public boolean isInCache(String uncheckedFileName, long timestamp) {
         final String lastChecked = details.getProperty(uncheckedFileName);
-        return lastChecked != null
-            && lastChecked.equals(Long.toString(timestamp));
+        return Objects.equals(lastChecked, Long.toString(timestamp));
     }
 
     /**
@@ -212,18 +219,9 @@ final class PropertyCacheFile {
      */
     private static String getHashCodeBasedOnObjectContent(Serializable object) {
         try {
-            // im-memory serialization of Configuration
-
             final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            ObjectOutputStream oos = null;
-            try {
-                oos = new ObjectOutputStream(outputStream);
-                oos.writeObject(object);
-            }
-            finally {
-                flushAndCloseOutStream(oos);
-            }
-
+            // in-memory serialization of Configuration
+            serialize(object, outputStream);
             // Instead of hexEncoding outputStream.toByteArray() directly we
             // use a message digest here to keep the length of the
             // hashcode reasonable
@@ -231,11 +229,28 @@ final class PropertyCacheFile {
             final MessageDigest digest = MessageDigest.getInstance("SHA-1");
             digest.update(outputStream.toByteArray());
 
-            return DatatypeConverter.printHexBinary(digest.digest());
+            return BaseEncoding.base16().upperCase().encode(digest.digest());
         }
         catch (final IOException | NoSuchAlgorithmException ex) {
             // rethrow as unchecked exception
             throw new IllegalStateException("Unable to calculate hashcode.", ex);
+        }
+    }
+
+    /**
+     * Serializes object to output stream.
+     * @param object object to be serialized
+     * @param outputStream serialization stream
+     * @throws IOException if an error occurs
+     */
+    private static void serialize(Serializable object,
+                                  OutputStream outputStream) throws IOException {
+        final ObjectOutputStream oos = new ObjectOutputStream(outputStream);
+        try {
+            oos.writeObject(object);
+        }
+        finally {
+            flushAndCloseOutStream(oos);
         }
     }
 
@@ -267,13 +282,14 @@ final class PropertyCacheFile {
             }
             catch (CheckstyleException ex) {
                 // if exception happened (configuration resource was not found, connection is not
-                // available, resouce is broken, etc), we need to calculate hash sum based on
+                // available, resource is broken, etc), we need to calculate hash sum based on
                 // exception object content in order to check whether problem is resolved later
                 // and/or the configuration is changed.
                 contentHashSum = getHashCodeBasedOnObjectContent(ex);
             }
             finally {
-                resources.add(new ExternalResource(location, contentHashSum));
+                resources.add(new ExternalResource(EXTERNAL_RESOURCE_KEY_PREFIX + location,
+                        contentHashSum));
             }
         }
         return resources;
@@ -282,7 +298,7 @@ final class PropertyCacheFile {
     /**
      * Loads the content of external resource.
      * @param location external resource location.
-     * @return array of bytes which respresents the content of external resource in binary form.
+     * @return array of bytes which represents the content of external resource in binary form.
      * @throws CheckstyleException if error while loading occurs.
      */
     private static byte[] loadExternalResource(String location) throws CheckstyleException {
@@ -305,7 +321,7 @@ final class PropertyCacheFile {
      * @return true if the contents of external configuration resources were changed.
      */
     private boolean areExternalResourcesChanged(Set<ExternalResource> resources) {
-        return resources.stream().filter(resource -> {
+        return resources.stream().anyMatch(resource -> {
             boolean changed = false;
             if (isResourceLocationInCache(resource.location)) {
                 final String contentHashSum = resource.contentHashSum;
@@ -318,7 +334,7 @@ final class PropertyCacheFile {
                 changed = true;
             }
             return changed;
-        }).findFirst().isPresent();
+        });
     }
 
     /**
@@ -347,6 +363,7 @@ final class PropertyCacheFile {
      * @author Andrei Selkin
      */
     private static class ExternalResource {
+
         /** Location of resource. */
         private final String location;
         /** Hash sum which is calculated based on resource content. */
@@ -361,5 +378,7 @@ final class PropertyCacheFile {
             this.location = location;
             this.contentHashSum = contentHashSum;
         }
+
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ package com.puppycrawl.tools.checkstyle.checks.javadoc;
 
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
@@ -30,10 +31,11 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
 
 /**
- * Checks that a variable has Javadoc comment. Ignores <code>serialVersionUID</code> fields.
+ * Checks that a variable has Javadoc comment. Ignores {@code serialVersionUID} fields.
  *
  * @author Oliver Burn
  */
+@StatelessCheck
 public class JavadocVariableCheck
     extends AbstractCheck {
 
@@ -130,31 +132,22 @@ public class JavadocVariableCheck
      * @return whether we should check a given node.
      */
     private boolean shouldCheck(final DetailAST ast) {
-        if (ScopeUtils.isInCodeBlock(ast) || isIgnored(ast)) {
-            return false;
-        }
-
-        final Scope customScope;
-        if (ast.getType() == TokenTypes.ENUM_CONSTANT_DEF) {
-            customScope = Scope.PUBLIC;
-        }
-        else {
-            final DetailAST mods = ast.findFirstToken(TokenTypes.MODIFIERS);
-            final Scope declaredScope = ScopeUtils.getScopeFromMods(mods);
-
-            if (ScopeUtils.isInInterfaceOrAnnotationBlock(ast)) {
-                customScope = Scope.PUBLIC;
+        boolean result = false;
+        if (!ScopeUtils.isInCodeBlock(ast) && !isIgnored(ast)) {
+            Scope customScope = Scope.PUBLIC;
+            if (ast.getType() != TokenTypes.ENUM_CONSTANT_DEF
+                    && !ScopeUtils.isInInterfaceOrAnnotationBlock(ast)) {
+                final DetailAST mods = ast.findFirstToken(TokenTypes.MODIFIERS);
+                customScope = ScopeUtils.getScopeFromMods(mods);
             }
-            else {
-                customScope = declaredScope;
-            }
+
+            final Scope surroundingScope = ScopeUtils.getSurroundingScope(ast);
+            result = customScope.isIn(scope) && surroundingScope.isIn(scope)
+                && (excludeScope == null
+                    || !customScope.isIn(excludeScope)
+                    || !surroundingScope.isIn(excludeScope));
         }
-
-        final Scope surroundingScope = ScopeUtils.getSurroundingScope(ast);
-
-        return customScope.isIn(scope) && surroundingScope.isIn(scope)
-            && (excludeScope == null
-                || !customScope.isIn(excludeScope)
-                || !surroundingScope.isIn(excludeScope));
+        return result;
     }
+
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,11 +22,13 @@ package com.puppycrawl.tools.checkstyle.checks.whitespace;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.JavadocUtils;
 
 /**
  * Checks for empty line separators after header, package, all import declarations,
@@ -187,6 +189,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author maxvetrenko
  * @author <a href="mailto:nesterenko-aleksey@list.ru">Aleksey Nesterenko</a>
  */
+@StatelessCheck
 public class EmptyLineSeparatorCheck extends AbstractCheck {
 
     /**
@@ -251,6 +254,11 @@ public class EmptyLineSeparatorCheck extends AbstractCheck {
     }
 
     @Override
+    public boolean isCommentNodesRequired() {
+        return true;
+    }
+
+    @Override
     public int[] getDefaultTokens() {
         return getAcceptableTokens();
     }
@@ -285,7 +293,10 @@ public class EmptyLineSeparatorCheck extends AbstractCheck {
             processMultipleLinesInside(ast);
         }
 
-        final DetailAST nextToken = ast.getNextSibling();
+        DetailAST nextToken = ast.getNextSibling();
+        while (nextToken != null && isComment(nextToken)) {
+            nextToken = nextToken.getNextSibling();
+        }
         if (nextToken != null) {
             final int astType = ast.getType();
             switch (astType) {
@@ -319,7 +330,7 @@ public class EmptyLineSeparatorCheck extends AbstractCheck {
      */
     private void processMultipleLinesInside(DetailAST ast) {
         final int astType = ast.getType();
-        if (isClassMemberBlock(astType)) {
+        if (astType != TokenTypes.CLASS_DEF && isClassMemberBlock(astType)) {
             final List<Integer> emptyLines = getEmptyLines(ast);
             final List<Integer> emptyLinesToLog = getEmptyLinesToLog(emptyLines);
 
@@ -351,12 +362,14 @@ public class EmptyLineSeparatorCheck extends AbstractCheck {
         final DetailAST lastToken = ast.getLastChild().getLastChild();
         int lastTokenLineNo = 0;
         if (lastToken != null) {
-            lastTokenLineNo = lastToken.getLineNo();
+            // -1 as count starts from 0
+            // -2 as last token line cannot be empty, because it is a RCURLY
+            lastTokenLineNo = lastToken.getLineNo() - 2;
         }
         final List<Integer> emptyLines = new ArrayList<>();
         final FileContents fileContents = getFileContents();
 
-        for (int lineNo = ast.getLineNo(); lineNo < lastTokenLineNo; lineNo++) {
+        for (int lineNo = ast.getLineNo(); lineNo <= lastTokenLineNo; lineNo++) {
             if (fileContents.lineIsBlank(lineNo)) {
                 emptyLines.add(lineNo);
             }
@@ -371,7 +384,7 @@ public class EmptyLineSeparatorCheck extends AbstractCheck {
      */
     private static List<Integer> getEmptyLinesToLog(List<Integer> emptyLines) {
         final List<Integer> emptyLinesToLog = new ArrayList<>();
-        if (emptyLines.size() > 1) {
+        if (emptyLines.size() >= 2) {
             int previousEmptyLineNo = emptyLines.get(0);
             for (int emptyLineNo : emptyLines) {
                 if (previousEmptyLineNo + 1 == emptyLineNo) {
@@ -405,7 +418,14 @@ public class EmptyLineSeparatorCheck extends AbstractCheck {
      */
     private void processPackage(DetailAST ast, DetailAST nextToken) {
         if (ast.getLineNo() > 1 && !hasEmptyLineBefore(ast)) {
-            log(ast.getLineNo(), MSG_SHOULD_BE_SEPARATED, ast.getText());
+            if (getFileContents().getFileName().endsWith("package-info.java")) {
+                if (ast.getFirstChild().getChildCount() == 0 && !isPrecededByJavadoc(ast)) {
+                    log(ast.getLineNo(), MSG_SHOULD_BE_SEPARATED, ast.getText());
+                }
+            }
+            else {
+                log(ast.getLineNo(), MSG_SHOULD_BE_SEPARATED, ast.getText());
+            }
         }
         if (!hasEmptyLineAfter(ast)) {
             log(nextToken.getLineNo(), MSG_SHOULD_BE_SEPARATED, nextToken.getText());
@@ -472,7 +492,7 @@ public class EmptyLineSeparatorCheck extends AbstractCheck {
         final int number = 3;
         if (lineNo >= number) {
             final String prePreviousLine = getLines()[lineNo - number];
-            result = prePreviousLine.trim().isEmpty();
+            result = CommonUtils.isBlank(prePreviousLine);
         }
         return result;
     }
@@ -487,8 +507,12 @@ public class EmptyLineSeparatorCheck extends AbstractCheck {
         if (lastToken == null) {
             lastToken = token.getLastChild();
         }
+        DetailAST nextToken = token.getNextSibling();
+        if (isComment(nextToken)) {
+            nextToken = nextToken.getNextSibling();
+        }
         // Start of the next token
-        final int nextBegin = token.getNextSibling().getLineNo();
+        final int nextBegin = nextToken.getLineNo();
         // End of current token.
         final int currentEnd = lastToken.getLineNo();
         return hasEmptyLine(currentEnd + 1, nextBegin - 1);
@@ -499,7 +523,7 @@ public class EmptyLineSeparatorCheck extends AbstractCheck {
      * started from 1 for parameter values
      * @param startLine number of the first line in the range
      * @param endLine number of the second line in the range
-     * @return <code>true</code> if found any blank line within the range, <code>false</code>
+     * @return {@code true} if found any blank line within the range, {@code false}
      *         otherwise
      */
     private boolean hasEmptyLine(int startLine, int endLine) {
@@ -524,13 +548,39 @@ public class EmptyLineSeparatorCheck extends AbstractCheck {
      * @return true, if token have empty line before.
      */
     private boolean hasEmptyLineBefore(DetailAST token) {
+        boolean result = false;
         final int lineNo = token.getLineNo();
-        if (lineNo == 1) {
-            return false;
+        if (lineNo != 1) {
+            // [lineNo - 2] is the number of the previous line as the numbering starts from zero.
+            final String lineBefore = getLines()[lineNo - 2];
+            result = CommonUtils.isBlank(lineBefore);
         }
-        //  [lineNo - 2] is the number of the previous line because the numbering starts from zero.
-        final String lineBefore = getLines()[lineNo - 2];
-        return lineBefore.trim().isEmpty();
+        return result;
+    }
+
+    /**
+     * Check if token is preceded by javadoc comment.
+     * @param token token for check.
+     * @return true, if token is preceded by javadoc comment.
+     */
+    private static boolean isPrecededByJavadoc(DetailAST token) {
+        boolean result = false;
+        final DetailAST previous = token.getPreviousSibling();
+        if (previous.getType() == TokenTypes.BLOCK_COMMENT_BEGIN
+                && JavadocUtils.isJavadocComment(previous.getFirstChild().getText())) {
+            result = true;
+        }
+        return result;
+    }
+
+    /**
+     * Check if token is a comment.
+     * @param ast ast node
+     * @return true, if given ast is comment.
+     */
+    private static boolean isComment(DetailAST ast) {
+        return ast.getType() == TokenTypes.SINGLE_LINE_COMMENT
+                   || ast.getType() == TokenTypes.BLOCK_COMMENT_BEGIN;
     }
 
     /**
@@ -542,4 +592,5 @@ public class EmptyLineSeparatorCheck extends AbstractCheck {
         final int parentType = variableDef.getParent().getParent().getType();
         return parentType == TokenTypes.CLASS_DEF;
     }
+
 }

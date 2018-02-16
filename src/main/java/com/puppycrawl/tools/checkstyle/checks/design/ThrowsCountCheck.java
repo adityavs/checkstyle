@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.design;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -52,6 +53,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * </p>
  * @author <a href="mailto:simon@redhillconsulting.com.au">Simon Harris</a>
  */
+@StatelessCheck
 public final class ThrowsCountCheck extends AbstractCheck {
 
     /**
@@ -76,21 +78,19 @@ public final class ThrowsCountCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return new int[] {
-            TokenTypes.LITERAL_THROWS,
-        };
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getDefaultTokens();
+        return new int[] {
+            TokenTypes.LITERAL_THROWS,
+        };
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {
-            TokenTypes.LITERAL_THROWS,
-        };
+        return getRequiredTokens();
     }
 
     /**
@@ -143,12 +143,13 @@ public final class ThrowsCountCheck extends AbstractCheck {
     private static boolean isOverriding(DetailAST ast) {
         final DetailAST modifiers = ast.getParent().findFirstToken(TokenTypes.MODIFIERS);
         boolean isOverriding = false;
-        if (modifiers.branchContains(TokenTypes.ANNOTATION)) {
+        if (modifiers.findFirstToken(TokenTypes.ANNOTATION) != null) {
             DetailAST child = modifiers.getFirstChild();
             while (child != null) {
                 if (child.getType() == TokenTypes.ANNOTATION
                         && "Override".equals(getAnnotationName(child))) {
                     isOverriding = true;
+                    break;
                 }
                 child = child.getNextSibling();
             }
@@ -182,4 +183,5 @@ public final class ThrowsCountCheck extends AbstractCheck {
         final DetailAST methodModifiers = ast.getParent().findFirstToken(TokenTypes.MODIFIERS);
         return methodModifiers.findFirstToken(TokenTypes.LITERAL_PRIVATE) != null;
     }
+
 }

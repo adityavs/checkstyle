@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -36,7 +36,6 @@ import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.Scope;
 import com.puppycrawl.tools.checkstyle.api.TextBlock;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
-import com.puppycrawl.tools.checkstyle.checks.AbstractTypeAwareCheck;
 import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
@@ -47,8 +46,9 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author Oliver Burn
  * @author Rick Giles
  * @author o_sukhodoslky
+ *
+ * @noinspection deprecation
  */
-@SuppressWarnings("deprecation")
 public class JavadocMethodCheck extends AbstractTypeAwareCheck {
 
     /**
@@ -100,12 +100,12 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
     public static final String MSG_DUPLICATE_TAG = "javadoc.duplicateTag";
 
     /** Compiled regexp to match Javadoc tags that take an argument. */
-    private static final Pattern MATCH_JAVADOC_ARG =
-            CommonUtils.createPattern("@(throws|exception|param)\\s+(\\S+)\\s+\\S*");
+    private static final Pattern MATCH_JAVADOC_ARG = CommonUtils.createPattern(
+            "^\\s*(?>\\*|\\/\\*\\*)?\\s*@(throws|exception|param)\\s+(\\S+)\\s+\\S*");
 
     /** Compiled regexp to match first part of multilineJavadoc tags. */
-    private static final Pattern MATCH_JAVADOC_ARG_MULTILINE_START =
-            CommonUtils.createPattern("@(throws|exception|param)\\s+(\\S+)\\s*$");
+    private static final Pattern MATCH_JAVADOC_ARG_MULTILINE_START = CommonUtils.createPattern(
+            "^\\s*(?>\\*|\\/\\*\\*)?\\s*@(throws|exception|param)\\s+(\\S+)\\s*$");
 
     /** Compiled regexp to look for a continuation of the comment. */
     private static final Pattern MATCH_JAVADOC_MULTILINE_CONT =
@@ -118,15 +118,15 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
 
     /** Compiled regexp to match Javadoc tags with no argument. */
     private static final Pattern MATCH_JAVADOC_NOARG =
-            CommonUtils.createPattern("@(return|see)\\s+\\S");
+            CommonUtils.createPattern("^\\s*(?>\\*|\\/\\*\\*)?\\s*@(return|see)\\s+\\S");
     /** Compiled regexp to match first part of multilineJavadoc tags. */
     private static final Pattern MATCH_JAVADOC_NOARG_MULTILINE_START =
-            CommonUtils.createPattern("@(return|see)\\s*$");
+            CommonUtils.createPattern("^\\s*(?>\\*|\\/\\*\\*)?\\s*@(return|see)\\s*$");
     /** Compiled regexp to match Javadoc tags with no argument and {}. */
     private static final Pattern MATCH_JAVADOC_NOARG_CURLY =
             CommonUtils.createPattern("\\{\\s*@(inheritDoc)\\s*\\}");
 
-    /** Default value of minimal amount of lines in method to demand documentation presence.*/
+    /** Default value of minimal amount of lines in method to allow no documentation.*/
     private static final int DEFAULT_MIN_LINE_COUNT = -1;
 
     /** The visibility scope where Javadoc comments are checked. */
@@ -135,7 +135,7 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
     /** The visibility scope where Javadoc comments shouldn't be checked. */
     private Scope excludeScope;
 
-    /** Minimal amount of lines in method to demand documentation presence.*/
+    /** Minimal amount of lines in method to allow no documentation.*/
     private int minLineCount = DEFAULT_MIN_LINE_COUNT;
 
     /**
@@ -203,7 +203,7 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
     }
 
     /**
-     * Sets minimal amount of lines in method.
+     * Sets minimal amount of lines in method to allow no documentation.
      * @param value user's value.
      */
     public void setMinLineCount(int value) {
@@ -365,6 +365,7 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
      * @return Some javadoc.
      */
     private boolean hasAllowedAnnotations(DetailAST methodDef) {
+        boolean result = false;
         final DetailAST modifiersNode = methodDef.findFirstToken(TokenTypes.MODIFIERS);
         DetailAST annotationNode = modifiersNode.findFirstToken(TokenTypes.ANNOTATION);
         while (annotationNode != null && annotationNode.getType() == TokenTypes.ANNOTATION) {
@@ -374,11 +375,12 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
                     .findFirstToken(TokenTypes.IDENT);
             }
             if (allowedAnnotations.contains(identNode.getText())) {
-                return true;
+                result = true;
+                break;
             }
             annotationNode = annotationNode.getNextSibling();
         }
-        return false;
+        return result;
     }
 
     /**
@@ -418,7 +420,7 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
      * @param ast the tree node for the method or constructor.
      * @return True if this method or constructor doesn't need Javadoc.
      */
-    protected boolean isMissingJavadocAllowed(final DetailAST ast) {
+    private boolean isMissingJavadocAllowed(final DetailAST ast) {
         return allowMissingJavadoc
             || allowMissingPropertyJavadoc
                 && (CheckUtils.isSetterMethod(ast) || CheckUtils.isGetterMethod(ast))
@@ -445,16 +447,17 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
      * @return true if given method name matches the regex.
      */
     private boolean matchesSkipRegex(DetailAST methodDef) {
+        boolean result = false;
         if (ignoreMethodNamesRegex != null) {
             final DetailAST ident = methodDef.findFirstToken(TokenTypes.IDENT);
             final String methodName = ident.getText();
 
             final Matcher matcher = ignoreMethodNamesRegex.matcher(methodName);
             if (matcher.matches()) {
-                return true;
+                result = true;
             }
         }
-        return false;
+        return result;
     }
 
     /**
@@ -484,11 +487,11 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
         final List<JavadocTag> tags = getMethodTags(comment);
 
         if (!hasShortCircuitTag(ast, tags)) {
-            final Iterator<JavadocTag> it = tags.iterator();
             if (ast.getType() == TokenTypes.ANNOTATION_FIELD_DEF) {
                 checkReturnTag(tags, ast.getLineNo(), true);
             }
             else {
+                final Iterator<JavadocTag> it = tags.iterator();
                 // Check for inheritDoc
                 boolean hasInheritDocTag = false;
                 while (!hasInheritDocTag && it.hasNext()) {
@@ -517,20 +520,20 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
      * @param tags the list of Javadoc tags associated with the construct
      * @return true if the construct has a short circuit tag.
      */
-    private boolean hasShortCircuitTag(final DetailAST ast,
-            final List<JavadocTag> tags) {
+    private boolean hasShortCircuitTag(final DetailAST ast, final List<JavadocTag> tags) {
+        boolean result = true;
         // Check if it contains {@inheritDoc} tag
-        if (tags.size() != 1
-                || !tags.get(0).isInheritDocTag()) {
-            return false;
+        if (tags.size() == 1
+                && tags.get(0).isInheritDocTag()) {
+            // Invalid if private, a constructor, or a static method
+            if (!JavadocTagInfo.INHERIT_DOC.isValidOn(ast)) {
+                log(ast, MSG_INVALID_INHERIT_DOC);
+            }
         }
-
-        // Invalid if private, a constructor, or a static method
-        if (!JavadocTagInfo.INHERIT_DOC.isValidOn(ast)) {
-            log(ast, MSG_INVALID_INHERIT_DOC);
+        else {
+            result = false;
         }
-
-        return true;
+        return result;
     }
 
     /**
@@ -542,15 +545,16 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
      * @return the scope of the method/constructor
      */
     private static Scope calculateScope(final DetailAST ast) {
-        final DetailAST mods = ast.findFirstToken(TokenTypes.MODIFIERS);
-        final Scope declaredScope = ScopeUtils.getScopeFromMods(mods);
+        final Scope scope;
 
         if (ScopeUtils.isInInterfaceOrAnnotationBlock(ast)) {
-            return Scope.PUBLIC;
+            scope = Scope.PUBLIC;
         }
         else {
-            return declaredScope;
+            final DetailAST mods = ast.findFirstToken(TokenTypes.MODIFIERS);
+            scope = ScopeUtils.getScopeFromMods(mods);
         }
+        return scope;
     }
 
     /**
@@ -694,7 +698,9 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
         while (child != null) {
             if (child.getType() == TokenTypes.PARAMETER_DEF) {
                 final DetailAST ident = child.findFirstToken(TokenTypes.IDENT);
-                returnValue.add(ident);
+                if (ident != null) {
+                    returnValue.add(ident);
+                }
             }
             child = child.getNextSibling();
         }
@@ -758,7 +764,6 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
             if (CommonUtils.startsWithChar(arg1, '<') && CommonUtils.endsWithChar(arg1, '>')) {
                 found = searchMatchingTypeParameter(typeParams,
                         arg1.substring(1, arg1.length() - 1));
-
             }
 
             // Handle extra JavadocTag
@@ -907,7 +912,6 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
                     log(tag.getLineNo(), tag.getColumnNo(),
                         MSG_UNUSED_TAG,
                         JavadocTagInfo.THROWS.getText(), tag.getFirstArg());
-
                 }
             }
         }
@@ -938,14 +942,12 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
         ExceptionInfo foundException = null;
 
         // First look for matches on the exception name
-        final ListIterator<ExceptionInfo> throwIt = throwsList.listIterator();
-        while (!found && throwIt.hasNext()) {
-            final ExceptionInfo exceptionInfo = throwIt.next();
-
+        for (ExceptionInfo exceptionInfo : throwsList) {
             if (exceptionInfo.getName().getText().equals(
                     documentedClassInfo.getName().getText())) {
                 found = true;
                 foundException = exceptionInfo;
+                break;
             }
         }
 
@@ -973,6 +975,7 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
 
     /** Stores useful information about declared exception. */
     private static class ExceptionInfo {
+
         /** Class information associated with this exception. */
         private final AbstractClassInfo classInfo;
         /** Does the exception have throws tag associated with. */
@@ -1015,5 +1018,7 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
         private Class<?> getClazz() {
             return classInfo.getClazz();
         }
+
     }
+
 }

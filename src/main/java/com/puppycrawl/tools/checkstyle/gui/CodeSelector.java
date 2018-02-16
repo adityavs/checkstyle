@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.swing.JTextArea;
 
+import com.google.common.collect.ImmutableList;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.DetailNode;
 
@@ -32,10 +33,11 @@ import com.puppycrawl.tools.checkstyle.api.DetailNode;
  * @author unknown
  */
 public class CodeSelector {
+
     /** Editor. */
     private final JTextArea editor;
     /** Presentation model. */
-    private final CodeSelectorPModel pModel;
+    private final CodeSelectorPresentation pModel;
 
     /**
      * Constructor.
@@ -47,10 +49,12 @@ public class CodeSelector {
                         final List<Integer> lines2position) {
         this.editor = editor;
         if (node instanceof DetailAST) {
-            pModel = new CodeSelectorPModel((DetailAST) node, lines2position);
+            pModel = new CodeSelectorPresentation((DetailAST) node,
+                    ImmutableList.copyOf(lines2position));
         }
         else {
-            pModel = new CodeSelectorPModel((DetailNode) node, lines2position);
+            pModel = new CodeSelectorPresentation((DetailNode) node,
+                    ImmutableList.copyOf(lines2position));
         }
     }
 
@@ -64,4 +68,5 @@ public class CodeSelector {
         editor.setCaretPosition(pModel.getSelectionStart());
         editor.moveCaretPosition(pModel.getSelectionEnd());
     }
+
 }

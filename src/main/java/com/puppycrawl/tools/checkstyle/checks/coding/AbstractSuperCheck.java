@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 
 import antlr.collections.AST;
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -35,6 +36,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * </p>
  * @author Rick Giles
  */
+@FileStatefulCheck
 public abstract class AbstractSuperCheck
         extends AbstractCheck {
 
@@ -55,20 +57,20 @@ public abstract class AbstractSuperCheck
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {
-            TokenTypes.METHOD_DEF,
-            TokenTypes.LITERAL_SUPER,
-        };
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getDefaultTokens();
+        return new int[] {
+            TokenTypes.METHOD_DEF,
+            TokenTypes.LITERAL_SUPER,
+        };
     }
 
     @Override
@@ -120,13 +122,11 @@ public abstract class AbstractSuperCheck
 
         while (dotAst.getType() != TokenTypes.CTOR_DEF
                 && dotAst.getType() != TokenTypes.INSTANCE_INIT) {
-
             if (dotAst.getType() == TokenTypes.METHOD_DEF) {
                 inOverridingMethod = isOverridingMethod(dotAst);
                 break;
             }
             dotAst = dotAst.getParent();
-
         }
         return inOverridingMethod;
     }
@@ -147,18 +147,13 @@ public abstract class AbstractSuperCheck
      * @return true if method name is the same
      */
     private boolean isSameNameMethod(DetailAST ast) {
-
         AST sibling = ast.getNextSibling();
         // ignore type parameters
         if (sibling != null
             && sibling.getType() == TokenTypes.TYPE_ARGUMENTS) {
             sibling = sibling.getNextSibling();
         }
-        if (sibling == null) {
-            return true;
-        }
-        final String name = sibling.getText();
-        return !getMethodName().equals(name);
+        return sibling == null || !getMethodName().equals(sibling.getText());
     }
 
     @Override
@@ -192,7 +187,7 @@ public abstract class AbstractSuperCheck
             final DetailAST modifiersAST = ast.findFirstToken(TokenTypes.MODIFIERS);
 
             if (getMethodName().equals(name)
-                    && !modifiersAST.branchContains(TokenTypes.LITERAL_NATIVE)) {
+                    && modifiersAST.findFirstToken(TokenTypes.LITERAL_NATIVE) == null) {
                 final DetailAST params = ast.findFirstToken(TokenTypes.PARAMETERS);
                 overridingMethod = params.getChildCount() == 0;
             }
@@ -206,6 +201,7 @@ public abstract class AbstractSuperCheck
      * @author Rick Giles
      */
     private static class MethodNode {
+
         /** Method definition. */
         private final DetailAST method;
 
@@ -244,5 +240,7 @@ public abstract class AbstractSuperCheck
         public DetailAST getMethod() {
             return method;
         }
+
     }
+
 }

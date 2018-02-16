@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
+import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -48,6 +49,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  *
  * @author o_sukhodolsky
  */
+@StatelessCheck
 public class ExplicitInitializationCheck extends AbstractCheck {
 
     /**
@@ -56,46 +58,72 @@ public class ExplicitInitializationCheck extends AbstractCheck {
      */
     public static final String MSG_KEY = "explicit.init";
 
+    /** Whether only explicit initialization made to null should be checked.**/
+    private boolean onlyObjectReferences;
+
     @Override
     public final int[] getDefaultTokens() {
-        return new int[] {TokenTypes.VARIABLE_DEF};
+        return getRequiredTokens();
     }
 
     @Override
     public final int[] getRequiredTokens() {
-        return getDefaultTokens();
+        return new int[] {TokenTypes.VARIABLE_DEF};
     }
 
     @Override
     public final int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.VARIABLE_DEF};
+        return getRequiredTokens();
+    }
+
+    /**
+     * Sets whether only explicit initialization made to null should be checked.
+     * @param onlyObjectReferences whether only explicit initialization made to null
+     *                             should be checked
+     */
+    public void setOnlyObjectReferences(boolean onlyObjectReferences) {
+        this.onlyObjectReferences = onlyObjectReferences;
     }
 
     @Override
     public void visitToken(DetailAST ast) {
         if (!isSkipCase(ast)) {
-            final DetailAST ident = ast.findFirstToken(TokenTypes.IDENT);
             final DetailAST assign = ast.findFirstToken(TokenTypes.ASSIGN);
             final DetailAST exprStart =
                 assign.getFirstChild().getFirstChild();
             final DetailAST type = ast.findFirstToken(TokenTypes.TYPE);
             if (isObjectType(type)
                 && exprStart.getType() == TokenTypes.LITERAL_NULL) {
+                final DetailAST ident = ast.findFirstToken(TokenTypes.IDENT);
                 log(ident, MSG_KEY, ident.getText(), "null");
             }
+            if (!onlyObjectReferences) {
+                validateNonObjects(ast);
+            }
+        }
+    }
 
-            final int primitiveType = type.getFirstChild().getType();
-            if (primitiveType == TokenTypes.LITERAL_BOOLEAN
+    /**
+     * Checks for explicit initializations made to 'false', '0' and '\0'.
+     * @param ast token being checked for explicit initializations
+     */
+    private void validateNonObjects(DetailAST ast) {
+        final DetailAST ident = ast.findFirstToken(TokenTypes.IDENT);
+        final DetailAST assign = ast.findFirstToken(TokenTypes.ASSIGN);
+        final DetailAST exprStart =
+                assign.getFirstChild().getFirstChild();
+        final DetailAST type = ast.findFirstToken(TokenTypes.TYPE);
+        final int primitiveType = type.getFirstChild().getType();
+        if (primitiveType == TokenTypes.LITERAL_BOOLEAN
                 && exprStart.getType() == TokenTypes.LITERAL_FALSE) {
-                log(ident, MSG_KEY, ident.getText(), "false");
-            }
-            if (isNumericType(primitiveType) && isZero(exprStart)) {
-                log(ident, MSG_KEY, ident.getText(), "0");
-            }
-            if (primitiveType == TokenTypes.LITERAL_CHAR
+            log(ident, MSG_KEY, ident.getText(), "false");
+        }
+        if (isNumericType(primitiveType) && isZero(exprStart)) {
+            log(ident, MSG_KEY, ident.getText(), "0");
+        }
+        if (primitiveType == TokenTypes.LITERAL_CHAR
                 && isZeroChar(exprStart)) {
-                log(ident, MSG_KEY, ident.getText(), "\\0");
-            }
+            log(ident, MSG_KEY, ident.getText(), "\\0");
         }
     }
 
@@ -111,7 +139,7 @@ public class ExplicitInitializationCheck extends AbstractCheck {
     }
 
     /**
-     * Checks for cases that should be skipped: no assignment, local variable, final variables
+     * Checks for cases that should be skipped: no assignment, local variable, final variables.
      * @param ast Variable def AST
      * @return true is that is a case that need to be skipped.
      */
@@ -126,7 +154,7 @@ public class ExplicitInitializationCheck extends AbstractCheck {
 
             if (assign != null) {
                 final DetailAST modifiers = ast.findFirstToken(TokenTypes.MODIFIERS);
-                skipCase = modifiers.branchContains(TokenTypes.FINAL);
+                skipCase = modifiers.findFirstToken(TokenTypes.FINAL) != null;
             }
         }
         return skipCase;
@@ -159,21 +187,26 @@ public class ExplicitInitializationCheck extends AbstractCheck {
     }
 
     /**
+     * Checks if given node contains numeric constant for zero.
+     *
      * @param expr node to check.
      * @return true if given node contains numeric constant for zero.
      */
     private static boolean isZero(DetailAST expr) {
         final int type = expr.getType();
+        final boolean isZero;
         switch (type) {
             case TokenTypes.NUM_FLOAT:
             case TokenTypes.NUM_DOUBLE:
             case TokenTypes.NUM_INT:
             case TokenTypes.NUM_LONG:
                 final String text = expr.getText();
-                return Double.compare(
-                    CheckUtils.parseDouble(text, type), 0.0) == 0;
+                isZero = Double.compare(CheckUtils.parseDouble(text, type), 0.0) == 0;
+                break;
             default:
-                return false;
+                isZero = false;
         }
+        return isZero;
     }
+
 }

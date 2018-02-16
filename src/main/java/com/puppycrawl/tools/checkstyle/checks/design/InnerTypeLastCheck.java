@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2018 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.design;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -32,6 +33,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  *
  * @author <a href="mailto:ryly@mail.ru">Ruslan Dyachenko</a>
  */
+@FileStatefulCheck
 public class InnerTypeLastCheck extends AbstractCheck {
 
     /**
@@ -45,17 +47,17 @@ public class InnerTypeLastCheck extends AbstractCheck {
 
     @Override
     public int[] getDefaultTokens() {
-        return getAcceptableTokens();
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return new int[] {TokenTypes.CLASS_DEF, TokenTypes.INTERFACE_DEF};
+        return getRequiredTokens();
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return getAcceptableTokens();
+        return new int[] {TokenTypes.CLASS_DEF, TokenTypes.INTERFACE_DEF};
     }
 
     @Override
@@ -85,4 +87,5 @@ public class InnerTypeLastCheck extends AbstractCheck {
             rootClass = true;
         }
     }
+
 }
