@@ -39,7 +39,6 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * </UL>
  *
  *
- * @author jrichard
  */
 public class BlockParentHandler extends AbstractExpressionHandler {
 
@@ -54,6 +53,8 @@ public class BlockParentHandler extends AbstractExpressionHandler {
         TokenTypes.LITERAL_RETURN,
         TokenTypes.LITERAL_THROW,
         TokenTypes.LITERAL_CONTINUE,
+        TokenTypes.CTOR_CALL,
+        TokenTypes.SUPER_CTOR_CALL,
     };
 
     /**
@@ -96,29 +97,9 @@ public class BlockParentHandler extends AbstractExpressionHandler {
 
         if (topLevel != null
                 && !getIndent().isAcceptable(expandedTabsColumnNo(topLevel))
-                && !hasLabelBefore()
-                && (shouldTopLevelStartLine() || isOnStartOfLine(topLevel))) {
+                && isOnStartOfLine(topLevel)) {
             logError(topLevel, "", expandedTabsColumnNo(topLevel));
         }
-    }
-
-    /**
-     * Check if the top level token has label before.
-     * @return true if the top level token has label before.
-     */
-    private boolean hasLabelBefore() {
-        final DetailAST parent = getTopLevelAst().getParent();
-        return parent.getType() == TokenTypes.LABELED_STAT
-            && parent.getLineNo() == getTopLevelAst().getLineNo();
-    }
-
-    /**
-     * Determines if the top level token must start the line.
-     *
-     * @return true
-     */
-    protected boolean shouldTopLevelStartLine() {
-        return true;
     }
 
     /**

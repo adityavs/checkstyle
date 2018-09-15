@@ -31,10 +31,9 @@ import java.util.regex.PatternSyntaxException;
 import com.puppycrawl.tools.checkstyle.TreeWalkerAuditEvent;
 import com.puppycrawl.tools.checkstyle.TreeWalkerFilter;
 import com.puppycrawl.tools.checkstyle.api.AutomaticBean;
-import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.TextBlock;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtil;
 
 /**
  * <p>
@@ -68,7 +67,6 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * <p>See {@link SuppressionCommentFilter} for usage notes.
  *
- * @author Mick Killianey
  */
 public class SuppressWithNearbyCommentFilter
     extends AutomaticBean
@@ -184,7 +182,7 @@ public class SuppressWithNearbyCommentFilter
     }
 
     @Override
-    protected void finishLocalSetup() throws CheckstyleException {
+    protected void finishLocalSetup() {
         // No code by default
     }
 
@@ -314,21 +312,21 @@ public class SuppressWithNearbyCommentFilter
             //Does not intern Patterns with Utils.getPattern()
             String format = "";
             try {
-                format = CommonUtils.fillTemplateWithStringsByRegexp(
+                format = CommonUtil.fillTemplateWithStringsByRegexp(
                         filter.checkFormat, text, filter.commentFormat);
                 tagCheckRegexp = Pattern.compile(format);
                 if (filter.messageFormat == null) {
                     tagMessageRegexp = null;
                 }
                 else {
-                    format = CommonUtils.fillTemplateWithStringsByRegexp(
+                    format = CommonUtil.fillTemplateWithStringsByRegexp(
                             filter.messageFormat, text, filter.commentFormat);
                     tagMessageRegexp = Pattern.compile(format);
                 }
-                format = CommonUtils.fillTemplateWithStringsByRegexp(
+                format = CommonUtil.fillTemplateWithStringsByRegexp(
                         filter.influenceFormat, text, filter.commentFormat);
 
-                if (CommonUtils.startsWithChar(format, '+')) {
+                if (CommonUtil.startsWithChar(format, '+')) {
                     format = format.substring(1);
                 }
                 final int influence = parseInfluence(format, filter.influenceFormat, text);

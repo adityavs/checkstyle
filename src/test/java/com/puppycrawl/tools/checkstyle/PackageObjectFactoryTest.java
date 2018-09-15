@@ -60,7 +60,6 @@ import com.puppycrawl.tools.checkstyle.internal.utils.CheckUtil;
 /**
  * Enter a description of class PackageObjectFactoryTest.java.
  *
- * @author Rick Giles
  */
 public class PackageObjectFactoryTest {
 
@@ -143,7 +142,7 @@ public class PackageObjectFactoryTest {
             fail("Exception is expected");
         }
         catch (CheckstyleException ex) {
-            final LocalizedMessage exceptionMessage = new LocalizedMessage(0,
+            final LocalizedMessage exceptionMessage = new LocalizedMessage(1,
                     Definitions.CHECKSTYLE_BUNDLE, UNABLE_TO_INSTANTIATE_EXCEPTION_MESSAGE,
                     new String[] {name, null}, null, factory.getClass(), null);
             assertEquals("Invalid exception message",
@@ -153,24 +152,22 @@ public class PackageObjectFactoryTest {
 
     @Test
     public void testCreateModuleWithNonExistName() {
-        testCreateModuleWithNonExistName("NonExistClassOne");
-        testCreateModuleWithNonExistName("NonExistClassTwo");
-    }
-
-    private void testCreateModuleWithNonExistName(String name) {
-        try {
-            factory.createModule(name);
-            fail("Exception is expected");
-        }
-        catch (CheckstyleException ex) {
-            final String attemptedNames = BASE_PACKAGE + PACKAGE_SEPARATOR + name + STRING_SEPARATOR
-                    + name + CHECK_SUFFIX + STRING_SEPARATOR
+        final String[] names = {"NonExistClassOne", "NonExistClassTwo", };
+        for (String name : names) {
+            try {
+                factory.createModule(name);
+                fail("Exception is expected");
+            }
+            catch (CheckstyleException ex) {
+                final String attemptedNames = BASE_PACKAGE + PACKAGE_SEPARATOR + name
+                    + STRING_SEPARATOR + name + CHECK_SUFFIX + STRING_SEPARATOR
                     + BASE_PACKAGE + PACKAGE_SEPARATOR + name + CHECK_SUFFIX;
-            final LocalizedMessage exceptionMessage = new LocalizedMessage(0,
+                final LocalizedMessage exceptionMessage = new LocalizedMessage(1,
                     Definitions.CHECKSTYLE_BUNDLE, UNABLE_TO_INSTANTIATE_EXCEPTION_MESSAGE,
                     new String[] {name, attemptedNames}, null, factory.getClass(), null);
-            assertEquals("Invalid exception message",
+                assertEquals("Invalid exception message",
                     exceptionMessage.getMessage(), ex.getMessage());
+            }
         }
     }
 
@@ -190,6 +187,31 @@ public class PackageObjectFactoryTest {
     }
 
     @Test
+    public void testCreateStandardModuleObjectFromMap() throws Exception {
+        final String moduleName = "TreeWalker";
+        final String packageName = BASE_PACKAGE + ".packageobjectfactory.bar";
+        final String fullName = BASE_PACKAGE + PACKAGE_SEPARATOR + moduleName;
+        final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        final PackageObjectFactory objectFactory =
+                new PackageObjectFactory(packageName, classLoader);
+        final Object instance = objectFactory.createModule(moduleName);
+        assertEquals("Invalid canonical name", fullName, instance.getClass().getCanonicalName());
+    }
+
+    @Test
+    public void testCreateStandardCheckModuleObjectFromMap() throws Exception {
+        final String moduleName = "TypeName";
+        final String packageName = BASE_PACKAGE + ".packageobjectfactory.bar";
+        final String fullName = BASE_PACKAGE + PACKAGE_SEPARATOR + "checks" + PACKAGE_SEPARATOR
+            + "naming" + PACKAGE_SEPARATOR + moduleName + CHECK_SUFFIX;
+        final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        final PackageObjectFactory objectFactory =
+                new PackageObjectFactory(packageName, classLoader);
+        final Object instance = objectFactory.createModule(moduleName);
+        assertEquals("Invalid canonical name", fullName, instance.getClass().getCanonicalName());
+    }
+
+    @Test
     public void testCreateObjectFromFullModuleNamesWithAmbiguousException() {
         final String barPackage = BASE_PACKAGE + ".packageobjectfactory.bar";
         final String fooPackage = BASE_PACKAGE + ".packageobjectfactory.foo";
@@ -204,7 +226,7 @@ public class PackageObjectFactoryTest {
         catch (CheckstyleException ex) {
             final String optionalNames = barPackage + PACKAGE_SEPARATOR + name
                     + STRING_SEPARATOR + fooPackage + PACKAGE_SEPARATOR + name;
-            final LocalizedMessage exceptionMessage = new LocalizedMessage(0,
+            final LocalizedMessage exceptionMessage = new LocalizedMessage(1,
                     Definitions.CHECKSTYLE_BUNDLE, AMBIGUOUS_MODULE_NAME_EXCEPTION_MESSAGE,
                     new String[] {name, optionalNames}, null, getClass(), null);
             assertEquals("Invalid exception message",
@@ -231,7 +253,7 @@ public class PackageObjectFactoryTest {
                     + checkName + STRING_SEPARATOR
                     + package1 + PACKAGE_SEPARATOR + checkName + STRING_SEPARATOR
                     + package2 + PACKAGE_SEPARATOR + checkName;
-            final LocalizedMessage exceptionMessage = new LocalizedMessage(0,
+            final LocalizedMessage exceptionMessage = new LocalizedMessage(1,
                     Definitions.CHECKSTYLE_BUNDLE, UNABLE_TO_INSTANTIATE_EXCEPTION_MESSAGE,
                     new String[] {name, attemptedNames}, null, getClass(), null);
             assertEquals("Invalid exception message",
@@ -259,7 +281,7 @@ public class PackageObjectFactoryTest {
                     + checkName + STRING_SEPARATOR
                     + package1 + PACKAGE_SEPARATOR + checkName + STRING_SEPARATOR
                     + package2 + PACKAGE_SEPARATOR + checkName;
-            final LocalizedMessage exceptionMessage = new LocalizedMessage(0,
+            final LocalizedMessage exceptionMessage = new LocalizedMessage(1,
                     Definitions.CHECKSTYLE_BUNDLE, UNABLE_TO_INSTANTIATE_EXCEPTION_MESSAGE,
                     new String[] {name, attemptedNames}, null, getClass(), null);
             assertEquals("Invalid exception message",
@@ -353,6 +375,26 @@ public class PackageObjectFactoryTest {
                     "IllegalArgumentException", ex.getCause().getCause().getClass()
                     .getSimpleName());
         }
+    }
+
+    @Test
+    public void testGetShortFromFullModuleNames() {
+        final String fullName =
+                "com.puppycrawl.tools.checkstyle.checks.coding.DefaultComesLastCheck";
+
+        assertEquals("Invalid simple check name",
+                "DefaultComesLastCheck",
+                PackageObjectFactory.getShortFromFullModuleNames(fullName));
+    }
+
+    @Test
+    public void testGetShortFromFullModuleNamesThirdParty() {
+        final String fullName =
+                "java.util.stream.Collectors";
+
+        assertEquals("Invalid simple check name",
+                fullName,
+                PackageObjectFactory.getShortFromFullModuleNames(fullName));
     }
 
     private static final class FailConstructorFileSet extends AbstractFileSetCheck {

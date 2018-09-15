@@ -6,7 +6,8 @@
 
   <head>
     <title>Writing Listeners</title>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"/>
+    <script type="text/javascript"
+            src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"/>
     <script type="text/javascript" src="js/anchors.js"/>
     <script type="text/javascript" src="js/google-analytics.js"/>
     <link rel="icon" href="images/favicon.png" type="image/x-icon" />
@@ -111,74 +112,74 @@ public class VerboseListener
     extends AutomaticBean
     implements AuditListener
 {
-    private PrintWriter mWriter = new PrintWriter(System.out);
-    private boolean mCloseOut = false;
-    private int mTotalErrors;
-    private int mErrors;
+  private PrintWriter mWriter = new PrintWriter(System.out);
+  private boolean mCloseOut = false;
+  private int mTotalErrors;
+  private int mErrors;
 
-    public void setFile(String aFileName)
-        throws FileNotFoundException
-    {
-        final OutputStream out = new FileOutputStream(aFileName);
-        mWriter = new PrintWriter(out);
-        mCloseOut = true;
-    }
+  public void setFile(String aFileName)
+      throws FileNotFoundException
+  {
+    final OutputStream out = new FileOutputStream(aFileName);
+    mWriter = new PrintWriter(out);
+    mCloseOut = true;
+  }
 
-    public void auditStarted(AuditEvent aEvt)
-    {
-        mTotalErrors = 0;
-        mWriter.println("Audit started.");
-    }
+  public void auditStarted(AuditEvent aEvt)
+  {
+    mTotalErrors = 0;
+    mWriter.println("Audit started.");
+  }
 
-    public void auditFinished(AuditEvent aEvt)
-    {
-        mWriter.println("Audit finished. Total errors: " + mTotalErrors);
-        mWriter.flush();
-        if (mCloseOut) {
-            mWriter.close();
-        }
+  public void auditFinished(AuditEvent aEvt)
+  {
+    mWriter.println("Audit finished. Total errors: " + mTotalErrors);
+    mWriter.flush();
+    if (mCloseOut) {
+      mWriter.close();
     }
+  }
 
-    public void fileStarted(AuditEvent aEvt)
-    {
-        mErrors = 0;
-        mWriter.println(
-            "Started checking file '" + aEvt.getFileName() + "'.");
-    }
+  public void fileStarted(AuditEvent aEvt)
+  {
+    mErrors = 0;
+    mWriter.println(
+        "Started checking file '" + aEvt.getFileName() + "'.");
+  }
 
-    public void fileFinished(AuditEvent aEvt)
-    {
-        mWriter.println("Finished checking file '" + aEvt.getFileName()
-            + "'. Errors: " + mErrors);
-    }
+  public void fileFinished(AuditEvent aEvt)
+  {
+    mWriter.println("Finished checking file '" + aEvt.getFileName()
+        + "'. Errors: " + mErrors);
+  }
 
-    public void addError(AuditEvent aEvt)
-    {
-        printEvent(aEvt);
-        if (SeverityLevel.ERROR.equals(aEvt.getSeverityLevel())) {
-            mErrors++;
-            mTotalErrors++;
-        }
+  public void addError(AuditEvent aEvt)
+  {
+    printEvent(aEvt);
+    if (SeverityLevel.ERROR.equals(aEvt.getSeverityLevel())) {
+      mErrors++;
+      mTotalErrors++;
     }
+  }
 
-    public void addException(AuditEvent aEvt, Throwable aThrowable)
-    {
-        printEvent(aEvt);
-        aThrowable.printStackTrace(System.out);
-        mErrors++;
-        mTotalErrors++;
-    }
+  public void addException(AuditEvent aEvt, Throwable aThrowable)
+  {
+    printEvent(aEvt);
+    aThrowable.printStackTrace(System.out);
+    mErrors++;
+    mTotalErrors++;
+  }
 
-    private void printEvent(AuditEvent aEvt)
-    {
-        mWriter.println("Logging error -"
-            + " file: '" + aEvt.getFileName() + "'"
-            + " line: " + aEvt.getLine()
-            + " column: " + aEvt.getColumn()
-            + " severity: " + aEvt.getSeverityLevel()
-            + " message: " + aEvt.getMessage()
-            + " source: " + aEvt.getSourceName());
-    }
+  private void printEvent(AuditEvent aEvt)
+  {
+    mWriter.println("Logging error -"
+        + " file: '" + aEvt.getFileName() + "'"
+        + " line: " + aEvt.getLine()
+        + " column: " + aEvt.getColumn()
+        + " severity: " + aEvt.getSeverityLevel()
+        + " message: " + aEvt.getMessage()
+        + " source: " + aEvt.getSourceName());
+  }
 }
       </source>
 
@@ -201,7 +202,8 @@ public class VerboseListener
         href="config.html#AuditListeners">configuration file</a>. For
         example, to configure a <code>Checker</code> so
         that it uses custom listener
-        <a href="https://github.com/checkstyle/contribution/blob/master/examples/listeners/com/mycompany/listeners/VerboseListener.java">VerboseListener</a>
+        <a href="https://github.com/checkstyle/contribution/blob/master/examples/listeners/com/mycompany/listeners/VerboseListener.java">
+            VerboseListener</a>
         to print audit messages to a
         file named &quot;audit.txt&quot;, include the following module
         in the configuration file:
@@ -209,7 +211,7 @@ public class VerboseListener
 
       <source>
 &lt;module name=&quot;com.mycompany.listeners.VerboseListener&quot;&gt;
-    &lt;property name=&quot;file&quot; value=&quot;audit.txt&quot;/&gt;
+  &lt;property name=&quot;file&quot; value=&quot;audit.txt&quot;/&gt;
 &lt;/module&gt;
       </source>
 
@@ -275,10 +277,12 @@ Audit finished. Total errors: 1
         in the classpath because that jar file contains all the Commons
         Logging classes.  The default Log under J2SE 1.4 is wrapper
         class <a
-        href="http://commons.apache.org/proper/commons-logging/apidocs/org/apache/commons/logging/impl/Jdk14Logger.html">Jdk14Logger</a>.
+        href="http://commons.apache.org/proper/commons-logging/apidocs/org/apache/commons/logging/impl/Jdk14Logger.html">
+          Jdk14Logger</a>.
         Under earlier Java versions, the default Log is a simple wrapper
         class, <a
-        href="http://commons.apache.org/proper/commons-logging/apidocs/org/apache/commons/logging/impl/SimpleLog.html">SimpleLog</a>.
+        href="http://commons.apache.org/proper/commons-logging/apidocs/org/apache/commons/logging/impl/SimpleLog.html">
+          SimpleLog</a>.
         Both default logging tools can be used directly from Commons
         Logging; if you need to use other tools such as log4j, then you
         must include the appropriate jar file(s) in the classpath.

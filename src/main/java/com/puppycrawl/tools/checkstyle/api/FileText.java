@@ -21,9 +21,9 @@ package com.puppycrawl.tools.checkstyle.api;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
@@ -31,13 +31,14 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.UnsupportedCharsetException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtil;
 
 /**
  * Represents the text contents of a file of arbitrary plain text type.
@@ -46,7 +47,6 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * Checker.
  * </p>
  *
- * @author Martin von Gagern
  */
 public final class FileText {
 
@@ -126,8 +126,7 @@ public final class FileText {
         // Use the BufferedReader to break down the lines as this
         // is about 30% faster than using the
         // LINE_TERMINATOR.split(fullText, -1) method
-        final BufferedReader reader = new BufferedReader(new StringReader(fullText));
-        try {
+        try (BufferedReader reader = new BufferedReader(new StringReader(fullText))) {
             final ArrayList<String> textLines = new ArrayList<>();
             while (true) {
                 final String line = reader.readLine();
@@ -136,10 +135,7 @@ public final class FileText {
                 }
                 textLines.add(line);
             }
-            lines = textLines.toArray(new String[textLines.size()]);
-        }
-        finally {
-            CommonUtils.close(reader);
+            lines = textLines.toArray(CommonUtil.EMPTY_STRING_ARRAY);
         }
     }
 
@@ -180,7 +176,7 @@ public final class FileText {
         this.file = file;
         charset = null;
         fullText = buf.toString();
-        this.lines = lines.toArray(new String[lines.size()]);
+        this.lines = lines.toArray(CommonUtil.EMPTY_STRING_ARRAY);
     }
 
     /**
@@ -196,9 +192,8 @@ public final class FileText {
             throw new FileNotFoundException(inputFile.getPath() + " (No such file or directory)");
         }
         final StringBuilder buf = new StringBuilder(1024);
-        final FileInputStream stream = new FileInputStream(inputFile);
-        final Reader reader = new InputStreamReader(stream, decoder);
-        try {
+        final InputStream stream = Files.newInputStream(inputFile.toPath());
+        try (Reader reader = new InputStreamReader(stream, decoder)) {
             final char[] chars = new char[READ_BUFFER_SIZE];
             while (true) {
                 final int len = reader.read(chars);
@@ -207,9 +202,6 @@ public final class FileText {
                 }
                 buf.append(chars, 0, len);
             }
-        }
-        finally {
-            CommonUtils.close(reader);
         }
         return buf.toString();
     }

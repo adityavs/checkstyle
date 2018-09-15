@@ -21,14 +21,13 @@ package com.puppycrawl.tools.checkstyle.checks.design;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
 
 import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
+import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
-import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
+import com.puppycrawl.tools.checkstyle.utils.ScopeUtil;
 
 /**
  * <p>
@@ -42,7 +41,6 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * <pre>
  * &lt;module name="FinalClass"/&gt;
  * </pre>
- * @author o_sukhodolsky
  */
 @FileStatefulCheck
 public class FinalClassCheck
@@ -92,7 +90,7 @@ public class FinalClassCheck
 
         switch (ast.getType()) {
             case TokenTypes.PACKAGE_DEF:
-                packageName = extractQualifiedName(ast);
+                packageName = extractQualifiedName(ast.getFirstChild().getNextSibling());
                 break;
 
             case TokenTypes.CLASS_DEF:
@@ -106,7 +104,7 @@ public class FinalClassCheck
                 break;
 
             case TokenTypes.CTOR_DEF:
-                if (!ScopeUtils.isInEnumBlock(ast)) {
+                if (!ScopeUtil.isInEnumBlock(ast)) {
                     final ClassDesc desc = classes.peek();
                     if (modifiers.findFirstToken(TokenTypes.LITERAL_PRIVATE) == null) {
                         desc.registerNonPrivateCtor();
@@ -131,7 +129,7 @@ public class FinalClassCheck
                 && !desc.isDeclaredAsFinal()
                 && !desc.isWithNonPrivateCtor()
                 && !desc.isWithNestedSubclass()
-                && !ScopeUtils.isInInterfaceOrAnnotationBlock(ast)) {
+                && !ScopeUtil.isInInterfaceOrAnnotationBlock(ast)) {
                 final String qualifiedName = desc.getQualifiedName();
                 final String className = getClassNameFromQualifiedName(qualifiedName);
                 log(ast.getLineNo(), MSG_KEY, className);
@@ -140,31 +138,12 @@ public class FinalClassCheck
     }
 
     /**
-     * Get name of class(with qualified package if specified) in extend clause.
-     * @param classExtend extend clause to extract class name
-     * @return super class name
+     * Get name of class (with qualified package if specified) in {@code ast}.
+     * @param ast ast to extract class name from
+     * @return qualified name
      */
-    private static String extractQualifiedName(DetailAST classExtend) {
-        final String className;
-
-        if (classExtend.findFirstToken(TokenTypes.IDENT) == null) {
-            // Name specified with packages, have to traverse DOT
-            final DetailAST firstChild = classExtend.findFirstToken(TokenTypes.DOT);
-            final List<String> qualifiedNameParts = new LinkedList<>();
-
-            qualifiedNameParts.add(0, firstChild.findFirstToken(TokenTypes.IDENT).getText());
-            DetailAST traverse = firstChild.findFirstToken(TokenTypes.DOT);
-            while (traverse != null) {
-                qualifiedNameParts.add(0, traverse.findFirstToken(TokenTypes.IDENT).getText());
-                traverse = traverse.findFirstToken(TokenTypes.DOT);
-            }
-            className = String.join(PACKAGE_SEPARATOR, qualifiedNameParts);
-        }
-        else {
-            className = classExtend.findFirstToken(TokenTypes.IDENT).getText();
-        }
-
-        return className;
+    private static String extractQualifiedName(DetailAST ast) {
+        return FullIdent.createFullIdent(ast).getText();
     }
 
     /**
@@ -236,7 +215,7 @@ public class FinalClassCheck
         String superClassName = null;
         final DetailAST classExtend = classAst.findFirstToken(TokenTypes.EXTENDS_CLAUSE);
         if (classExtend != null) {
-            superClassName = extractQualifiedName(classExtend);
+            superClassName = extractQualifiedName(classExtend.getFirstChild());
         }
         return superClassName;
     }

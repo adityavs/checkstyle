@@ -21,7 +21,9 @@ package com.puppycrawl.tools.checkstyle.xpath;
 
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import net.sf.saxon.Configuration;
 import net.sf.saxon.om.AxisInfo;
+import net.sf.saxon.om.GenericTreeInfo;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.tree.iter.ArrayIterator;
 import net.sf.saxon.tree.iter.AxisIterator;
@@ -33,12 +35,14 @@ import net.sf.saxon.type.Type;
 /**
  * Represents root node of Xpath-tree.
  *
- * @author Timur Tibeyev
  */
 public class RootNode extends AbstractNode {
 
     /** Name of the root element. */
     private static final String ROOT_NAME = "ROOT";
+
+    /** Constant for optimization. */
+    private static final AbstractNode[] EMPTY_ABSTRACT_NODE_ARRAY = new AbstractNode[0];
 
     /** The ast node. */
     private final DetailAST detailAst;
@@ -49,7 +53,9 @@ public class RootNode extends AbstractNode {
      * @param detailAst reference to {@code DetailAST}
      */
     public RootNode(DetailAST detailAst) {
+        super(new GenericTreeInfo(Configuration.newConfiguration()));
         this.detailAst = detailAst;
+
         if (detailAst != null) {
             createChildren();
         }
@@ -151,7 +157,7 @@ public class RootNode extends AbstractNode {
             case AxisInfo.CHILD:
                 if (hasChildNodes()) {
                     result = new ArrayIterator.OfNodes(
-                            getChildren().toArray(new AbstractNode[getChildren().size()]));
+                            getChildren().toArray(EMPTY_ABSTRACT_NODE_ARRAY));
                 }
                 else {
                     result = EmptyIterator.OfNodes.THE_INSTANCE;

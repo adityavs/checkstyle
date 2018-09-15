@@ -24,7 +24,7 @@ import org.junit.Test;
 import com.google.checkstyle.test.base.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtil;
 
 public class CustomImportOrderTest extends AbstractModuleTestSupport {
 
@@ -76,7 +76,8 @@ public class CustomImportOrderTest extends AbstractModuleTestSupport {
             "13: " + getCheckMessage(clazz, MSG_LEX,
                 "com.google.checkstyle.test.chapter2filebasic.rule21filename.*",
                 "java.util.concurrent.AbstractExecutorService"),
-            "14: " + getCheckMessage(clazz, MSG_LEX, "com.sun.xml.internal.xsom.impl.scd.Iterators",
+            "14: " + getCheckMessage(clazz, MSG_LEX,
+                "com.google.checkstyle.test.chapter3filestructure.rule3sourcefile.*",
                 "java.util.concurrent.AbstractExecutorService"),
             "16: " + getCheckMessage(clazz, MSG_LEX, "com.google.common.reflect.*",
                 "java.util.concurrent.AbstractExecutorService"),
@@ -99,7 +100,8 @@ public class CustomImportOrderTest extends AbstractModuleTestSupport {
                 "com.google.checkstyle.test.chapter2filebasic.rule21filename.*", "java.awt.Dialog"),
             "8: " + getCheckMessage(clazz, MSG_LEX, "com.google.common.reflect.*",
                 "java.awt.Dialog"),
-            "9: " + getCheckMessage(clazz, MSG_LEX, "com.sun.xml.internal.xsom.impl.scd.Iterators",
+            "9: " + getCheckMessage(clazz, MSG_LEX,
+                "com.google.checkstyle.test.chapter3filestructure.rule3sourcefile.*",
                 "java.awt.Dialog"),
             "11: " + getCheckMessage(clazz, MSG_NONGROUP_EXPECTED, STATIC,
                 "java.io.File.createTempFile"),
@@ -117,7 +119,7 @@ public class CustomImportOrderTest extends AbstractModuleTestSupport {
 
     @Test
     public void testValid() throws Exception {
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
 
         final Configuration checkConfig = getModuleConfig("CustomImportOrder");
         final String filePath = getPath("InputCustomImportOrderValid.java");
@@ -128,7 +130,7 @@ public class CustomImportOrderTest extends AbstractModuleTestSupport {
 
     @Test
     public void testValidGoogleStyleOrderOfImports() throws Exception {
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
 
         final Configuration checkConfig = getModuleConfig("CustomImportOrder");
         final String filePath = getPath("InputCustomImportOrderNoImports.java");

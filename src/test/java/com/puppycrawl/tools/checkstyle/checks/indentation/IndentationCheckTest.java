@@ -30,10 +30,10 @@ import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,11 +49,10 @@ import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.AuditEvent;
 import com.puppycrawl.tools.checkstyle.api.AuditListener;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtil;
 
 /**
  * Unit test for IndentationCheck.
- * @author  jrichard
  */
 public class IndentationCheckTest extends AbstractModuleTestSupport {
 
@@ -61,12 +60,14 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
                     Pattern.compile(".*?//indent:(\\d+)(?: ioffset:(\\d+))?"
                         + " exp:(>=)?(\\d+(?:,\\d+)*?)( warn)?$");
 
+    private static final IndentComment[] EMPTY_INDENT_COMMENT_ARRAY = new IndentComment[0];
+
     private static IndentComment[] getLinesWithWarnAndCheckComments(String aFileName,
             final int tabWidth)
                     throws IOException {
         final List<IndentComment> result = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                new FileInputStream(aFileName), StandardCharsets.UTF_8))) {
+        try (BufferedReader br = Files.newBufferedReader(Paths.get(aFileName),
+                StandardCharsets.UTF_8)) {
             int lineNumber = 1;
             for (String line = br.readLine(); line != null; line = br.readLine()) {
                 final Matcher match = LINE_WITH_COMMENT_REGEX.matcher(line);
@@ -105,7 +106,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
                 lineNumber++;
             }
         }
-        return result.toArray(new IndentComment[result.size()]);
+        return result.toArray(EMPTY_INDENT_COMMENT_ARRAY);
     }
 
     private static boolean isCommentConsistent(IndentComment comment) {
@@ -140,7 +141,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         int lineStart = 0;
         for (int index = 0; index < line.length(); ++index) {
             if (!Character.isWhitespace(line.charAt(index))) {
-                lineStart = CommonUtils.lengthExpandedTabs(line, index, tabWidth);
+                lineStart = CommonUtil.lengthExpandedTabs(line, index, tabWidth);
                 break;
             }
         }
@@ -213,7 +214,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "8");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "8");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationStrictCondition.java"), expected);
     }
 
@@ -246,7 +247,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationZeroCaseLevel.java"), expected);
     }
 
@@ -288,8 +289,9 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String[] expected = {
-            "51: " + getCheckMessage(MSG_CHILD_ERROR, "method call", 18, 20),
-            "52: " + getCheckMessage(MSG_ERROR, "method call rparen", 14, 16),
+            "53: " + getCheckMessage(MSG_CHILD_ERROR, "method call", 18, 20),
+            "54: " + getCheckMessage(MSG_ERROR, "method call rparen", 14, 16),
+            "75: " + getCheckMessage(MSG_ERROR, "lambda arguments", 12, 16),
         };
         verifyWarns(checkConfig, getPath("InputIndentationMethodCallLineWrap.java"), expected);
     }
@@ -323,11 +325,11 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
 
         final String[] expected = {
-            "33: " + getCheckMessage(MSG_ERROR, ")", 16, 0),
-            "35: " + getCheckMessage(MSG_ERROR, ")", 16, 0),
-            "39: " + getCheckMessage(MSG_ERROR, ")", 8, 4),
-            "41: " + getCheckMessage(MSG_ERROR, ")", 8, 4),
-            "45: " + getCheckMessage(MSG_ERROR, ")", 8, 4),
+            "34: " + getCheckMessage(MSG_ERROR, ")", 16, 0),
+            "36: " + getCheckMessage(MSG_ERROR, ")", 16, 0),
+            "40: " + getCheckMessage(MSG_ERROR, ")", 8, 4),
+            "42: " + getCheckMessage(MSG_ERROR, ")", 8, 4),
+            "46: " + getCheckMessage(MSG_ERROR, ")", 8, 4),
         };
 
         verifyWarns(checkConfig,
@@ -348,7 +350,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationFromGuava2.java"), expected);
     }
 
@@ -364,7 +366,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationFromGuava.java"), expected);
     }
 
@@ -380,7 +382,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationCorrectIfAndParameter.java"), expected);
     }
 
@@ -396,7 +398,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationAnonymousClasses.java"), expected);
     }
 
@@ -412,7 +414,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationArrays.java"), expected);
     }
 
@@ -428,7 +430,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationLabels.java"), expected);
     }
 
@@ -444,8 +446,40 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationClassesMethods.java"), expected);
+    }
+
+    @Test
+    public void testCtorCall() throws Exception {
+        final DefaultConfiguration checkConfig = createModuleConfig(IndentationCheck.class);
+
+        checkConfig.addAttribute("basicOffset", "2");
+        checkConfig.addAttribute("braceAdjustment", "0");
+        checkConfig.addAttribute("lineWrappingIndentation", "4");
+        checkConfig.addAttribute("tabWidth", "4");
+        final String[] expected = {
+            "28: " + getCheckMessage(MSG_CHILD_ERROR, "ctor def", 4, 6),
+            "29: " + getCheckMessage(MSG_CHILD_ERROR, "method call", 4, 6),
+            "30: " + getCheckMessage(MSG_CHILD_ERROR, "method call", 4, 6),
+            "34: " + getCheckMessage(MSG_CHILD_ERROR, "ctor def", 4, 6),
+            "35: " + getCheckMessage(MSG_CHILD_ERROR, "method call", 4, 6),
+            "39: " + getCheckMessage(MSG_CHILD_ERROR, "ctor def", 4, 6),
+            "40: " + getCheckMessage(MSG_CHILD_ERROR, "method call", 4, 8),
+            "41: " + getCheckMessage(MSG_CHILD_ERROR, "method call", 4, 8),
+            "45: " + getCheckMessage(MSG_CHILD_ERROR, "ctor def", 4, 6),
+            "46: " + getCheckMessage(MSG_CHILD_ERROR, "method call", 4, 8),
+            "50: " + getCheckMessage(MSG_CHILD_ERROR, "ctor def", 4, 6),
+            "51: " + getCheckMessage(MSG_ERROR, "(", 4, 8),
+            "52: " + getCheckMessage(MSG_ERROR, "x", 4, 8),
+            "56: " + getCheckMessage(MSG_CHILD_ERROR, "ctor def", 4, 6),
+            "57: " + getCheckMessage(MSG_ERROR, "method call lparen", 4, 6),
+            "62: " + getCheckMessage(MSG_ERROR, ".", 4, 10),
+            "63: " + getCheckMessage(MSG_CHILD_ERROR, "method call", 4, 8),
+            "68: " + getCheckMessage(MSG_ERROR, "super", 4, 10),
+            "69: " + getCheckMessage(MSG_CHILD_ERROR, "method call", 4, 8),
+        };
+        verifyWarns(checkConfig, getPath("InputIndentationCtorCall.java"), expected);
     }
 
     @Test
@@ -523,7 +557,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationValidLabelIndent.java"), expected);
     }
 
@@ -560,7 +594,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationValidDotIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -693,7 +727,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationValidSwitchIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -711,7 +745,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationValidArrayInitDefaultIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -729,7 +763,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationValidArrayInitIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -799,7 +833,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationValidTryIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1129,7 +1163,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationInvalidAnonymousClassIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1187,7 +1221,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationValidForIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1205,7 +1239,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationValidDoWhileIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1259,7 +1293,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationValidBlockIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1277,7 +1311,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationValidWhileIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1316,7 +1350,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationValidInterfaceDefIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1334,7 +1368,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
         final String fileName = getPath("InputIndentationValidCommaIndent.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1386,7 +1420,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "8");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationInvalidThrowsIndent.java"), expected);
     }
 
@@ -1498,7 +1532,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationValidAssignIndent.java"), expected);
     }
 
@@ -1514,7 +1548,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentation15Extensions.java"), expected);
     }
 
@@ -1530,7 +1564,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "4");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationValidTryResourcesIndent.java"),
                expected);
     }
@@ -1547,7 +1581,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "8");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "8");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationSwitchCustom.java"),
                expected);
     }
@@ -1563,7 +1597,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "8");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "8");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationSynchronizedStatement.java"), expected);
     }
 
@@ -1578,7 +1612,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("lineWrappingIndentation", "8");
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("throwsIndent", "8");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationSynchronizedMethod.java"), expected);
     }
 
@@ -1630,7 +1664,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
     public void testAnnotationDefinition() throws Exception {
         final DefaultConfiguration checkConfig = createModuleConfig(IndentationCheck.class);
         checkConfig.addAttribute("tabWidth", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationAnnotationDefinition.java"), expected);
     }
 
@@ -1652,14 +1686,14 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
             "2: " + getCheckMessage(MSG_ERROR, "package def", 1, 0),
         };
         verifyWarns(checkConfig,
-            getNonCompilablePath("InputIndentationPackageDeclaration2.java"), expected);
+            getPath("package-info.java"), expected);
     }
 
     @Test
     public void testPackageDeclaration3() throws Exception {
         final DefaultConfiguration checkConfig = createModuleConfig(IndentationCheck.class);
         checkConfig.addAttribute("tabWidth", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationPackageDeclaration3.java"), expected);
     }
 
@@ -1690,7 +1724,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("basicOffset", "4");
         checkConfig.addAttribute("lineWrappingIndentation", "8");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationLambda2.java"), expected);
     }
 
@@ -1699,7 +1733,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         final DefaultConfiguration checkConfig = createModuleConfig(IndentationCheck.class);
         checkConfig.addAttribute("tabWidth", "4");
         final String fileName = getPath("InputIndentationSeparatedStatements.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1708,7 +1742,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         final DefaultConfiguration checkConfig = createModuleConfig(IndentationCheck.class);
         checkConfig.addAttribute("tabWidth", "4");
         final String fileName = getPath("InputIndentationSeparatedStatementWithSpaces.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verify(checkConfig, fileName, expected);
     }
 
@@ -1718,7 +1752,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("basicOffset", "4");
         final String fileName = getPath("InputIndentationTwoStatementsPerLine.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1728,7 +1762,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("tabWidth", "4");
         checkConfig.addAttribute("basicOffset", "4");
         final String fileName = getPath("InputIndentationChainedMethods.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1740,7 +1774,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("forceStrictCondition", "true");
         final String fileName =
             getPath("InputIndentationCorrectMultipleAnnotationsWithWrappedLines.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, fileName, expected);
     }
 
@@ -1756,7 +1790,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
         checkConfig.addAttribute("arrayInitIndent", "2");
         final String fileName =
             getPath("InputIndentationMethodPrecededByAnnotationWithParameterOnSeparateLine.java");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verify(checkConfig, fileName, expected);
     }
 
@@ -1933,7 +1967,7 @@ public class IndentationCheckTest extends AbstractModuleTestSupport {
     public void testEmptyArray() throws Exception {
         final DefaultConfiguration checkConfig = createModuleConfig(IndentationCheck.class);
         checkConfig.addAttribute("tabWidth", "4");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
         verifyWarns(checkConfig, getPath("InputIndentationEmptyArray.java"), expected);
     }
 

@@ -22,9 +22,8 @@ package com.puppycrawl.tools.checkstyle;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -45,7 +44,7 @@ import com.google.common.io.Closeables;
 import com.google.common.io.Flushables;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtil;
 
 /**
  * This class maintains a persistent(on file-system) store of the files
@@ -57,8 +56,6 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * cache file to ensure the cache is invalidated when the
  * configuration has changed.
  *
- * @author Oliver Burn
- * @author Andrei Selkin
  */
 final class PropertyCacheFile {
 
@@ -115,19 +112,15 @@ final class PropertyCacheFile {
         // get the current config so if the file isn't found
         // the first time the hash will be added to output file
         configHash = getHashCodeBasedOnObjectContent(config);
-        if (new File(fileName).exists()) {
-            FileInputStream inStream = null;
-            try {
-                inStream = new FileInputStream(fileName);
+        final File file = new File(fileName);
+        if (file.exists()) {
+            try (InputStream inStream = Files.newInputStream(file.toPath())) {
                 details.load(inStream);
                 final String cachedConfigHash = details.getProperty(CONFIG_HASH_KEY);
                 if (!configHash.equals(cachedConfigHash)) {
                     // Detected configuration change - clear cache
                     reset();
                 }
-            }
-            finally {
-                Closeables.closeQuietly(inStream);
             }
         }
         else {
@@ -141,13 +134,14 @@ final class PropertyCacheFile {
      * @throws IOException  when there is a problems with file save
      */
     public void persist() throws IOException {
-        final Path directory = Paths.get(fileName).getParent();
+        final Path path = Paths.get(fileName);
+        final Path directory = path.getParent();
         if (directory != null) {
             Files.createDirectories(directory);
         }
-        FileOutputStream out = null;
+        OutputStream out = null;
         try {
-            out = new FileOutputStream(fileName);
+            out = Files.newOutputStream(path);
             details.store(out, null);
         }
         finally {
@@ -303,7 +297,7 @@ final class PropertyCacheFile {
      */
     private static byte[] loadExternalResource(String location) throws CheckstyleException {
         final byte[] content;
-        final URI uri = CommonUtils.getUriByFilename(location);
+        final URI uri = CommonUtil.getUriByFilename(location);
 
         try {
             content = ByteStreams.toByteArray(new BufferedInputStream(uri.toURL().openStream()));
@@ -360,7 +354,6 @@ final class PropertyCacheFile {
 
     /**
      * Class which represents external resource.
-     * @author Andrei Selkin
      */
     private static class ExternalResource {
 

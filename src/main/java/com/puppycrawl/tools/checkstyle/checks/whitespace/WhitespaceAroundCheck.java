@@ -23,7 +23,7 @@ import com.puppycrawl.tools.checkstyle.StatelessCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtil;
 
 /**
  * Checks that a token is surrounded by whitespace.
@@ -160,9 +160,6 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * <pre>   &lt;property name="ignoreEnhancedForColon" value="true" /&gt;</pre>
  *
- * @author Oliver Burn
- * @author maxvetrenko
- * @author Andrei Selkin
  */
 @StatelessCheck
 public class WhitespaceAroundCheck extends AbstractCheck {
@@ -315,7 +312,7 @@ public class WhitespaceAroundCheck extends AbstractCheck {
 
     @Override
     public int[] getRequiredTokens() {
-        return CommonUtils.EMPTY_INT_ARRAY;
+        return CommonUtil.EMPTY_INT_ARRAY;
     }
 
     /**
@@ -387,8 +384,7 @@ public class WhitespaceAroundCheck extends AbstractCheck {
                 final char prevChar = line.charAt(before);
                 if (shouldCheckSeparationFromPreviousToken(ast)
                         && !Character.isWhitespace(prevChar)) {
-                    log(ast.getLineNo(), ast.getColumnNo(),
-                            MSG_WS_NOT_PRECEDED, ast.getText());
+                    log(ast, MSG_WS_NOT_PRECEDED, ast.getText());
                 }
             }
 
@@ -677,11 +673,11 @@ public class WhitespaceAroundCheck extends AbstractCheck {
     private static boolean isPartOfDoubleBraceInitializerForNextToken(DetailAST ast) {
         final boolean classBeginBeforeInitializerBegin = ast.getType() == TokenTypes.LCURLY
             && ast.getNextSibling().getType() == TokenTypes.INSTANCE_INIT;
-        final boolean initalizerEndsBeforeClassEnds = ast.getType() == TokenTypes.RCURLY
+        final boolean initializerEndsBeforeClassEnds = ast.getType() == TokenTypes.RCURLY
             && ast.getParent().getType() == TokenTypes.SLIST
             && ast.getParent().getParent().getType() == TokenTypes.INSTANCE_INIT
             && ast.getParent().getParent().getNextSibling().getType() == TokenTypes.RCURLY;
-        return classBeginBeforeInitializerBegin || initalizerEndsBeforeClassEnds;
+        return classBeginBeforeInitializerBegin || initializerEndsBeforeClassEnds;
     }
 
 }

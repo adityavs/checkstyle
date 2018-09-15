@@ -6,7 +6,8 @@
 
   <head>
     <title>Imports</title>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"/>
+    <script type="text/javascript"
+            src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"/>
     <script type="text/javascript" src="js/anchors.js"/>
     <script type="text/javascript" src="js/google-analytics.js"/>
     <link rel="icon" href="images/favicon.png" type="image/x-icon" />
@@ -22,7 +23,7 @@
     </section>
 
     <section name="AvoidStarImport">
-      <subsection name="Description">
+      <subsection name="Description" id="AvoidStarImport_Description">
         <p>Since Checkstyle 3.0</p>
         <p>
           Checks that there are no import statements that use the * notation.
@@ -36,7 +37,7 @@
         </p>
       </subsection>
 
-      <subsection name="Properties">
+      <subsection name="Properties" id="AvoidStarImport_Properties">
         <table>
           <tr>
             <th>name</th>
@@ -79,7 +80,7 @@
         </table>
       </subsection>
 
-      <subsection name="Examples">
+      <subsection name="Examples" id="AvoidStarImport_Examples">
         <p>
           An example how to configure the check so that star imports from
           packages java.io and java.net as well as static members from class
@@ -88,14 +89,14 @@
 
         <source>
 &lt;module name="AvoidStarImport"&gt;
-   &lt;property name="excludes" value="java.io,java.net,java.lang.Math"/&gt;
-   &lt;property name="allowClassImports" value="false"/&gt;
-   &lt;property name="allowStaticMemberImports" value="false"/&gt;
+  &lt;property name="excludes" value="java.io,java.net,java.lang.Math"/&gt;
+  &lt;property name="allowClassImports" value="false"/&gt;
+  &lt;property name="allowStaticMemberImports" value="false"/&gt;
 &lt;/module&gt;
         </source>
       </subsection>
 
-      <subsection name="Example of Usage">
+      <subsection name="Example of Usage" id="AvoidStarImport_Example_of_Usage">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources+filename%3Agoogle_checks.xml+repo%3Acheckstyle%2Fcheckstyle+AvoidStarImport">
@@ -111,7 +112,7 @@
           </li>
         </ul>
       </subsection>
-      <subsection name="Error Messages">
+      <subsection name="Error Messages" id="AvoidStarImport_Error_Messages">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fimports+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22import.avoidStar%22">
@@ -123,11 +124,11 @@
           Please <a href="config.html#Custom_messages">see the documentation</a> to learn how to.
         </p>
       </subsection>
-      <subsection name="Package">
+      <subsection name="Package" id="AvoidStarImport_Package">
         <p> com.puppycrawl.tools.checkstyle.checks.imports </p>
       </subsection>
 
-      <subsection name="Parent Module">
+      <subsection name="Parent Module" id="AvoidStarImport_Parent_Module">
         <p>
           <a href="config.html#TreeWalker">TreeWalker</a>
         </p>
@@ -135,7 +136,7 @@
     </section>
 
     <section name="AvoidStaticImport">
-      <subsection name="Description">
+      <subsection name="Description" id="AvoidStaticImport_Description">
         <p>Since Checkstyle 5.0</p>
         <p>
           Checks that there are no static import statements.
@@ -149,7 +150,7 @@
         </p>
       </subsection>
 
-      <subsection name="Properties">
+      <subsection name="Properties" id="AvoidStaticImport_Properties">
         <table>
           <tr>
             <th>name</th>
@@ -181,20 +182,20 @@
         </table>
       </subsection>
 
-      <subsection name="Examples">
+      <subsection name="Examples" id="AvoidStaticImport_Examples">
         <p>
           An example of how to configure the check so that the <code>java.lang.System.out</code>
           member and all members from <code>java.lang.Math</code> are allowed:
         </p>
 
         <source>
-         &lt;module name="AvoidStaticImport"&gt;
-           &lt;property name="excludes" value="java.lang.System.out,java.lang.Math.*"/&gt;
-         &lt;/module&gt;
+&lt;module name="AvoidStaticImport"&gt;
+  &lt;property name="excludes" value="java.lang.System.out,java.lang.Math.*"/&gt;
+&lt;/module&gt;
         </source>
       </subsection>
 
-      <subsection name="Example of Usage">
+      <subsection name="Example of Usage" id="AvoidStaticImport_Example_of_Usage">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Aconfig+filename%3Acheckstyle_checks.xml+repo%3Acheckstyle%2Fcheckstyle+AvoidStaticImport">
@@ -203,7 +204,7 @@
         </ul>
       </subsection>
 
-      <subsection name="Error Messages">
+      <subsection name="Error Messages" id="AvoidStaticImport_Error_Messages">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fimports+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22import.avoidStatic%22">
@@ -216,11 +217,11 @@
         </p>
       </subsection>
 
-      <subsection name="Package">
+      <subsection name="Package" id="AvoidStaticImport_Package">
         <p> com.puppycrawl.tools.checkstyle.checks.imports </p>
       </subsection>
 
-      <subsection name="Parent Module">
+      <subsection name="Parent Module" id="AvoidStaticImport_Parent_Module">
         <p>
           <a href="config.html#TreeWalker">TreeWalker</a>
         </p>
@@ -228,7 +229,7 @@
     </section>
 
     <section name="CustomImportOrder">
-      <subsection name="Description">
+      <subsection name="Description" id="CustomImportOrder_Description">
         <p>Since Checkstyle 5.8</p>
         <p>
           Checks that the groups of import declarations appear in the order specified
@@ -236,12 +237,12 @@
           configuration such an import should be placed at the end of the import list.
         </p>
         <p>
-          <a href="#CustomImportOrder_Example">Examples section</a> contains examples that
+          <a href="#CustomImportOrder_Examples">Examples section</a> contains examples that
           work with default formatter configurations of Eclipse, IntelliJ IDEA and NetBeans
         </p>
       </subsection>
 
-      <subsection name="Rule Description">
+      <subsection name="Rule Description" id="CustomImportOrder_Rule_Description">
         <p>
           The rule consists of:
         </p>
@@ -287,7 +288,7 @@ import java.util.regex.Matcher; //#8
         </p>
       </subsection>
 
-      <subsection name="Notes">
+      <subsection name="Notes" id="CustomImportOrder_Notes">
         <p>
           Use the separator '###' between rules.
         </p>
@@ -296,9 +297,9 @@ import java.util.regex.Matcher; //#8
           thirdPartyPackageRegExp and standardPackageRegExp options.
         </p>
         <p>
-          Pretty often one import can match more than one group. For example, static import from standard
-          package or regular expressions are configured to allow one import match multiple groups.
-          In this case, group will be assigned according to priorities:
+          Pretty often one import can match more than one group. For example, static import
+          from standard package or regular expressions are configured to allow one import match
+          multiple groups. In this case, group will be assigned according to priorities:
         </p>
         <ol>
           <li>STATIC has top priority</li>
@@ -312,7 +313,8 @@ import java.util.regex.Matcher; //#8
           Few examples to illustrate "best match":
         </p>
         <p>
-          1. patterns STANDARD_JAVA_PACKAGE = "Check", SPECIAL_IMPORTS="ImportOrderCheck" and input file:
+          1. patterns STANDARD_JAVA_PACKAGE = "Check", SPECIAL_IMPORTS="ImportOrderCheck"
+          and input file:
         </p>
         <source>
 import com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck;
@@ -329,13 +331,13 @@ import com.puppycrawl.tools.checkstyle.checks.imports.ImportOrderCheck;
 import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;
         </source>
         <p>
-          Result: import will be assigned to SPECIAL_IMPORTS. Matching substring length is 5 for both
-          patterns. However, "Avoid" position is lower then "Check" position.
+          Result: import will be assigned to SPECIAL_IMPORTS. Matching substring length is 5 for
+          both patterns. However, "Avoid" position is lower then "Check" position.
         </p>
 
     </subsection>
 
-      <subsection name="Properties">
+      <subsection name="Properties" id="CustomImportOrder_Properties">
         <table>
           <tr>
             <th>name</th>
@@ -369,7 +371,7 @@ import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;
             <td>specialImportsRegExp</td>
             <td>RegExp for SPECIAL_IMPORTS group imports.</td>
             <td><a href="property_types.html#regexp">Regular Expression</a></td>
-            <td><code>"^$"</code></td>
+            <td><code>"^$" (empty)</code></td>
             <td>5.8</td>
           </tr>
           <tr>
@@ -391,7 +393,7 @@ import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;
         </table>
       </subsection>
 
-      <subsection name="Examples" id="CustomImportOrder_Example">
+      <subsection name="Examples" id="CustomImportOrder_Examples">
         <p>To configure the check so that it matches default Eclipse formatter configuration
            (tested on Kepler and Luna releases):</p>
         <ul>
@@ -410,11 +412,11 @@ import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;
         </ul>
         <source>
 &lt;module name=&quot;CustomImportOrder&quot;&gt;
-    &lt;property name=&quot;customImportOrderRules&quot;
-        value=&quot;STATIC###STANDARD_JAVA_PACKAGE###SPECIAL_IMPORTS&quot;/&gt;
-    &lt;property name=&quot;specialImportsRegExp&quot; value=&quot;^org\.&quot;/&gt;
-    &lt;property name=&quot;sortImportsInGroupAlphabetically&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;separateLineBetweenGroups&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;customImportOrderRules&quot;
+    value=&quot;STATIC###STANDARD_JAVA_PACKAGE###SPECIAL_IMPORTS&quot;/&gt;
+  &lt;property name=&quot;specialImportsRegExp&quot; value=&quot;^org\.&quot;/&gt;
+  &lt;property name=&quot;sortImportsInGroupAlphabetically&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;separateLineBetweenGroups&quot; value=&quot;true&quot;/&gt;
 &lt;/module&gt;
         </source>
 
@@ -429,12 +431,12 @@ import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;
         </ul>
         <source>
 &lt;module name=&quot;CustomImportOrder&quot;&gt;
-    &lt;property name=&quot;customImportOrderRules&quot;
-        value=&quot;STATIC###STANDARD_JAVA_PACKAGE###SPECIAL_IMPORTS###THIRD_PARTY_PACKAGE&quot;/&gt;
-    &lt;property name=&quot;specialImportsRegExp&quot; value=&quot;^org\.&quot;/&gt;
-    &lt;property name=&quot;thirdPartyPackageRegExp&quot; value=&quot;^com\.&quot;/&gt;
-    &lt;property name=&quot;sortImportsInGroupAlphabetically&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;separateLineBetweenGroups&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;customImportOrderRules&quot;
+    value=&quot;STATIC###STANDARD_JAVA_PACKAGE###SPECIAL_IMPORTS###THIRD_PARTY_PACKAGE&quot;/&gt;
+  &lt;property name=&quot;specialImportsRegExp&quot; value=&quot;^org\.&quot;/&gt;
+  &lt;property name=&quot;thirdPartyPackageRegExp&quot; value=&quot;^com\.&quot;/&gt;
+  &lt;property name=&quot;sortImportsInGroupAlphabetically&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;separateLineBetweenGroups&quot; value=&quot;true&quot;/&gt;
 &lt;/module&gt;
         </source>
 
@@ -456,12 +458,12 @@ import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;
 
         <source>
 &lt;module name=&quot;CustomImportOrder&quot;&gt;
-    &lt;property name=&quot;customImportOrderRules&quot;
-        value=&quot;THIRD_PARTY_PACKAGE###SPECIAL_IMPORTS###STANDARD_JAVA_PACKAGE###STATIC&quot;/&gt;
-    &lt;property name=&quot;specialImportsRegExp&quot; value=&quot;^javax\.&quot;/&gt;
-    &lt;property name=&quot;standardPackageRegExp&quot; value=&quot;^java\.&quot;/&gt;
-    &lt;property name=&quot;sortImportsInGroupAlphabetically&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;separateLineBetweenGroups&quot; value=&quot;false&quot;/&gt;
+  &lt;property name=&quot;customImportOrderRules&quot;
+    value=&quot;THIRD_PARTY_PACKAGE###SPECIAL_IMPORTS###STANDARD_JAVA_PACKAGE###STATIC&quot;/&gt;
+  &lt;property name=&quot;specialImportsRegExp&quot; value=&quot;^javax\.&quot;/&gt;
+  &lt;property name=&quot;standardPackageRegExp&quot; value=&quot;^java\.&quot;/&gt;
+  &lt;property name=&quot;sortImportsInGroupAlphabetically&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;separateLineBetweenGroups&quot; value=&quot;false&quot;/&gt;
 &lt;/module&gt;
         </source>
 
@@ -483,10 +485,10 @@ import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;
         </p>
         <source>
 &lt;module name=&quot;CustomImportOrder&quot;&gt;
-    &lt;property name=&quot;customImportOrderRules&quot;
-        value=&quot;STATIC###SAME_PACKAGE(3)###THIRD_PARTY_PACKAGE###STANDARD_JAVA_PACKAGE&quot;/&gt;
-    &lt;property name=&quot;thirdPartyPackageRegExp&quot; value=&quot;^(com|org)\.&quot;/&gt;
-    &lt;property name=&quot;standardPackageRegExp&quot; value=&quot;^(java|javax)\.&quot;/&gt;
+  &lt;property name=&quot;customImportOrderRules&quot;
+    value=&quot;STATIC###SAME_PACKAGE(3)###THIRD_PARTY_PACKAGE###STANDARD_JAVA_PACKAGE&quot;/&gt;
+  &lt;property name=&quot;thirdPartyPackageRegExp&quot; value=&quot;^(com|org)\.&quot;/&gt;
+  &lt;property name=&quot;standardPackageRegExp&quot; value=&quot;^(java|javax)\.&quot;/&gt;
 &lt;/module&gt;
         </source>
         <p>
@@ -495,7 +497,7 @@ import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;
         </p>
         <source>
 &lt;module name=&quot;CustomImportOrder&quot;&gt;
-    &lt;property name=&quot;separateLineBetweenGroups&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;separateLineBetweenGroups&quot; value=&quot;true&quot;/&gt;
 &lt;/module&gt;
         </source>
         <p>
@@ -505,7 +507,7 @@ import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;
         </p>
        <source>
 &lt;module name=&quot;CustomImportOrder&quot;&gt;
-    &lt;property name=&quot;sortImportsInGroupAlphabetically&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;sortImportsInGroupAlphabetically&quot; value=&quot;true&quot;/&gt;
 &lt;/module&gt;
        </source>
        <p>
@@ -541,14 +543,14 @@ import android.*;
        </p>
        <source>
 &lt;module name=&quot;CustomImportOrder&quot;&gt;
-    &lt;property name=&quot;customImportOrderRules&quot;
+  &lt;property name=&quot;customImportOrderRules&quot;
     value=&quot;SAME_PACKAGE(3)###THIRD_PARTY_PACKAGE###STATIC###SPECIAL_IMPORTS&quot;/&gt;
-    &lt;property name=&quot;specialImportsRegExp&quot; value=&quot;^android\.&quot;/&gt;
+  &lt;property name=&quot;specialImportsRegExp&quot; value=&quot;^android\.&quot;/&gt;
 &lt;/module&gt;
        </source>
       </subsection>
 
-      <subsection name="Example of Usage">
+      <subsection name="Example of Usage" id="CustomImportOrder_Example_of_Usage">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources+filename%3Agoogle_checks.xml+repo%3Acheckstyle%2Fcheckstyle+CustomImportOrder">
@@ -561,7 +563,7 @@ import android.*;
         </ul>
       </subsection>
 
-      <subsection name="Error Messages">
+      <subsection name="Error Messages" id="CustomImportOrder_Error_Messages">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fimports+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22custom.import.order%22">
@@ -590,13 +592,13 @@ import android.*;
         </p>
       </subsection>
 
-      <subsection name="Package">
+      <subsection name="Package" id="CustomImportOrder_Package">
         <p>
           com.puppycrawl.tools.checkstyle.checks.imports
         </p>
       </subsection>
 
-      <subsection name="Parent Module">
+      <subsection name="Parent Module" id="CustomImportOrder_Parent_Module">
         <p>
           <a href="config.html#TreeWalker">TreeWalker</a>
         </p>
@@ -604,7 +606,7 @@ import android.*;
     </section>
 
     <section name="IllegalImport">
-      <subsection name="Description">
+      <subsection name="Description" id="IllegalImport_Description">
         <p>Since Checkstyle 3.0</p>
         <p>
           Checks for imports from a set of illegal packages. By default, the
@@ -616,7 +618,7 @@ import android.*;
         </p>
       </subsection>
 
-      <subsection name="Properties">
+      <subsection name="Properties" id="IllegalImport_Properties">
         <table>
           <tr>
             <th>name</th>
@@ -657,7 +659,7 @@ import android.*;
 
       </subsection>
 
-      <subsection name="Examples">
+      <subsection name="Examples" id="IllegalImport_Examples">
         <p>
           To configure the check:
         </p>
@@ -671,7 +673,7 @@ import android.*;
         </p>
         <source>
 &lt;module name=&quot;IllegalImport&quot;&gt;
-    &lt;property name=&quot;illegalPkgs&quot; value=&quot;java.io, java.sql&quot;/&gt;
+  &lt;property name=&quot;illegalPkgs&quot; value=&quot;java.io, java.sql&quot;/&gt;
 &lt;/module&gt;
         </source>
         <p>
@@ -711,8 +713,8 @@ public class InputIllegalImport { }
         </p>
         <source>
 &lt;module name=&quot;IllegalImport&quot;&gt;
-    &lt;property name=&quot;illegalClasses&quot;
-        value=&quot;java.util.Date, java.sql.Connection&quot;/&gt;
+  &lt;property name=&quot;illegalClasses&quot;
+    value=&quot;java.util.Date, java.sql.Connection&quot;/&gt;
 &lt;/module&gt;
         </source>
         <p>
@@ -754,8 +756,8 @@ public class InputIllegalImport { }
         </p>
         <source>
 &lt;module name=&quot;IllegalImport&quot;&gt;
-    &lt;property name=&quot;regexp&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;illegalPkgs&quot; value=&quot;java\.util&quot;/&gt;
+  &lt;property name=&quot;regexp&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;illegalPkgs&quot; value=&quot;java\.util&quot;/&gt;
 &lt;/module&gt;
         </source>
         <p>
@@ -799,9 +801,9 @@ public class InputIllegalImport { }
         </p>
         <source>
 &lt;module name=&quot;IllegalImport&quot;&gt;
-    &lt;property name=&quot;regexp&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;illegalClasses&quot;
-        value=&quot;^java\.util\.(List|Arrays), ^java\.sql\.Connection&quot;/&gt;
+  &lt;property name=&quot;regexp&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;illegalClasses&quot;
+    value=&quot;^java\.util\.(List|Arrays), ^java\.sql\.Connection&quot;/&gt;
 &lt;/module&gt;
         </source>
         <p>
@@ -838,7 +840,7 @@ public class InputIllegalImport { }
         </source>
       </subsection>
 
-      <subsection name="Example of Usage">
+      <subsection name="Example of Usage" id="IllegalImport_Example_of_Usage">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources+filename%3Asun_checks.xml+repo%3Acheckstyle%2Fcheckstyle+IllegalImport">
@@ -851,7 +853,7 @@ public class InputIllegalImport { }
         </ul>
       </subsection>
 
-      <subsection name="Error Messages">
+      <subsection name="Error Messages" id="IllegalImport_Error_Messages">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fimports+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22import.illegal%22">
@@ -864,13 +866,13 @@ public class InputIllegalImport { }
         </p>
       </subsection>
 
-      <subsection name="Package">
+      <subsection name="Package" id="IllegalImport_Package">
         <p>
           com.puppycrawl.tools.checkstyle.checks.imports
         </p>
       </subsection>
 
-      <subsection name="Parent Module">
+      <subsection name="Parent Module" id="IllegalImport_Parent_Module">
         <p>
           <a href="config.html#TreeWalker">TreeWalker</a>
         </p>
@@ -878,33 +880,57 @@ public class InputIllegalImport { }
     </section>
 
     <section name="ImportControl">
-      <subsection name="Description">
+      <subsection name="Description" id="ImportControl_Description">
         <p>Since Checkstyle 4.0</p>
         <p>
-          Controls what can be imported in each package. Useful for
+          Controls what can be imported in each package and file. Useful for
           ensuring that application layering rules are not violated,
           especially on large projects.
+        </p>
+        <p>
+          You can control imports based on the a package name or based on the file
+          name. When controlling packages, all files and sub-packages in the declared
+          package will be controlled by this check. To specify differences between a main package
+          and a sub-package, you must define the sub-package inside the main package. When
+          controlling file, only the file name is considered and only files processed by
+          <a href="config.html#TreeWalker">TreeWalker</a>. The file's extension is ignored.
         </p>
 
         <p>
           Short description of the behaviour:
           <ul>
               <li>Check starts checking from the longest matching subpackage (later 'current
-                  subpackage') described inside import control file to package defined in class
-                  file.</li>
-              <li>If there is matching allow/disallow rule inside the current subpackage then the
-                  Check returns "allowed" or "disallowed" message.</li>
-              <li>If there is no matching allow/disallow rule inside the current subpackage then it
-                  continues checking in the parent subpackage.</li>
-              <li>If there is no matching allow/disallow rule in any of the subpackages, including
-                  the root level (import-control), then the import is disallowed by default.</li>
+                  subpackage') or the first file name match described inside import
+                  control file to package defined in class file.
+                  <ul>
+                    <li>The longest matching subpackage is found by starting with the root package
+                        and examining if the any of the sub-packages or file definitions match the
+                        current class' package or file name.</li>
+                    <li>If a file name is matched first, that is considered the longest
+                        match and becomes the current file/subpackage.</li>
+                    <li>If another subpackage is matched, then it's subpackages and file
+                        names are examined for the next longest match and the process repeats
+                        recursively.</li>
+                    <li>If no subpackages or file names are matched, the current subpackage
+                        is then used.</li>
+                  </ul>
+              </li>
+              <li>Order of rules in the same subpackage/root are defined by the order of
+                  declaration in the XML file, which is from top (first) to bottom (last).</li>
+              <li>If there is matching allow/disallow rule inside the current file/subpackage
+                  then the Check returns the first "allowed" or "disallowed" message.</li>
+              <li>If there is no matching allow/disallow rule inside the current file/subpackage
+                  then it continues checking in the parent subpackage.</li>
+              <li>If there is no matching allow/disallow rule in any of the files/subpackages,
+                  including the root level (import-control), then the import is disallowed by
+                  default.</li>
           </ul>
         </p>
 
         <p>
           The DTD for a import control XML document is at <a
-          href="http://checkstyle.sourceforge.net/dtds/import_control_1_3.dtd">
-          http://checkstyle.sourceforge.net/dtds/import_control_1_3.dtd</a>. It
+          href="https://checkstyle.org/dtds/import_control_1_4.dtd">
+          https://checkstyle.org/dtds/import_control_1_4.dtd</a>. It
           contains documentation on each of the elements and attributes.
         </p>
 
@@ -916,12 +942,12 @@ public class InputIllegalImport { }
 
         <pre>
 &lt;!DOCTYPE import-control PUBLIC
-    &quot;-//Puppy Crawl//DTD Import Control 1.3//EN&quot;
-    &quot;http://checkstyle.sourceforge.net/dtds/import_control_1_3.dtd&quot;&gt;
+    &quot;-//Checkstyle//DTD ImportControl Configuration 1.4//EN&quot;
+    &quot;https://checkstyle.org/dtds/import_control_1_4.dtd&quot;&gt;
         </pre>
       </subsection>
 
-      <subsection name="Properties">
+      <subsection name="Properties" id="ImportControl_Properties">
         <table>
           <tr>
             <th>name</th>
@@ -955,7 +981,7 @@ public class InputIllegalImport { }
         </table>
       </subsection>
 
-      <subsection name="Examples">
+      <subsection name="Examples" id="ImportControl_Examples">
         <p>
           To configure the check using an import control file called
           &quot;config/import-control.xml&quot;, then have the following:
@@ -963,7 +989,7 @@ public class InputIllegalImport { }
 
         <source>
 &lt;module name=&quot;ImportControl&quot;&gt;
-    &lt;property name=&quot;file&quot; value=&quot;config/import-control.xml&quot;/&gt;
+  &lt;property name=&quot;file&quot; value=&quot;config/import-control.xml&quot;/&gt;
 &lt;/module&gt;
         </source>
 
@@ -975,8 +1001,8 @@ public class InputIllegalImport { }
 
         <source>
 &lt;module name=&quot;ImportControl&quot;&gt;
-    &lt;property name=&quot;file&quot; value=&quot;config/import-control.xml&quot;/&gt;
-    &lt;property name=&quot;path&quot; value=&quot;^.*[\\/]src[\\/]main[\\/].*$&quot;/&gt;
+  &lt;property name=&quot;file&quot; value=&quot;config/import-control.xml&quot;/&gt;
+  &lt;property name=&quot;path&quot; value=&quot;^.*[\\/]src[\\/]main[\\/].*$&quot;/&gt;
 &lt;/module&gt;
         </source>
 
@@ -993,23 +1019,22 @@ public class InputIllegalImport { }
 
         <source>
 &lt;import-control pkg=&quot;com.puppycrawl.tools.checkstyle&quot;&gt;
-    &lt;disallow pkg=&quot;sun&quot;/&gt;
-    &lt;allow pkg=&quot;com.puppycrawl.tools.checkstyle.api&quot;/&gt;
-    &lt;allow pkg=&quot;com.puppycrawl.tools.checkstyle.checks&quot;/&gt;
-    &lt;allow class=&quot;com.google.common.io.Files&quot;/&gt;
-    &lt;allow class=&quot;com.google.common.reflect.ClassPath&quot;/&gt;
-    &lt;subpackage name=&quot;filters&quot;&gt;
-        &lt;allow class=&quot;java\.lang\.ref\.(Weak|Soft)Reference&quot;
-            regex=&quot;true&quot;/&gt;
-        &lt;disallow pkg=&quot;com\.puppycrawl\.tools\.checkstyle\.checks\.[^.]+&quot;
-            regex=&quot;true&quot;/&gt;
-        &lt;disallow pkg=&quot;com.puppycrawl.tools.checkstyle.ant&quot;/&gt;
-        &lt;disallow pkg=&quot;com.puppycrawl.tools.checkstyle.doclets&quot;/&gt;
-        &lt;disallow pkg=&quot;com.puppycrawl.tools.checkstyle.gui&quot;/&gt;
-    &lt;/subpackage&gt;
-    &lt;subpackage name=&quot;dao&quot;&gt;
-        &lt;disallow pkg=&quot;javax.swing&quot; exact-match=&quot;true&quot;/&gt;
-    &lt;/subpackage&gt;
+  &lt;disallow pkg=&quot;sun&quot;/&gt;
+  &lt;allow pkg=&quot;com.puppycrawl.tools.checkstyle.api&quot;/&gt;
+  &lt;allow pkg=&quot;com.puppycrawl.tools.checkstyle.checks&quot;/&gt;
+  &lt;allow class=&quot;com.google.common.io.Files&quot;/&gt;
+  &lt;allow class=&quot;com.google.common.reflect.ClassPath&quot;/&gt;
+  &lt;subpackage name=&quot;filters&quot;&gt;
+    &lt;allow class=&quot;java\.lang\.ref\.(Weak|Soft)Reference&quot;
+      regex=&quot;true&quot;/&gt;
+    &lt;disallow pkg=&quot;com\.puppycrawl\.tools\.checkstyle\.checks\.[^.]+&quot;
+      regex=&quot;true&quot;/&gt;
+    &lt;disallow pkg=&quot;com.puppycrawl.tools.checkstyle.ant&quot;/&gt;
+    &lt;disallow pkg=&quot;com.puppycrawl.tools.checkstyle.gui&quot;/&gt;
+  &lt;/subpackage&gt;
+  &lt;subpackage name=&quot;dao&quot;&gt;
+    &lt;disallow pkg=&quot;javax.swing&quot; exact-match=&quot;true&quot;/&gt;
+  &lt;/subpackage&gt;
 &lt;/import-control&gt;
         </source>
 
@@ -1024,13 +1049,13 @@ public class InputIllegalImport { }
 
         <source>
 &lt;import-control pkg=&quot;(de.olddomain|de.newdomain)\..*&quot; regex=&quot;true&quot;&gt;
-    &lt;subpackage pkg=&quot;[^.]+\.dao&quot; regex=&quot;true&quot;&gt;
-        &lt;disallow pkg=&quot;.*\.ui&quot; regex=&quot;true&quot;/&gt;
-        &lt;disallow pkg=&quot;.*\.(awt|swing).\.*&quot; regex=&quot;true&quot;/&gt;
-    &lt;/subpackage&gt;
-    &lt;subpackage pkg=&quot;[^.]+\.ui&quot; regex=&quot;true&quot;&gt;
-        &lt;disallow pkg=&quot;.*\.(dao|service)&quot; regex=&quot;true&quot;/&gt;
-    &lt;/subpackage&gt;
+  &lt;subpackage pkg=&quot;[^.]+\.dao&quot; regex=&quot;true&quot;&gt;
+    &lt;disallow pkg=&quot;.*\.ui&quot; regex=&quot;true&quot;/&gt;
+    &lt;disallow pkg=&quot;.*\.(awt|swing).\.*&quot; regex=&quot;true&quot;/&gt;
+  &lt;/subpackage&gt;
+  &lt;subpackage pkg=&quot;[^.]+\.ui&quot; regex=&quot;true&quot;&gt;
+    &lt;disallow pkg=&quot;.*\.(dao|service)&quot; regex=&quot;true&quot;/&gt;
+  &lt;/subpackage&gt;
 &lt;/import-control&gt;
         </source>
 
@@ -1066,9 +1091,9 @@ public class InputIllegalImport { }
         </p>
         <source>
 &lt;import-control pkg=&quot;com.puppycrawl.tools.checkstyle.checks&quot;
-        strategyOnMismatch=&quot;allowed&quot;&gt;
-    &lt;disallow class=&quot;java.awt.Image&quot;/&gt;
-    &lt;disallow class=&quot;java.io.File&quot;/&gt;
+  strategyOnMismatch=&quot;allowed&quot;&gt;
+  &lt;disallow class=&quot;java.awt.Image&quot;/&gt;
+  &lt;disallow class=&quot;java.io.File&quot;/&gt;
 &lt;/import-control&gt;
         </source>
 
@@ -1081,11 +1106,11 @@ public class InputIllegalImport { }
         </p>
         <source>
 &lt;import-control pkg=&quot;com.puppycrawl.tools.checkstyle.checks&quot;
-        strategyOnMismatch=&quot;allowed&quot;&gt;
-    &lt;subpackage name=&quot;imports&quot; strategyOnMismatch=&quot;disallowed&quot;&gt;
-        &lt;allow pkg=&quot;javax.swing&quot;/&gt;
-        &lt;allow class=&quot;java.io.File&quot;/&gt;
-    &lt;/subpackage&gt;
+  strategyOnMismatch=&quot;allowed&quot;&gt;
+  &lt;subpackage name=&quot;imports&quot; strategyOnMismatch=&quot;disallowed&quot;&gt;
+    &lt;allow pkg=&quot;javax.swing&quot;/&gt;
+    &lt;allow class=&quot;java.io.File&quot;/&gt;
+  &lt;/subpackage&gt;
 &lt;/import-control&gt;
         </source>
 
@@ -1101,16 +1126,37 @@ public class InputIllegalImport { }
         </p>
         <source>
 &lt;import-control pkg=&quot;com.puppycrawl.tools.checkstyle.checks&quot;&gt;
-    &lt;allow class=&quot;java\.awt\.Image&quot; regex=&quot;true&quot;/&gt;
-    &lt;allow class=&quot;java\..*\.File&quot; local-only=&quot;true&quot; regex=&quot;true&quot;/&gt;
-    &lt;subpackage name=&quot;imports&quot; strategyOnMismatch=&quot;allowed&quot;&gt;
-        &lt;allow pkg=&quot;javax\.swing&quot; regex=&quot;true&quot;/&gt;
-        &lt;allow pkg=&quot;java\.io&quot; exact-match=&quot;true&quot;
-            local-only=&quot;true&quot; regex=&quot;true&quot;/&gt;
-    &lt;/subpackage&gt;
-    &lt;subpackage name=&quot;filters&quot;&gt;
-        &lt;allow class=&quot;javax.util.Date&quot;/&gt;
-    &lt;/subpackage&gt;
+  &lt;allow class=&quot;java\.awt\.Image&quot; regex=&quot;true&quot;/&gt;
+  &lt;allow class=&quot;java\..*\.File&quot; local-only=&quot;true&quot; regex=&quot;true&quot;/&gt;
+  &lt;subpackage name=&quot;imports&quot; strategyOnMismatch=&quot;allowed&quot;&gt;
+    &lt;allow pkg=&quot;javax\.swing&quot; regex=&quot;true&quot;/&gt;
+    &lt;allow pkg=&quot;java\.io&quot; exact-match=&quot;true&quot;
+      local-only=&quot;true&quot; regex=&quot;true&quot;/&gt;
+  &lt;/subpackage&gt;
+  &lt;subpackage name=&quot;filters&quot;&gt;
+    &lt;allow class=&quot;javax.util.Date&quot;/&gt;
+  &lt;/subpackage&gt;
+&lt;/import-control&gt;
+        </source>
+        <p>
+          In the example below, only file names that end with "Panel", "View", or "Dialog"
+          in the package <code>gui</code> are disallowed to have imports from
+          <code>com.mycompany.dao</code> and any <code>jdbc</code> package. In addition, only
+          the file name named "PresentationModel" in the package <code>gui</code> are
+          disallowed to have imports that match <code>javax.swing.J*</code>.
+          All other imports in the package are allowed.
+        </p>
+        <source>
+&lt;import-control pkg=&quot;com.mycompany.billing&quot;&gt;
+  &lt;subpackage name=&quot;gui&quot; strategyOnMismatch=&quot;allowed&quot;&gt;
+    &lt;file name=&quot;.*(Panel|View|Dialog)&quot; regex=&quot;true&quot;&gt;
+      &lt;disallow pkg=&quot;com.mycompany.dao&quot;/&gt;
+      &lt;disallow pkg=&quot;.*\.jdbc&quot; regex=&quot;true&quot;/&gt;
+    &lt;/file&gt;
+    &lt;file name=&quot;PresentationModel&quot;&gt;
+      &lt;disallow pkg=&quot;javax\.swing\.J.*&quot; regex=&quot;true&quot;/&gt;
+    &lt;/file&gt;
+  &lt;/subpackage&gt;
 &lt;/import-control&gt;
         </source>
 
@@ -1135,10 +1181,10 @@ public class InputIllegalImport { }
         </p>
         <source>
 &lt;import-control pkg=&quot;com.puppycrawl.tools.checkstyle&quot;&gt;
-    &lt;allow pkg=&quot;java.util&quot;/&gt;
-    &lt;subpackage name=&quot;filters&quot; &gt;
-        &lt;disallow class=&quot;java.util.Map&quot;/&gt;
-    &lt;/subpackage&gt;
+  &lt;allow pkg=&quot;java.util&quot;/&gt;
+  &lt;subpackage name=&quot;filters&quot; &gt;
+    &lt;disallow class=&quot;java.util.Map&quot;/&gt;
+  &lt;/subpackage&gt;
 &lt;/import-control&gt;
         </source>
         <p>
@@ -1150,11 +1196,11 @@ public class InputIllegalImport { }
         </p>
         <source>
 &lt;import-control pkg=&quot;com.puppycrawl.tools.checkstyle.checks&quot;&gt;
-    &lt;allow pkg=&quot;java.util.stream&quot;/&gt;
-    &lt;subpackage name=&quot;imports&quot;&gt;
-        &lt;disallow class=&quot;java.util.stream.Stream&quot;/&gt;
-        &lt;disallow class=&quot;java.util.stream.Collectors&quot;/&gt;
-    &lt;/subpackage&gt;
+  &lt;allow pkg=&quot;java.util.stream&quot;/&gt;
+  &lt;subpackage name=&quot;imports&quot;&gt;
+    &lt;disallow class=&quot;java.util.stream.Stream&quot;/&gt;
+    &lt;disallow class=&quot;java.util.stream.Collectors&quot;/&gt;
+  &lt;/subpackage&gt;
 &lt;/import-control&gt;
         </source>
 
@@ -1171,12 +1217,23 @@ import java.util.stream.IntStream;
         </p>
         <source>
 &lt;import-control pkg=&quot;com.puppycrawl.tools.checkstyle.checks&quot;&gt;
-    &lt;allow pkg=&quot;.*&quot; regex=&quot;true&quot;/&gt;
-    &lt;subpackage name=&quot;imports&quot;&gt;
-        &lt;disallow class=&quot;java.util.Date&quot;/&gt;
-        &lt;disallow class=&quot;java.util.List&quot;/&gt;
-        &lt;disallow pkg=&quot;sun&quot;/&gt;
-    &lt;/subpackage&gt;
+  &lt;allow pkg=&quot;.*&quot; regex=&quot;true&quot;/&gt;
+  &lt;subpackage name=&quot;imports&quot;&gt;
+    &lt;disallow class=&quot;java.util.Date&quot;/&gt;
+    &lt;disallow class=&quot;java.util.List&quot;/&gt;
+    &lt;disallow pkg=&quot;sun&quot;/&gt;
+  &lt;/subpackage&gt;
+&lt;/import-control&gt;
+        </source>
+        <p>
+          In the following example, all imports of the <code>java.util</code> package are allowed
+          except the <code>java.util.Date</code> class.
+        </p>
+        <source>
+&lt;import-control pkg=&quot;com.puppycrawl.tools.checkstyle.checks&quot;&gt;
+  &lt;disallow class=&quot;java.util.Date&quot;/&gt;
+
+  &lt;allow pkg=&quot;java.util&quot;/&gt;
 &lt;/import-control&gt;
         </source>
 
@@ -1237,20 +1294,20 @@ import java.util.stream.IntStream;
         </p>
         <source>
 &lt;import-control pkg=&quot;com.puppycrawl.tools.checkstyle&quot;&gt;
-    &lt;allow class=&quot;java.util.Map&quot;/&gt;
-    &lt;allow class=&quot;java.util.Map.Entry&quot;/&gt;
+  &lt;allow class=&quot;java.util.Map&quot;/&gt;
+  &lt;allow class=&quot;java.util.Map.Entry&quot;/&gt;
 &lt;/import-control&gt;
         </source>
         <p>It is also possible to use a regex with a wildcard:</p>
         <source>
 &lt;import-control pkg=&quot;com.puppycrawl.tools.checkstyle&quot;&gt;
-    &lt;allow class=&quot;java.util.Map&quot;/&gt;
-    &lt;allow class=&quot;java.util.Map.*&quot; regex=&quot;true&quot; /&gt;
+  &lt;allow class=&quot;java.util.Map&quot;/&gt;
+  &lt;allow class=&quot;java.util.Map.*&quot; regex=&quot;true&quot; /&gt;
 &lt;/import-control&gt;
         </source>
       </subsection>
 
-      <subsection name="Example of Usage">
+      <subsection name="Example of Usage" id="ImportControl_Example_of_Usage">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Aconfig+filename%3Acheckstyle_checks.xml+repo%3Acheckstyle%2Fcheckstyle+ImportControl">
@@ -1259,7 +1316,7 @@ import java.util.stream.IntStream;
         </ul>
       </subsection>
 
-      <subsection name="Error Messages">
+      <subsection name="Error Messages" id="ImportControl_Error_Messages">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fimports+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22import.control.disallowed%22">
@@ -1280,13 +1337,13 @@ import java.util.stream.IntStream;
         </p>
       </subsection>
 
-      <subsection name="Package">
+      <subsection name="Package" id="ImportControl_Package">
         <p>
           com.puppycrawl.tools.checkstyle.checks.imports
         </p>
       </subsection>
 
-      <subsection name="Parent Module">
+      <subsection name="Parent Module" id="ImportControl_Parent_Module">
         <p>
           <a href="config.html#TreeWalker">TreeWalker</a>
         </p>
@@ -1294,33 +1351,33 @@ import java.util.stream.IntStream;
     </section>
 
     <section name="ImportOrder">
-      <subsection name="Description">
+      <subsection name="Description" id="ImportOrder_Description">
         <p>Since Checkstyle 3.2</p>
         <p>Checks the ordering/grouping of imports. Features are:</p>
         <ul>
-          <li>groups imports: ensures that groups of imports come in a
+          <li>groups type/static imports: ensures that groups of imports come in a
           specific order (e.g., java. comes first, javax. comes second,
           then everything else)</li>
-          <li>adds a separation between groups : ensures that a blank
+          <li>adds a separation between type import groups : ensures that a blank
           line sit between each group</li>
-          <li>import groups aren't separated internally: ensures that
+          <li>type/static import groups aren't separated internally: ensures that
           each group aren't separated internally by blank line or comment</li>
-          <li>sorts imports inside each group: ensures that imports
+          <li>sorts type/static imports inside each group: ensures that imports
           within each group are in lexicographic order</li>
           <li>sorts according to case: ensures that the comparison
           between imports is case sensitive, in
           <a href="https://en.wikipedia.org/wiki/ASCII#Order">ASCII sort order</a></li>
-          <li>groups static imports: ensures the relative order between
-          regular imports and static imports (see
+          <li>arrange static imports: ensures the relative order between
+          type imports and static imports (see
           <a href="property_types.html#importOrder">import orders</a>)</li>
          </ul>
         <p>
-        <a href="#ImportOrder_Example">Examples section</a> contains examples that
+        <a href="#ImportOrder_Examples">Examples section</a> contains examples that
           work with default formatter configurations of Eclipse, IntelliJ IDEA and NetBeans
         </p>
       </subsection>
 
-      <subsection name="Properties">
+      <subsection name="Properties" id="ImportOrder_Properties">
         <table>
           <tr>
             <th>name</th>
@@ -1331,7 +1388,7 @@ import java.util.stream.IntStream;
           </tr>
           <tr>
             <td>option</td>
-            <td>policy on the relative order between regular imports and static imports</td>
+            <td>policy on the relative order between type imports and static imports</td>
             <td><a href="property_types.html#importOrder">Import Order Policy</a></td>
             <td><code>under</code></td>
             <td>5.0</td>
@@ -1339,9 +1396,12 @@ import java.util.stream.IntStream;
           <tr>
             <td>groups</td>
             <td>
-              list of imports groups (every group identified either by a
+              list of <b>type import</b> groups (every group identified either by a
               common prefix string, or by a regular expression enclosed
-              in forward slashes (e.g. <code>/regexp/</code>)
+              in forward slashes (e.g. <code>/regexp/</code>). All type imports,
+              which does not match any group, falls into an additional group, located at the end.
+              Thus, the empty list of type groups (the default value) means
+              one group for all type imports.
             </td>
             <td><a href="property_types.html#regexp">Regular Expressions</a></td>
             <td><code>{}</code></td>
@@ -1349,7 +1409,7 @@ import java.util.stream.IntStream;
           </tr>
           <tr>
             <td>ordered</td>
-            <td>whether imports within group should be sorted
+            <td>whether type imports within each group should be sorted
               (It doesn't affect sorting for static imports.)</td>
             <td><a href="property_types.html#boolean">Boolean</a></td>
             <td>true</td>
@@ -1358,7 +1418,7 @@ import java.util.stream.IntStream;
           <tr>
             <td>separated</td>
             <td>
-              whether imports groups should be separated by, at least, one
+              whether type import groups should be separated by, at least, one
               blank line or comment and aren't separated internally.
               (It doesn't affect separations for static imports.)
             </td>
@@ -1367,20 +1427,47 @@ import java.util.stream.IntStream;
             <td>3.2</td>
           </tr>
           <tr>
+          <td>separatedStaticGroups</td>
+              <td>
+              whether static import groups should be separated by, at least, one
+              blank line or comment and aren't separated internally.
+              (This property has effect only when the property <code>option</code>
+              is is set to <code>top</code> or <code>bottom</code>.)
+              </td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
+            <td>false</td>
+            <td>8.12</td>
+          </tr>
+          <tr>
             <td>caseSensitive</td>
             <td>whether string comparison should be case sensitive or not.
               Case sensitive sorting is in
-              <a href="https://en.wikipedia.org/wiki/ASCII#Order">ASCII sort order</a>
+              <a href="https://en.wikipedia.org/wiki/ASCII#Order">ASCII sort order</a>.
+              (It affects both type imports and static imports)
             </td>
             <td><a href="property_types.html#boolean">Boolean</a></td>
             <td>true</td>
             <td>3.3</td>
           </tr>
           <tr>
+            <td>staticGroups</td>
+            <td>
+                list of <b>static</b> import groups (every group identified either by a
+                common prefix string, or by a regular expression enclosed
+                in forward slashes (e.g. <code>/regexp/</code>). All static imports,
+                which does not match any group, falls into an additional group, located at the end.
+                Thus, the empty list of static groups (the default value) means
+                one group for all static imports. (This property has effect only when
+                the property <code>option</code> is set to <code>top</code> or <code>bottom</code>.)
+            </td>
+            <td><a href="property_types.html#regexp">Regular Expressions</a></td>
+            <td><code>{}</code></td>
+            <td>8.12</td>
+          </tr>
+          <tr>
             <td>sortStaticImportsAlphabetically</td>
-            <td>whether <b>static imports</b> grouped by <b>top</b> or <b>bottom</b> option
-                are sorted alphabetically or not.
-                Attention: It is applied to all static imports as one group.</td>>
+            <td>whether <b>static imports</b> located at <b>top</b> or <b>bottom</b> are sorted
+                within the group.</td>
             <td><a href="property_types.html#boolean">Boolean</a></td>
             <td>false</td>
             <td>6.5</td>
@@ -1399,23 +1486,25 @@ import java.util.stream.IntStream;
 
             <td>
               subset of tokens
-              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#STATIC_IMPORT">STATIC_IMPORT</a>.
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#STATIC_IMPORT">
+                  STATIC_IMPORT</a>.
             </td>
 
             <td>
-              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#STATIC_IMPORT">STATIC_IMPORT</a>.
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#STATIC_IMPORT">
+                  STATIC_IMPORT</a>.
             </td>
             <td>3.2</td>
           </tr>
         </table>
       </subsection>
 
-      <subsection name="Examples" id="ImportOrder_Example">
+      <subsection name="Examples" id="ImportOrder_Examples">
         <p>To configure the check so that it matches default Eclipse formatter configuration
            (tested on Kepler and Luna releases):</p>
         <ul>
           <li>group of static imports is on the top</li>
-          <li>groups of non-static imports: &quot;java&quot; and &quot;javax&quot; packages first,
+          <li>groups of type imports: &quot;java&quot; and &quot;javax&quot; packages first,
               then &quot;org&quot; and then all other imports</li>
           <li>imports will be sorted in the groups</li>
           <li>groups are separated by, at least, one blank line and aren't separated internally</li>
@@ -1430,11 +1519,11 @@ import java.util.stream.IntStream;
 
         <source>
 &lt;module name=&quot;ImportOrder&quot;&gt;
-    &lt;property name=&quot;groups&quot; value=&quot;/^java\./,javax,org&quot;/&gt;
-    &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;separated&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;option&quot; value=&quot;above&quot;/&gt;
-    &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;groups&quot; value=&quot;/^java\./,javax,org&quot;/&gt;
+  &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;separated&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;option&quot; value=&quot;above&quot;/&gt;
+  &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
 &lt;/module&gt;
         </source>
 
@@ -1442,7 +1531,7 @@ import java.util.stream.IntStream;
            configuration (tested on Mars release):</p>
         <ul>
           <li>group of static imports is on the top</li>
-          <li>groups of non-static imports: &quot;java&quot; and &quot;javax&quot; packages first,
+          <li>groups of type imports: &quot;java&quot; and &quot;javax&quot; packages first,
               then &quot;org&quot; and &quot;com&quot;, then all other imports as one group</li>
           <li>imports will be sorted in the groups</li>
           <li>groups are separated by, at least, one blank line and aren't separated internally</li>
@@ -1450,11 +1539,11 @@ import java.util.stream.IntStream;
 
         <source>
 &lt;module name=&quot;ImportOrder&quot;&gt;
-    &lt;property name=&quot;groups&quot; value=&quot;/^java\./,javax,org,com&quot;/&gt;
-    &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;separated&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;option&quot; value=&quot;above&quot;/&gt;
-    &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;groups&quot; value=&quot;/^java\./,javax,org,com&quot;/&gt;
+  &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;separated&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;option&quot; value=&quot;above&quot;/&gt;
+  &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
 &lt;/module&gt;
         </source>
 
@@ -1462,7 +1551,7 @@ import java.util.stream.IntStream;
            configuration (tested on v14):</p>
         <ul>
           <li>group of static imports is on the bottom</li>
-          <li>groups of non-static imports: all imports except of &quot;javax&quot;
+          <li>groups of type imports: all imports except of &quot;javax&quot;
               and &quot;java&quot;, then &quot;javax&quot; and &quot;java&quot;</li>
           <li>imports will be sorted in the groups</li>
           <li>groups are separated by, at least, one blank line and aren't separated internally</li>
@@ -1476,25 +1565,25 @@ import java.util.stream.IntStream;
 
         <source>
 &lt;module name=&quot;ImportOrder&quot;&gt;
-    &lt;property name=&quot;groups&quot; value=&quot;*,javax,java&quot;/&gt;
-    &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;separated&quot; value=&quot;false&quot;/&gt;
-    &lt;property name=&quot;option&quot; value=&quot;bottom&quot;/&gt;
-    &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;groups&quot; value=&quot;*,javax,java&quot;/&gt;
+  &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;separated&quot; value=&quot;false&quot;/&gt;
+  &lt;property name=&quot;option&quot; value=&quot;bottom&quot;/&gt;
+  &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
 &lt;/module&gt;
         </source>
 
         <p>To configure the check so that it matches default NetBeans formatter configuration
            (tested on v8):</p>
         <ul>
-          <li>groups of non-static imports are not defined, all imports will be sorted as a one
+          <li>groups of type imports are not defined, all imports will be sorted as a one
               group</li>
           <li>static imports are not separated, they will be sorted along with other imports</li>
         </ul>
 
         <source>
 &lt;module name=&quot;ImportOrder&quot;&gt;
-    &lt;property name=&quot;option&quot; value=&quot;inflow&quot;/&gt;
+  &lt;property name=&quot;option&quot; value=&quot;inflow&quot;/&gt;
 &lt;/module&gt;
         </source>
 
@@ -1505,8 +1594,8 @@ import java.util.stream.IntStream;
 
         <source>
 &lt;module name=&quot;ImportOrder&quot;&gt;
-    &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;option&quot; value=&quot;top&quot;/&gt;
+  &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;option&quot; value=&quot;top&quot;/&gt;
 &lt;/module&gt;
         </source>
 
@@ -1518,6 +1607,26 @@ import static org.abego.treelayout.Configuration.AlignmentInLevel; // OK, alphab
 import org.abego.*;
 
 import java.util.Set; //  Wrong order for 'java.util.Set' import.
+
+public class SomeClass { ... }
+        </source>
+
+        <p>
+          To configure the Check with groups of static imports:
+        </p>
+
+        <source>
+&lt;module name=&quot;ImportOrder&quot;&gt;
+  &lt;property name=&quot;staticGroups&quot; value=&quot;org,java&quot;/&gt;
+  &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
+&lt;/module&gt;
+        </source>
+
+        <source>
+import static org.abego.treelayout.Configuration.AlignmentInLevel; // Group 1
+import static java.lang.Math.abs; // Group 2
+import static java.lang.String.format; // Group 2
+import static com.google.common.primitives.Doubles.BYTES; // Group "everything else"
 
 public class SomeClass { ... }
         </source>
@@ -1541,11 +1650,11 @@ public class SomeClass { ... }
         Example for <code>useContainerOrderingForStatic=true</code>
         <source>
 &lt;module name=&quot;ImportOrder&quot;&gt;
-    &lt;property name=&quot;useContainerOrderingForStatic&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;option&quot; value=&quot;top&quot;/&gt;
-    &lt;property name=&quot;caseSensitive&quot; value=&quot;false&quot;/&gt;
-    &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;useContainerOrderingForStatic&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;option&quot; value=&quot;top&quot;/&gt;
+  &lt;property name=&quot;caseSensitive&quot; value=&quot;false&quot;/&gt;
+  &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
 &lt;/module&gt;
         </source>
         <source>
@@ -1559,11 +1668,11 @@ public class InputEclipseStaticImportsOrder { }
         Example for <code>useContainerOrderingForStatic=false</code>
         <source>
 &lt;module name=&quot;ImportOrder&quot;&gt;
-    &lt;property name=&quot;useContainerOrderingForStatic&quot; value=&quot;false&quot;/&gt;
-    &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
-    &lt;property name=&quot;option&quot; value=&quot;top&quot;/&gt;
-    &lt;property name=&quot;caseSensitive&quot; value=&quot;false&quot;/&gt;
-    &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;useContainerOrderingForStatic&quot; value=&quot;false&quot;/&gt;
+  &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;option&quot; value=&quot;top&quot;/&gt;
+  &lt;property name=&quot;caseSensitive&quot; value=&quot;false&quot;/&gt;
+  &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
 &lt;/module&gt;
         </source>
         <source>
@@ -1576,7 +1685,7 @@ public class InputEclipseStaticImportsOrder { }
         </source>
       </subsection>
 
-      <subsection name="Example of Usage">
+      <subsection name="Example of Usage" id="ImportOrder_Example_of_Usage">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Aconfig+filename%3Acheckstyle_checks.xml+repo%3Acheckstyle%2Fcheckstyle+ImportOrder">
@@ -1585,7 +1694,7 @@ public class InputEclipseStaticImportsOrder { }
         </ul>
       </subsection>
 
-      <subsection name="Error Messages">
+      <subsection name="Error Messages" id="ImportOrder_Error_Messages">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fimports+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22import.groups.separated.internally%22">
@@ -1606,13 +1715,13 @@ public class InputEclipseStaticImportsOrder { }
         </p>
       </subsection>
 
-      <subsection name="Package">
+      <subsection name="Package" id="ImportOrder_Package">
         <p>
           com.puppycrawl.tools.checkstyle.checks.imports
         </p>
       </subsection>
 
-      <subsection name="Parent Module">
+      <subsection name="Parent Module" id="ImportOrder_Parent_Module">
         <p>
           <a href="config.html#TreeWalker">TreeWalker</a>
         </p>
@@ -1620,7 +1729,7 @@ public class InputEclipseStaticImportsOrder { }
     </section>
 
     <section name="RedundantImport">
-      <subsection name="Description">
+      <subsection name="Description" id="RedundantImport_Description">
         <p>Since Checkstyle 3.0</p>
         <p>
           Checks for redundant import statements. An import statement is
@@ -1642,7 +1751,7 @@ public class InputEclipseStaticImportsOrder { }
         </ul>
       </subsection>
 
-      <subsection name="Examples">
+      <subsection name="Examples" id="RedundantImport_Examples">
         <p>
           To configure the check:
         </p>
@@ -1651,7 +1760,7 @@ public class InputEclipseStaticImportsOrder { }
         </source>
       </subsection>
 
-      <subsection name="Example of Usage">
+      <subsection name="Example of Usage" id="RedundantImport_Example_of_Usage">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources+filename%3Asun_checks.xml+repo%3Acheckstyle%2Fcheckstyle+RedundantImport">
@@ -1664,7 +1773,7 @@ public class InputEclipseStaticImportsOrder { }
         </ul>
       </subsection>
 
-      <subsection name="Error Messages">
+      <subsection name="Error Messages" id="RedundantImport_Error_Messages">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fimports+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22import.duplicate%22">
@@ -1685,13 +1794,13 @@ public class InputEclipseStaticImportsOrder { }
         </p>
       </subsection>
 
-      <subsection name="Package">
+      <subsection name="Package" id="RedundantImport_Package">
         <p>
           com.puppycrawl.tools.checkstyle.checks.imports
         </p>
       </subsection>
 
-      <subsection name="Parent Module">
+      <subsection name="Parent Module" id="RedundantImport_Parent_Module">
         <p>
           <a href="config.html#TreeWalker">TreeWalker</a>
         </p>
@@ -1699,7 +1808,7 @@ public class InputEclipseStaticImportsOrder { }
     </section>
 
     <section name="UnusedImports">
-      <subsection name="Description">
+      <subsection name="Description" id="UnusedImports_Description">
         <p>Since Checkstyle 3.0</p>
         <p>
           Checks for unused import statements. Checkstyle uses a simple but
@@ -1751,13 +1860,13 @@ public class InputEclipseStaticImportsOrder { }
         <source>
 import java.awt.Component;
 class FooBar {
-    private Object Component; // a bad practice in my opinion
-    ...
+  private Object Component; // a bad practice in my opinion
+  ...
 }
         </source>
       </subsection>
 
-      <subsection name="Properties">
+      <subsection name="Properties" id="UnusedImports_Properties">
         <table>
           <tr>
             <th>name</th>
@@ -1776,7 +1885,7 @@ class FooBar {
         </table>
       </subsection>
 
-      <subsection name="Examples">
+      <subsection name="Examples" id="UnusedImports_Examples">
         <p>
           To configure the check:
         </p>
@@ -1785,7 +1894,7 @@ class FooBar {
         </source>
       </subsection>
 
-      <subsection name="Example of Usage">
+      <subsection name="Example of Usage" id="UnusedImports_Example_of_Usage">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources+filename%3Asun_checks.xml+repo%3Acheckstyle%2Fcheckstyle+UnusedImports">
@@ -1798,7 +1907,7 @@ class FooBar {
         </ul>
       </subsection>
 
-      <subsection name="Error Messages">
+      <subsection name="Error Messages" id="UnusedImports_Error_Messages">
         <ul>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fimports+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22import.unused%22">
@@ -1811,13 +1920,13 @@ class FooBar {
         </p>
       </subsection>
 
-      <subsection name="Package">
+      <subsection name="Package" id="UnusedImports_Package">
         <p>
           com.puppycrawl.tools.checkstyle.checks.imports
         </p>
       </subsection>
 
-      <subsection name="Parent Module">
+      <subsection name="Parent Module" id="UnusedImports_Parent_Module">
         <p>
           <a href="config.html#TreeWalker">TreeWalker</a>
         </p>

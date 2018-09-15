@@ -21,6 +21,7 @@ package com.puppycrawl.tools.checkstyle.checks.design;
 
 import static com.puppycrawl.tools.checkstyle.checks.design.MutableExceptionCheck.MSG_KEY;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.File;
@@ -35,7 +36,7 @@ import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtil;
 
 public class MutableExceptionCheckTest extends AbstractModuleTestSupport {
 
@@ -48,7 +49,7 @@ public class MutableExceptionCheckTest extends AbstractModuleTestSupport {
     public void testClassExtendsGenericClass() throws Exception {
         final DefaultConfiguration checkConfig = createModuleConfig(MutableExceptionCheck.class);
 
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputMutableExceptionClassExtendsGenericClass.java"),
             expected);
@@ -125,7 +126,8 @@ public class MutableExceptionCheckTest extends AbstractModuleTestSupport {
             fail("IllegalStateException is expected");
         }
         catch (IllegalStateException ex) {
-            //expected
+            // exception is expected
+            assertEquals("Invalid exception message", "interface[0x-1]", ex.getMessage());
         }
     }
 

@@ -1,6 +1,6 @@
 package com.puppycrawl.tools.checkstyle.checks.naming.abbreviationaswordinname;
 
-abstract class IIIInputAbstractClassName {
+abstract class InputAbbreviationAsWordInNameType {
 }
 
 abstract class NonAAAAbstractClassName {
@@ -49,7 +49,7 @@ interface Directions {
   int DOWN=4;
 }
 
-interface BadNameForInterfeis
+interface BadNameForInterface
 {
    void interfaceMethod();
 }

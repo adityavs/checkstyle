@@ -19,29 +19,23 @@
 
 package com.puppycrawl.tools.checkstyle;
 
-import static com.puppycrawl.tools.checkstyle.utils.CommonUtils.EMPTY_BYTE_ARRAY;
+import static com.puppycrawl.tools.checkstyle.utils.CommonUtil.EMPTY_BYTE_ARRAY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.times;
-import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -55,16 +49,13 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import com.google.common.io.Closeables;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 
 /**
  * Enter a description of class PackageNamesLoaderTest.java.
- * @author Rick Giles
- * @author lkuehne
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({PackageNamesLoader.class, Closeables.class})
+@PrepareForTest(PackageNamesLoader.class)
 public class PackageNamesLoaderTest extends AbstractPathTestSupport {
 
     @Override
@@ -82,28 +73,30 @@ public class PackageNamesLoaderTest extends AbstractPathTestSupport {
                 packageNames.size());
     }
 
+    /**
+     * Tests the loading of package names. This test needs mocking, because the package names would
+     * have to be placed in {@literal checkstyle_packages.xml}, but this will affect every test,
+     * which is undesired.
+     *
+     * @throws Exception if error occurs
+     */
     @Test
     @SuppressWarnings("unchecked")
     public void testPackagesFile() throws Exception {
-        mockStatic(Closeables.class);
-        doNothing().when(Closeables.class);
-        Closeables.closeQuietly(any(InputStream.class));
+        final URLConnection mockConnection = Mockito.mock(URLConnection.class);
+        when(mockConnection.getInputStream()).thenReturn(
+            Files.newInputStream(Paths.get(getPath("InputPackageNamesLoaderFile.xml"))));
 
-        final Method processFileMethod = PackageNamesLoader.class.getDeclaredMethod("processFile",
-                URL.class, PackageNamesLoader.class);
-        processFileMethod.setAccessible(true);
-        final Constructor<PackageNamesLoader> constructor = PackageNamesLoader.class
-                .getDeclaredConstructor();
-        constructor.setAccessible(true);
-        final PackageNamesLoader namesLoader = constructor.newInstance();
-        final URL input = new File(getPath("InputPackageNamesLoaderFile.xml")).toURI().toURL();
+        final URL url = getMockUrl(mockConnection);
 
-        processFileMethod.invoke(null, input, namesLoader);
+        final Enumeration<URL> enumeration = mock(Enumeration.class);
+        when(enumeration.hasMoreElements()).thenReturn(true).thenReturn(false);
+        when(enumeration.nextElement()).thenReturn(url);
 
-        final Field packageNamesField = PackageNamesLoader.class.getDeclaredField("packageNames");
-        packageNamesField.setAccessible(true);
+        final ClassLoader classLoader = mock(ClassLoader.class);
+        when(classLoader.getResources("checkstyle_packages.xml")).thenReturn(enumeration);
 
-        final Set<String> actualPackageNames = (Set<String>) packageNamesField.get(namesLoader);
+        final Set<String> actualPackageNames = PackageNamesLoader.getPackageNames(classLoader);
         final String[] expectedPackageNames = {
             "com.puppycrawl.tools.checkstyle",
             "com.puppycrawl.tools.checkstyle.checks",
@@ -130,9 +123,6 @@ public class PackageNamesLoaderTest extends AbstractPathTestSupport {
         final Set<String> checkstylePackagesSet =
                 new HashSet<>(Arrays.asList(expectedPackageNames));
         assertEquals("Invalid names set.", checkstylePackagesSet, actualPackageNames);
-
-        verifyStatic(times(1));
-        Closeables.closeQuietly(any(InputStream.class));
     }
 
     @Test
@@ -206,7 +196,6 @@ public class PackageNamesLoaderTest extends AbstractPathTestSupport {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testPackagesWithIoExceptionGetResources() throws Exception {
         final ClassLoader classLoader = mock(ClassLoader.class);
         when(classLoader.getResources("checkstyle_packages.xml")).thenThrow(IOException.class);

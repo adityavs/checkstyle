@@ -21,21 +21,19 @@ package com.puppycrawl.tools.checkstyle.filters;
 
 import com.puppycrawl.tools.checkstyle.api.AuditEvent;
 import com.puppycrawl.tools.checkstyle.api.AutomaticBean;
-import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Filter;
 import com.puppycrawl.tools.checkstyle.checks.SuppressWarningsHolder;
 
 /**
  * A filter that suppresses warnings using the {@link SuppressWarnings}
  * annotation.
- * @author Trevor Robinson
  */
 public class SuppressWarningsFilter
     extends AutomaticBean
     implements Filter {
 
     @Override
-    protected void finishLocalSetup() throws CheckstyleException {
+    protected void finishLocalSetup() {
         // No code by default
     }
 

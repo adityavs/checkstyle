@@ -33,12 +33,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.google.common.io.Closeables;
 import com.puppycrawl.tools.checkstyle.AbstractModuleTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.AuditEvent;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtil;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 
@@ -160,7 +159,7 @@ public class SuppressionFilterTest extends AbstractModuleTestSupport {
         checkerConfig.addAttribute("cacheFile", cacheFile.getPath());
 
         final String filePath = temporaryFolder.newFile("file.java").getPath();
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
 
         verify(checkerConfig, filePath, expected);
         // One more time to use cache.
@@ -198,7 +197,7 @@ public class SuppressionFilterTest extends AbstractModuleTestSupport {
             firstCheckerConfig.addAttribute("cacheFile", cacheFile.getPath());
 
             final String pathToEmptyFile = temporaryFolder.newFile("file.java").getPath();
-            final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+            final String[] expected = CommonUtil.EMPTY_STRING_ARRAY;
 
             verify(firstCheckerConfig, pathToEmptyFile, expected);
 
@@ -223,10 +222,7 @@ public class SuppressionFilterTest extends AbstractModuleTestSupport {
             int attemptCount = 0;
 
             while (attemptCount <= attemptLimit) {
-                InputStream stream = null;
-                try {
-                    final URL address = new URL(url);
-                    stream = address.openStream();
+                try (InputStream stream = new URL(url).openStream()) {
                     // Attempt to read a byte in order to check whether file content is available
                     available = stream.read() != -1;
                     break;
@@ -240,12 +236,8 @@ public class SuppressionFilterTest extends AbstractModuleTestSupport {
                         Thread.sleep(1000);
                     }
                     else {
-                        Closeables.closeQuietly(stream);
                         throw ex;
                     }
-                }
-                finally {
-                    Closeables.closeQuietly(stream);
                 }
             }
         }

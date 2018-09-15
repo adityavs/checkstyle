@@ -26,11 +26,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.puppycrawl.tools.checkstyle.FileStatefulCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
-import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
+import com.puppycrawl.tools.checkstyle.utils.TokenUtil;
 
 /**
  * Checks that particular class are never used as types in variable
@@ -85,10 +86,8 @@ import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
  *  benefit from checking for them.
  * </p>
  *
- * @author <a href="mailto:simon@redhillconsulting.com.au">Simon Harris</a>
- * @author <a href="mailto:nesterenko-aleksey@list.ru">Aleksey Nesterenko</a>
- * @author <a href="mailto:andreyselkin@gmail.com">Andrei Selkin</a>
  */
+@FileStatefulCheck
 public final class IllegalTypeCheck extends AbstractCheck {
 
     /**
@@ -456,7 +455,7 @@ public final class IllegalTypeCheck extends AbstractCheck {
     public void setMemberModifiers(String modifiers) {
         final List<Integer> modifiersList = new ArrayList<>();
         for (String modifier : modifiers.split(",")) {
-            modifiersList.add(TokenUtils.getTokenId(modifier.trim()));
+            modifiersList.add(TokenUtil.getTokenId(modifier.trim()));
         }
         memberModifiers = modifiersList;
     }

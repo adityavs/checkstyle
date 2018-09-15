@@ -38,14 +38,12 @@ import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
-import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.CheckUtil;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtil;
 
 /**
  * Base class for coupling calculation.
  *
- * @author <a href="mailto:simon@redhillconsulting.com.au">Simon Harris</a>
- * @author o_sukhodolsky
  */
 @FileStatefulCheck
 public abstract class AbstractClassCouplingCheck extends AbstractCheck {
@@ -99,7 +97,7 @@ public abstract class AbstractClassCouplingCheck extends AbstractCheck {
      */
     protected AbstractClassCouplingCheck(int defaultMax) {
         max = defaultMax;
-        excludeClassesRegexps.add(CommonUtils.createPattern("^$"));
+        excludeClassesRegexps.add(CommonUtil.createPattern("^$"));
     }
 
     /**
@@ -136,7 +134,7 @@ public abstract class AbstractClassCouplingCheck extends AbstractCheck {
      */
     public void setExcludeClassesRegexps(String... from) {
         excludeClassesRegexps.addAll(Arrays.stream(from.clone())
-                .map(CommonUtils::createPattern)
+                .map(CommonUtil::createPattern)
                 .collect(Collectors.toSet()));
     }
 
@@ -147,7 +145,7 @@ public abstract class AbstractClassCouplingCheck extends AbstractCheck {
      */
     public final void setExcludedPackages(String... excludedPackages) {
         final List<String> invalidIdentifiers = Arrays.stream(excludedPackages)
-            .filter(x -> !CommonUtils.isName(x))
+            .filter(packageName -> !CommonUtil.isName(packageName))
             .collect(Collectors.toList());
         if (!invalidIdentifiers.isEmpty()) {
             throw new IllegalArgumentException(
@@ -334,8 +332,6 @@ public abstract class AbstractClassCouplingCheck extends AbstractCheck {
     /**
      * Encapsulates information about class coupling.
      *
-     * @author <a href="mailto:simon@redhillconsulting.com.au">Simon Harris</a>
-     * @author o_sukhodolsky
      */
     private class ClassContext {
 
@@ -387,7 +383,7 @@ public abstract class AbstractClassCouplingCheck extends AbstractCheck {
          * @param ast type to process.
          */
         public void visitType(DetailAST ast) {
-            final String fullTypeName = CheckUtils.createFullType(ast).getText();
+            final String fullTypeName = CheckUtil.createFullType(ast).getText();
             addReferencedClassName(fullTypeName);
         }
 

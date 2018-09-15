@@ -33,8 +33,12 @@ import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.AbstractPathTestSupport;
 import com.puppycrawl.tools.checkstyle.JavaParser;
+import com.puppycrawl.tools.checkstyle.TreeWalkerAuditEvent;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
+import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.FileText;
+import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
+import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
 public class XpathQueryGeneratorTest extends AbstractPathTestSupport {
 
@@ -216,7 +220,10 @@ public class XpathQueryGeneratorTest extends AbstractPathTestSupport {
                     + "/MODIFIERS",
             "/CLASS_DEF[@text='InputXpathQueryGenerator']/OBJBLOCK"
                     + "/METHOD_DEF[@text='saveUser']/PARAMETERS/PARAMETER_DEF[@text='name']"
-                    + "/TYPE[@text='String']");
+                    + "/TYPE[@text='String']",
+            "/CLASS_DEF[@text='InputXpathQueryGenerator']/OBJBLOCK"
+                    + "/METHOD_DEF[@text='saveUser']/PARAMETERS/PARAMETER_DEF[@text='name']"
+                    + "/TYPE[@text='String']/IDENT");
         assertEquals("Generated queries do not match expected ones", expected, actual);
     }
 
@@ -318,6 +325,18 @@ public class XpathQueryGeneratorTest extends AbstractPathTestSupport {
     }
 
     @Test
+    public void testIdent() {
+        final int lineNumber = 12;
+        final int columnNumber = 14;
+        final XpathQueryGenerator queryGenerator = new XpathQueryGenerator(rootAst, lineNumber,
+                columnNumber, fileText, DEFAULT_TAB_WIDTH);
+        final List<String> actual = queryGenerator.generate();
+        final List<String> expected = Collections.singletonList(
+                "/CLASS_DEF[@text='InputXpathQueryGenerator']/IDENT");
+        assertEquals("Generated queries do not match expected ones", expected, actual);
+    }
+
+    @Test
     public void testTabWidthBeforeMethodDef() throws Exception {
         final File testFile = new File(getPath("InputXpathQueryGeneratorTabWidth.java"));
         final FileText testFileText = new FileText(testFile,
@@ -396,6 +415,34 @@ public class XpathQueryGeneratorTest extends AbstractPathTestSupport {
         final List<String> expected = Collections.singletonList(
                 "/CLASS_DEF[@text='InputXpathQueryGeneratorTabWidth']/OBJBLOCK"
                         + "/VARIABLE_DEF[@text='endLineTab']/SEMI");
+        assertEquals("Generated queries do not match expected ones", expected, actual);
+    }
+
+    @Test
+    public void testClassDefWithTokenType() {
+        final int lineNumber = 12;
+        final int columnNumber = 1;
+        final XpathQueryGenerator queryGenerator = new XpathQueryGenerator(rootAst, lineNumber,
+                columnNumber, TokenTypes.CLASS_DEF, fileText, DEFAULT_TAB_WIDTH);
+        final List<String> actual = queryGenerator.generate();
+        final List<String> expected = Collections.singletonList(
+                "/CLASS_DEF[@text='InputXpathQueryGenerator']");
+        assertEquals("Generated queries do not match expected ones", expected, actual);
+    }
+
+    @Test
+    public void testConstructorWithTreeWalkerAuditEvent() {
+        final LocalizedMessage message = new LocalizedMessage(12, 1, "messages.properties", null,
+                null, null, null, null, null);
+        final TreeWalkerAuditEvent event = new TreeWalkerAuditEvent(new FileContents(fileText),
+                "InputXpathQueryGenerator", message, rootAst);
+        final XpathQueryGenerator queryGenerator =
+                new XpathQueryGenerator(event, DEFAULT_TAB_WIDTH);
+        final List<String> actual = queryGenerator.generate();
+        final List<String> expected = Arrays.asList(
+                "/CLASS_DEF[@text='InputXpathQueryGenerator']",
+                "/CLASS_DEF[@text='InputXpathQueryGenerator']/MODIFIERS",
+                "/CLASS_DEF[@text='InputXpathQueryGenerator']/MODIFIERS/LITERAL_PUBLIC");
         assertEquals("Generated queries do not match expected ones", expected, actual);
     }
 

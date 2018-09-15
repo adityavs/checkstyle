@@ -27,7 +27,6 @@ import java.util.Set;
  * classes are not initialized.
  * <p>Limitations: this does not handle inner classes very well.</p>
  *
- * @author Oliver Burn
  */
 public class ClassResolver {
 
@@ -90,9 +89,7 @@ public class ClassResolver {
                         clazz = resolveByStarImports(name);
                         // -@cs[NestedIfDepth] it is better to have single return point from method
                         if (clazz == null) {
-                            // Giving up, the type is unknown, so load the class to generate an
-                            // exception
-                            clazz = safeLoad(name);
+                            throw new ClassNotFoundException(name);
                         }
                     }
                 }
